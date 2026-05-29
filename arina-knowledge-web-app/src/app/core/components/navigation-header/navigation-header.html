@@ -1,0 +1,42 @@
+<header class="bg-gray-100 border-b border-gray-100 text-gray-800 font-medium px-6 py-4 sticky top-0 z-50 shadow-sm">
+    <div class="max-w-7xl mx-auto">
+        <nav class="flex items-center justify-between">
+            <!-- Home Link -->
+            <a routerLink="{{routes.home}}" 
+                class="text-gray-800 text-xl font-bold tracking-wider hover:text-indigo-400 transition-colors duration-200">
+                Knowledge
+            </a>             
+            <ul class="flex items-center space-x-6 text-sm">
+                <!-- Repository Selector -->
+                <li class="relative">
+                    <button mat-button [matMenuTriggerFor]="versionRepositories"
+                        class="flex items-center space-x-1 px-3 py-1.5 rounded-md hover:bg-gray-800 hover:text-white transition-colors duration-200 focus:outline-none" >
+                        <span>{{repositoryName}}</span>
+                        <mat-icon class="text-gray-500 scale-90 -mr-1">arrow_drop_down</mat-icon>
+                    </button>
+                    <mat-menu #versionRepositories="matMenu">
+                        @for (item of repositories; track item.url){
+                            <button mat-menu-item (click)="setRepository(item)">
+                                {{item.name}}
+                            </button>
+                        }
+                    </mat-menu>
+                </li>
+                <!-- Guide Link -->
+                <li>
+                    <a href="{{routes.guide}}" target="_blank"
+                        class="hover:text-indigo-400 transition-colors duration-200 px-2 py-1 block">
+                        Guide
+                    </a>
+                </li>
+                <!-- SettingsLink -->
+                <li>
+                    <a routerLink="/{{routes.settings}}"
+                        class="hover:text-indigo-400 transition-colors duration-200 px-2 py-1 block">
+                        Settings
+                    </a>
+                </li>
+            </ul>
+        </nav>
+    </div>    
+</header>
