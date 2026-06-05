@@ -1,18 +1,34 @@
 @if (!authorizationService.isAuthorized()) {
-    <div class="login-container">
-        <h3>Access Your Repositories Safely</h3>
-        <p>This app has no backend. Your token stays inside your browser's memory and disappears on refresh.</p>
-        <ol>
-            <li>Go to your GitHub Settings -> Developer Settings.</li>
-            <li>Generate a <strong>Personal Access Token (classic)</strong> with <code>repo</code> scope.</li>
-            <a href="https://github.com/settings/personal-access-tokens" target="_blank">Generate Token</a>
-        </ol>
-        <input #tokenInput type="password" placeholder="Paste GitHub PAT here..." />
-        <button (click)="authorizationService.setToken(tokenInput.value)">Login</button>
+    <div class="h-full w-full flex flex-col items-center justify-center gap-6">
+        <h1 class="text-2xl font-semibold">Access Your Repositories Safely</h1>
+        <p class="text-gray-600">This app has no backend. Your token stays inside your browser's memory and disappears on refresh.</p>
+        <mat-list class="integer-mat-list">
+            <mat-list-item>
+                Go to your GitHub Settings -> Developer Settings.
+            </mat-list-item>
+            <mat-list-item>
+                Generate a <strong>Personal Access Token (classic)</strong> with <code>repo</code> scope.
+            </mat-list-item>
+        </mat-list>
+        <div class="action-link-container">
+            <a mat-button color="primary" href="https://github.com/settings/personal-access-tokens" target="_blank">
+                <mat-icon>open_in_new</mat-icon>
+                Generate Token
+            </a>
+        </div>
+        <div>
+            <mat-form-field class="w-[700px]" appearance="outline">
+                <mat-label>GitHub PAT</mat-label>
+                <input matInput #tokenInput type="password" autocomplete="off" placeholder="Paste GitHub PAT here..." />
+            </mat-form-field>
+            <button matButton="filled" color="primary" class="ml-3" (click)="login(tokenInput.value)">
+                Login
+            </button>
+        </div>
     </div>
 } @else {
     <div class="dashboard">
-        <button (click)="authorizationService.clearToken()">Log Out</button>
+        <button (click)="authorizationService.logout()">Log Out</button>
         <button (click)="loadRepos()">Fetch My Repos</button>
 
         <ul>

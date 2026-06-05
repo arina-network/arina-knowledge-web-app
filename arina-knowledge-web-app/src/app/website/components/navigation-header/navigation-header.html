@@ -29,12 +29,42 @@
                         Guide
                     </a>
                 </li>
-                <!-- SettingsLink -->
+                <!-- Login/Logout Link -->
                 <li>
-                    <a routerLink="/{{routes.settings}}"
-                        class="hover:text-indigo-400 transition-colors duration-200 px-2 py-1 block">
-                        Settings
-                    </a>
+                    @if (!authorizationService.isAuthorized()) {
+                        <a routerLink="/{{routes.login}}"
+                            class="hover:text-indigo-400 transition-colors duration-200 px-2 py-1 block">
+                            Login
+                        </a>
+                    } 
+                    @else {
+                        <!-- 1. The Trigger Button -->
+                        <button mat-button [matMenuTriggerFor]="profileMenu" 
+                                class="text-gray-700 hover:text-indigo-400 transition-colors duration-200 px-2 py-1 flex items-center gap-1">
+                            <img [src]="authorizationService.getUserInfo().avatar_url" alt="GitHub Profile" 
+                                class="w-8 h-8 rounded-full border border-slate-200 object-cover">
+
+                            <span>{{ authorizationService.getUserInfo().login }}</span>
+                            <mat-icon class="text-sm">expand_more</mat-icon>
+                        </button>
+
+                        <!-- 2. The Menu Panel Definition -->
+                        <mat-menu #profileMenu="matMenu" xPosition="before" class="mt-1">
+                            <a mat-menu-item 
+                                routerLink="/{{routes.settings}}" 
+                                class="text-gray-700 hover:bg-slate-50">
+                                <mat-icon class="text-red-500 mr-2">settings</mat-icon>
+                                <span>Settings</span>
+                            </a>
+                            <mat-divider class="my-1"></mat-divider>                            
+                            <a mat-menu-item 
+                                routerLink="/{{routes.logout}}" 
+                                class="text-gray-700 hover:bg-slate-50">
+                                <mat-icon class="text-red-500 mr-2">logout</mat-icon>
+                                <span>Logout</span>
+                            </a>
+                        </mat-menu>                        
+                    }
                 </li>
             </ul>
         </nav>

@@ -1,0 +1,16 @@
+<div class="h-full w-full flex flex-col items-center justify-center gap-6">
+    <h1 class="text-2xl font-semibold">Settings</h1>
+    @if (authorizationService.isAuthorized()) {
+        <p class="text-gray-600">name: {{ authorizationService.getUserInfo().name }}</p>
+        <p class="text-gray-600">login: {{ authorizationService.getUserInfo().login }}</p>
+        <p class="text-gray-600">id: {{ authorizationService.getUserInfo().id }}</p>
+    } 
+    @else {
+            <p class="text-gray-600">Please login to access your knowledge repositories.</p>
+            <a routerLink="{{routes.login}}" 
+                class="text-gray-800 text-xl font-bold tracking-wider hover:text-indigo-400 transition-colors duration-200">
+                Login
+            </a>  
+    }
+</div>
+

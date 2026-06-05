@@ -7,6 +7,8 @@ export class AppRoutes {
     public readonly github = 'https://github.com';
     public readonly githubApi = 'https://api.github.com';
 
+    public readonly githubApiUserInfo = `${this.githubApi}/user`;
+
     public readonly company = 'https://arina.network';
     public readonly guide = 'https://github.com/arina-network/arina-knowledge-guide';
 

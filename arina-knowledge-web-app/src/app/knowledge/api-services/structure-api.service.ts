@@ -14,6 +14,21 @@ export class StructureApiService {
     private authorizationService = inject(AuthorizationService);
     private routes = inject(AppRoutes)
 
+    getUserInfo(): Observable<any> {
+        const token = this.authorizationService.getToken();
+        if (!token) {
+            throw new Error('No GitHub token provided.');
+        }
+
+        // Attach user's token to the Authorization header
+        const headers = new HttpHeaders({
+        Authorization: `Bearer ${token}`,
+        Accept: 'application/vnd.github.v3+json'
+        });
+
+        return this.http.get(`${this.routes.githubApiUserInfo}`, { headers });
+    }
+
     getRepositories(): Observable<any> {
         const token = this.authorizationService.getToken();
         if (!token) {

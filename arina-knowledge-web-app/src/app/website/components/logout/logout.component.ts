@@ -10,6 +10,6 @@ export class LogoutComponent {
     private authorizationService = inject(AuthorizationService);
 
     constructor() {
-        this.authorizationService.clearToken();
+        this.authorizationService.logout();
     }
 }

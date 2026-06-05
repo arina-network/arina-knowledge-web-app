@@ -1,14 +1,20 @@
-import { Component } from '@angular/core';
+import { Component, inject } from '@angular/core';
 import { RouterLink } from '@angular/router';
+
+import { MatDividerModule } from '@angular/material/divider';
 import { MatMenuModule } from '@angular/material/menu'; // Import the module
 import { MatIconModule } from '@angular/material/icon';
+
+import { AuthorizationService } from '@/app/core/services/authorization.service';
 
 import { AppRoutes } from '../../../core/constants/app-routes';
 import { Repository } from '../../../knowledge/models/repository';
 
+
 @Component({
   selector: 'app-navigation-header',
   imports: [
+    MatDividerModule,
     MatIconModule,
     MatMenuModule,
     RouterLink
@@ -16,7 +22,8 @@ import { Repository } from '../../../knowledge/models/repository';
   templateUrl: './navigation-header.html'
 })
 export class NavigationHeader {
-    protected readonly routes = new AppRoutes();
+    protected authorizationService = inject(AuthorizationService);
+    protected routes = inject(AppRoutes);
     protected currentRepository?: Repository;
 
     get repositories() : Repository[] {

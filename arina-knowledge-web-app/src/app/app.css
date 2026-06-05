@@ -12,6 +12,29 @@
     justify-content: center;
 }
 
+/* ordered list */
+
+/* 1. Initialize the custom counter on the parent list container */
+.integer-mat-list {
+  counter-reset: mat-list-decimal-counter;
+}
+
+/* 2. Target the inner wrapper element inside each item to inject the counter */
+.integer-mat-list mat-list-item {
+  counter-increment: mat-list-decimal-counter;
+}
+
+/* 3. Inject the formatted integer before the content */
+.integer-mat-list mat-list-item::before {
+  content: counter(mat-list-decimal-counter); 
+  
+  font-weight: 500;
+  color: #3f51b5; /* Material theme palette primary */
+  margin-right: 16px;
+  min-width: 28px;
+  display: inline-block;
+}
+
 /* tree */
 mat-tree-node.node-active {
     border-radius: 5px;
