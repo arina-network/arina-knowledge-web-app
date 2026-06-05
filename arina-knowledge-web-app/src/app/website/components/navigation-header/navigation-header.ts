@@ -3,7 +3,7 @@ import { RouterLink } from '@angular/router';
 import { MatMenuModule } from '@angular/material/menu'; // Import the module
 import { MatIconModule } from '@angular/material/icon';
 
-import { AppRoutes } from '../../constants/app-routes';
+import { AppRoutes } from '../../../core/constants/app-routes';
 import { Repository } from '../../../knowledge/models/repository';
 
 @Component({

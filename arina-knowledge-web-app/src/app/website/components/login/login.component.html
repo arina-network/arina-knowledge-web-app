@@ -1,0 +1,24 @@
+@if (!authorizationService.isAuthorized()) {
+    <div class="login-container">
+        <h3>Access Your Repositories Safely</h3>
+        <p>This app has no backend. Your token stays inside your browser's memory and disappears on refresh.</p>
+        <ol>
+            <li>Go to your GitHub Settings -> Developer Settings.</li>
+            <li>Generate a <strong>Personal Access Token (classic)</strong> with <code>repo</code> scope.</li>
+            <a href="https://github.com/settings/personal-access-tokens" target="_blank">Generate Token</a>
+        </ol>
+        <input #tokenInput type="password" placeholder="Paste GitHub PAT here..." />
+        <button (click)="authorizationService.setToken(tokenInput.value)">Login</button>
+    </div>
+} @else {
+    <div class="dashboard">
+        <button (click)="authorizationService.clearToken()">Log Out</button>
+        <button (click)="loadRepos()">Fetch My Repos</button>
+
+        <ul>
+            @for (repo of repos; track repo.id) {
+                <li>{{ repo.name }}</li>
+            }
+        </ul>
+    </div>
+}

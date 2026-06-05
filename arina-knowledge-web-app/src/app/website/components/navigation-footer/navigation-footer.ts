@@ -1,6 +1,6 @@
 import { Component } from '@angular/core';
 
-import { AppRoutes } from '../../constants/app-routes';
+import { AppRoutes } from '../../../core/constants/app-routes';
 
 @Component({
   selector: 'app-navigation-footer',
