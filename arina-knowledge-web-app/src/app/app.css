@@ -12,6 +12,14 @@
     justify-content: center;
 }
 
+/* tooltip matTooltipClass="tooltip-nowrap" */
+/* .tooltip-nowrap .mdc-tooltip__surface {
+  white-space: nowrap !important;
+  max-width: none !important;
+  min-width: max-content !important;
+  display: inline-block !important;
+} */
+
 /* ordered list */
 
 /* 1. Initialize the custom counter on the parent list container */

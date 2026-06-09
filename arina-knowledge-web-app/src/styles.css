@@ -2,3 +2,9 @@
 
 @import 'tailwindcss';
 @plugin "@tailwindcss/typography";
+
+/* @layer utilities {
+  .tooltip-nowrap .mdc-tooltip__surface {
+    @apply whitespace-nowrap max-w-none w-auto;
+  }
+} */

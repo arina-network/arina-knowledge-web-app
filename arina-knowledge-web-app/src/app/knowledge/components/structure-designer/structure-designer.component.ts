@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, effect, inject } from '@angular/core';
 import { ActivatedRoute, RouterLink, RouterLinkActive } from '@angular/router'; 
 import { FlatTreeControl } from '@angular/cdk/tree';
 
@@ -22,6 +22,7 @@ import { StructureTreeNode } from '../structure-tree/structure-tree-node';
 import { StructureTreeDataSource } from '../structure-tree/structure-tree-data-source';
 
 import { StructureApiService } from '../../api-services/structure-api.service';
+import { RepositoryService } from '../../services/repository.service';
 
 @Component({
     selector: 'app-structure-designer',
@@ -41,6 +42,8 @@ import { StructureApiService } from '../../api-services/structure-api.service';
 })
 export class StructureDesignerComponent
     extends BaseDataComponent {
+
+    protected repositoryService = inject(RepositoryService);
 
     treeControl: FlatTreeControl<StructureTreeNode>;
     dataSource: StructureTreeDataSource;
@@ -73,6 +76,12 @@ export class StructureDesignerComponent
         this.treeControl = new FlatTreeControl<StructureTreeNode>(this.getLevel, this.isExpandable);
 
         this.dataSource = new StructureTreeDataSource(this.treeControl, api);
+
+        effect(() => {
+            const currentRepo = this.repositoryService.getSelectedRepository();
+            console.log('Repository changed to:', currentRepo);
+            this.refreshRootNodes();
+        });
     }
 
     override initSubsriptions() {

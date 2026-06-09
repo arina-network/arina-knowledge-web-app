@@ -5,7 +5,7 @@
             <a routerLink="{{routes.home}}" 
                 class="text-gray-800 text-xl font-bold tracking-wider hover:text-indigo-400 transition-colors duration-200">
                 Knowledge
-            </a>             
+            </a>
             <ul class="flex items-center space-x-6 text-sm">
                 <!-- Repository Selector -->
                 <li class="relative">
@@ -16,12 +16,31 @@
                     </button>
                     <mat-menu #versionRepositories="matMenu">
                         @for (item of repositories; track item.url){
-                            <button mat-menu-item (click)="setRepository(item)">
+                            <button mat-menu-item (click)="setRepository(item)" 
+                                matTooltip="{{item.url}}"
+                                [matTooltipPosition]="'below'">
                                 {{item.name}}
                             </button>
                         }
                     </mat-menu>
-                </li>
+                </li>                
+                <!-- Branch Selector -->
+                <li class="relative">
+                    <button mat-button [matMenuTriggerFor]="versionBranches"
+                        class="flex items-center space-x-1 px-3 py-1.5 rounded-md hover:bg-gray-800 hover:text-white transition-colors duration-200 focus:outline-none" >
+                        <span>{{branchName}}</span>
+                        <mat-icon class="text-gray-500 scale-90 -mr-1">arrow_drop_down</mat-icon>
+                    </button>
+                    <mat-menu #versionBranches="matMenu">
+                        @for (item of branches; track item.name){
+                            <button mat-menu-item (click)="setBranch(item)">
+                                {{item.name}}
+                            </button>
+                        }
+                    </mat-menu>
+                </li>                
+            </ul>             
+            <ul class="flex items-center space-x-6 text-sm">
                 <!-- Guide Link -->
                 <li>
                     <a href="{{routes.guide}}" target="_blank"

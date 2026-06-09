@@ -4,12 +4,14 @@ import { RouterLink } from '@angular/router';
 import { MatDividerModule } from '@angular/material/divider';
 import { MatMenuModule } from '@angular/material/menu'; // Import the module
 import { MatIconModule } from '@angular/material/icon';
+import { MatTooltipModule } from '@angular/material/tooltip';
 
 import { AuthorizationService } from '@/app/core/services/authorization.service';
+import { RepositoryService } from '@/app/knowledge/services/repository.service';
 
-import { AppRoutes } from '../../../core/constants/app-routes';
-import { Repository } from '../../../knowledge/models/repository';
-
+import { AppRoutes } from '@/app/core/constants/app-routes';
+import { Branch } from '@/app/knowledge/models/branch';
+import { Repository } from '@/app/knowledge/models/repository';
 
 @Component({
   selector: 'app-navigation-header',
@@ -17,38 +19,38 @@ import { Repository } from '../../../knowledge/models/repository';
     MatDividerModule,
     MatIconModule,
     MatMenuModule,
+    MatTooltipModule,
     RouterLink
   ],
   templateUrl: './navigation-header.html'
 })
 export class NavigationHeader {
     protected authorizationService = inject(AuthorizationService);
+    protected repositoryService = inject(RepositoryService);
     protected routes = inject(AppRoutes);
-    protected currentRepository?: Repository;
 
     get repositories() : Repository[] {
-      return [
-        {
-          url: 'https://github.com/arina-network/arina-knowledge',
-          name: 'Arina Knowledge',
-          ownerName: 'arina-network',
-          repositoryName: 'arina-knowledge'
-        },
-        {
-          url: 'https://github.com/arina-network/arina-knowledge-guide',
-          name: 'Arina Knowledge Guide',
-          ownerName: 'arina-network',
-          repositoryName: 'arina-knowledge-guide'
-        }
-      ];
+      return this.repositoryService.getRepositories(); 
     }
 
     get repositoryName() {
-      return this.currentRepository ? this.currentRepository.name : 'Select Repository';
-    }      
+      return this.repositoryService.getSelectedRepository()?.name || 'Select Repository';
+    }
 
     setRepository(repository: Repository) {
-      this.currentRepository = repository;
+      this.repositoryService.setSelectedRepository(repository);
+    }
+
+    get branches() : Branch[] {
+      return this.repositoryService.getBranches(); 
+    }
+
+    get branchName() {
+      return this.repositoryService.getSelectedBranch()?.name || 'Select Branch';
+    }
+
+    setBranch(branch: Branch) {
+      this.repositoryService.setSelectedBranch(branch);
     }
     
     isExpanded = false;

@@ -6,4 +6,6 @@ export interface Repository {
     repositoryName: string;
 
     description?: string;
+
+    isPublic: boolean;
 }

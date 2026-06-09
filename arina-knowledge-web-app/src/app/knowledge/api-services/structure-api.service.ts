@@ -1,10 +1,11 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
-import { Observable } from 'rxjs';
+import { Observable, of } from 'rxjs';
 
 import { AppRoutes } from '@/app/core/constants/app-routes';
 import { AuthorizationService } from '@/app/core/services/authorization.service';
 
+import { RepositoryService } from '../services/repository.service';
 
 @Injectable({
   providedIn: 'root'
@@ -12,6 +13,7 @@ import { AuthorizationService } from '@/app/core/services/authorization.service'
 export class StructureApiService {
     private http = inject(HttpClient);
     private authorizationService = inject(AuthorizationService);
+    private repositoryService = inject(RepositoryService);
     private routes = inject(AppRoutes)
 
     private getHeaders(throwError: boolean = false): HttpHeaders {
@@ -62,9 +64,12 @@ export class StructureApiService {
     }
 
     getStructureTreeRootNodes(): Observable<any> {
+        if (!this.repositoryService.isRepositorySelected()) {
+            return of([]);
+        }
         const headers =  this.getHeaders()
 
-        return this.http.get(`${this.routes.githubApiRepositories}/arina-network/arina-knowledge/${this.routes.githubApiContents}`, { headers });
+        return this.http.get(`${this.routes.githubApiRepositories}/${this.repositoryService.getSelectedRepository()?.ownerName}/${this.repositoryService.getSelectedRepository()?.repositoryName}/${this.routes.githubApiContents}`, { headers });
 
     }
 
@@ -72,7 +77,7 @@ export class StructureApiService {
         const headers =  this.getHeaders()
 
         // return this.http.get(`${this.routes.githubRaw}/arina-network/arina-knowledge/main/${key}`, { headers });
-        return this.http.get(`${this.routes.githubApiRepositories}/arina-network/arina-knowledge/${this.routes.githubApiContents}/${key}/?ref=main`, { headers });
+        return this.http.get(`${this.routes.githubApiRepositories}/${this.repositoryService.getSelectedRepository()?.ownerName}/${this.repositoryService.getSelectedRepository()?.repositoryName}/${this.routes.githubApiContents}/${key}/?ref=main`, { headers });
     }
 
     getStructureTreeNodes(containerKey: any): any {
