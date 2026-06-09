@@ -14,17 +14,34 @@ export class StructureApiService {
     private authorizationService = inject(AuthorizationService);
     private routes = inject(AppRoutes)
 
-    getUserInfo(): Observable<any> {
+    private getHeaders(throwError: boolean = false): HttpHeaders {
         const token = this.authorizationService.getToken();
-        if (!token) {
+        if (!token && throwError) {
             throw new Error('No GitHub token provided.');
         }
 
-        // Attach user's token to the Authorization header
-        const headers = new HttpHeaders({
-        Authorization: `Bearer ${token}`,
-        Accept: 'application/vnd.github.v3+json'
-        });
+        return  token ?
+            new HttpHeaders({
+                Authorization: `Bearer ${token}`,
+                Accept: 'application/vnd.github.v3+json'
+            }) : 
+            new HttpHeaders({
+                Accept: 'application/vnd.github.v3+json'
+            });        
+    }
+
+    getUserInfo(): Observable<any> {
+        // const token = this.authorizationService.getToken();
+        // if (!token) {
+        //     throw new Error('No GitHub token provided.');
+        // }
+
+        // // Attach user's token to the Authorization header
+        // const headers = new HttpHeaders({
+        //     Authorization: `Bearer ${token}`,
+        //     Accept: 'application/vnd.github.v3+json'
+        // });
+        const headers =  this.getHeaders(true);
 
         return this.http.get(`${this.routes.githubApiUserInfo}`, { headers });
     }
@@ -37,31 +54,25 @@ export class StructureApiService {
 
         // Attach user's token to the Authorization header
         const headers = new HttpHeaders({
-        Authorization: `Bearer ${token}`,
-        Accept: 'application/vnd.github.v3+json'
+            Authorization: `Bearer ${token}`,
+            Accept: 'application/vnd.github.v3+json'
         });
 
         return this.http.get(`${this.routes.githubApi}/user/repos`, { headers });
     }
 
-    getStructureTreeRootNodes(): any {
-        // fake data for testing
-        return [
-            {
-                key: 'logic',
-                name: 'logic',
-                isFolder: true
-            },
-            {
-                key: 'architecture',
-                name: 'architecture',
-                isFolder: true
-            },
-            {
-                key: 'README.md',
-                name: 'README.md'
-            }
-        ];
+    getStructureTreeRootNodes(): Observable<any> {
+        const headers =  this.getHeaders()
+
+        return this.http.get(`${this.routes.githubApiRepositories}/arina-network/arina-knowledge/${this.routes.githubApiContents}`, { headers });
+
+    }
+
+    getStructureRaw(key: string | undefined = 'README.md'): Observable<any> {
+        const headers =  this.getHeaders()
+
+        // return this.http.get(`${this.routes.githubRaw}/arina-network/arina-knowledge/main/${key}`, { headers });
+        return this.http.get(`${this.routes.githubApiRepositories}/arina-network/arina-knowledge/${this.routes.githubApiContents}/${key}/?ref=main`, { headers });
     }
 
     getStructureTreeNodes(containerKey: any): any {

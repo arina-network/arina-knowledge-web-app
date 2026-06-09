@@ -97,9 +97,30 @@ export class StructureDesignerComponent
         this.isDataLoading = true;
         try {
             // const p = (await this.api.getStructureTreeRootNodes().toPromise()) as DataPackage;
-            const p = this.api.getStructureTreeRootNodes()
-            this.dataSource.data = p.map(x => new StructureTreeNode(x.key, x.containerName, x.name, x.description, 0, true, x.isFolder));
-            this.showSelectedNode();
+            this.api.getStructureTreeRootNodes().subscribe({
+                next: (data) => {
+                    this.dataSource.data = data.map(x => 
+                        new StructureTreeNode(
+                            x.path, 
+                            undefined, 
+                            x.name, 
+                            undefined, 
+                            0, 
+                            x.type === 'dir', 
+                            x.type === 'dir' 
+                        )
+                    );
+                    this.isDataLoading = false;
+                },
+                error: (err) => {
+                    console.error('Error fetching Root Nodes from GitHub:', err);
+                    this.isDataLoading = false;
+                }
+            });
+
+            // const p = this.api.getStructureTreeRootNodes()
+            // this.dataSource.data = p.map(x => new StructureTreeNode(x.key, x.containerName, x.name, x.description, 0, true, x.isFolder));
+            // this.showSelectedNode();
         } finally {
             this.isDataLoading = false;
         }

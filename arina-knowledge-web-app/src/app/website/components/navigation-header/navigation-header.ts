@@ -30,11 +30,15 @@ export class NavigationHeader {
       return [
         {
           url: 'https://github.com/arina-network/arina-knowledge',
-          name: 'Arina Knowledge'
+          name: 'Arina Knowledge',
+          ownerName: 'arina-network',
+          repositoryName: 'arina-knowledge'
         },
         {
           url: 'https://github.com/arina-network/arina-knowledge-guide',
-          name: 'Arina Knowledge Guide'
+          name: 'Arina Knowledge Guide',
+          ownerName: 'arina-network',
+          repositoryName: 'arina-knowledge-guide'
         }
       ];
     }

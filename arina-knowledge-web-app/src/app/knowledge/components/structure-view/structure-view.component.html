@@ -3,6 +3,6 @@
 
 @if(sourceHtml){
     <h2 class="text-xl font-bold mb-4">{{title}}</h2>
-    <div class="m-1" [innerHTML]="sourceHtml | safeHtml">
+    <div class="prose" [innerHTML]="sourceHtml | markdown | safeHtml">
     </div>
 } 
