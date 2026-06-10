@@ -65,13 +65,12 @@ export class StructureDesignerComponent
     hasChild = (_: number, _nodeData: StructureTreeNode) => _nodeData.expandable;
 
     constructor(
-        protected override readonly route: ActivatedRoute,
         protected readonly api: StructureApiService,
         protected readonly dataNotificationService: DataNotificationService,
         // public readonly types: StructureTypes, // used in HTML
         public readonly routes: AppRoutes // used in HTML
     ) {
-        super(route);
+        super();
 
         this.treeControl = new FlatTreeControl<StructureTreeNode>(this.getLevel, this.isExpandable);
 
@@ -106,7 +105,11 @@ export class StructureDesignerComponent
         this.isDataLoading = true;
         try {
             // const p = (await this.api.getStructureTreeRootNodes().toPromise()) as DataPackage;
-            this.api.getStructureTreeRootNodes().subscribe({
+            this.api.getStructureTreeRootNodes(
+                this.owner, 
+                this.repository, 
+                this.branch
+            ).subscribe({
                 next: (data) => {
                     this.dataSource.data = data.map(x => 
                         new StructureTreeNode(
@@ -135,24 +138,26 @@ export class StructureDesignerComponent
         }
     }
 
-    override async refreshLookupData() {
-        await super.refreshLookupData();
+    // override async refreshLookupData() {
+    //     await super.refreshLookupData();
 
-        this.refreshRootNodes();
-    }
+    //     this.refreshRootNodes();
+    // }
 
     override async refreshData() {
-        // get route and expand
-        if (this.key?.length ?? 0 > 0) {
-            if (!this.isLastInCurrentRoute(this.key)) {
-                this.currentRoute = this.api.getRoute(this.key);
-                this.nodesToExpand = [...this.currentRoute];
+        this.refreshRootNodes();
 
-                this.openRoute();
-            }
-        } else {
-            this.currentRoute = [];
-        }
+        // // get route and expand
+        // if (this.key?.length ?? 0 > 0) {
+        //     if (!this.isLastInCurrentRoute(this.key)) {
+        //         this.currentRoute = this.api.getRoute(this.key);
+        //         this.nodesToExpand = [...this.currentRoute];
+
+        //         this.openRoute();
+        //     }
+        // } else {
+        //     this.currentRoute = [];
+        // }
     }
 
     refreshTree(p: any) {

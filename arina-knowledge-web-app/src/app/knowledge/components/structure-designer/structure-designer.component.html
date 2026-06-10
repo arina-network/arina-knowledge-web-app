@@ -4,13 +4,13 @@
         <!-- <app-messages [messages]="messages"></app-messages> -->
 
         <mat-tree [dataSource]="dataSource" [treeControl]="treeControl">
-            <mat-tree-node *matTreeNodeDef="let node" matTreeNodePadding routerLink="/{{node.key}}" [routerLinkActive]='["node-active"]'
+            <mat-tree-node *matTreeNodeDef="let node" matTreeNodePadding routerLink="/{{routes.knowledge}}/{{owner}}/{{repository}}/{{branch}}/{{node.key}}" [routerLinkActive]='["node-active"]'
                 class="rounded-md hover:bg-gray-200/50 hover:text-white transition-colors duration-150 my-0.5 px-2 text-sm cursor-pointer"
                 matTooltip="{{node.description}}" matTooltipShowDelay="1000">
                 <button mat-icon-button disabled class="w-6"></button>
                 {{node.name}}
             </mat-tree-node>
-            <mat-tree-node *matTreeNodeDef="let node; when: hasChild" matTreeNodePadding routerLink="/{{node.key}}" [routerLinkActive]='["node-active"]'
+            <mat-tree-node *matTreeNodeDef="let node; when: hasChild" matTreeNodePadding routerLink="/{{routes.knowledge}}/{{owner}}/{{repository}}/{{branch}}/{{node.key}}" [routerLinkActive]='["node-active"]'
                 class="rounded-md hover:bg-gray-200/50 hover:text-white transition-colors duration-150 my-0.5 px-2 text-sm cursor-pointer"
                 matTooltip="{{node.description}}" matTooltipShowDelay="1000">
                 <button mat-icon-button [attr.aria-label]="'toggle ' + node.filename" matTreeNodeToggle>

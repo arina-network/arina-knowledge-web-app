@@ -74,12 +74,12 @@ export class StructureTreeComponent
     hasChild = (_: number, _nodeData: StructureTreeNode) => _nodeData.expandable;
 
     constructor(
-        protected override readonly route: ActivatedRoute,
+        // protected override readonly route: ActivatedRoute,
         protected readonly api: StructureApiService,
         protected readonly dataNotificationService: DataNotificationService
         // public readonly types: StructureTypes
     ) {
-        super(route);
+        super();
 
         this.treeControl = new FlatTreeControl<StructureTreeNode>(this.getLevel, this.isExpandable);
 

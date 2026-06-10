@@ -63,21 +63,34 @@ export class StructureApiService {
         return this.http.get(`${this.routes.githubApi}/user/repos`, { headers });
     }
 
-    getStructureTreeRootNodes(): Observable<any> {
-        if (!this.repositoryService.isRepositorySelected()) {
+    getStructureTreeRootNodes(
+        ownerName: string | undefined = this.repositoryService.getSelectedRepository()?.ownerName,
+        repositoryName: string | undefined = this.repositoryService.getSelectedRepository()?.repositoryName,
+        branchName: string | undefined = this.repositoryService.getSelectedBranch()?.name ?? 'main'
+    ): Observable<any> {
+        if (!ownerName || !repositoryName || !branchName) {
             return of([]);
         }
+
         const headers =  this.getHeaders()
 
-        return this.http.get(`${this.routes.githubApiRepositories}/${this.repositoryService.getSelectedRepository()?.ownerName}/${this.repositoryService.getSelectedRepository()?.repositoryName}/${this.routes.githubApiContents}`, { headers });
-
+        return this.http.get(`${this.routes.githubApiRepositories}/${ownerName}/${repositoryName}/${this.routes.githubApiContents}/?ref=${branchName}`, { headers });
     }
 
-    getStructureRaw(key: string | undefined = 'README.md'): Observable<any> {
-        const headers =  this.getHeaders()
+    getStructureRaw(
+        ownerName: string | undefined = this.repositoryService.getSelectedRepository()?.ownerName,
+        repositoryName: string | undefined = this.repositoryService.getSelectedRepository()?.repositoryName,
+        branchName: string | undefined = this.repositoryService.getSelectedBranch()?.name ?? 'main',
+        key: string | undefined = 'README.md'
+    ): Observable<any> {
+        console.log('Fetching Raw Structure with params:', { ownerName, repositoryName, branchName, key });
 
-        // return this.http.get(`${this.routes.githubRaw}/arina-network/arina-knowledge/main/${key}`, { headers });
-        return this.http.get(`${this.routes.githubApiRepositories}/${this.repositoryService.getSelectedRepository()?.ownerName}/${this.repositoryService.getSelectedRepository()?.repositoryName}/${this.routes.githubApiContents}/${key}/?ref=main`, { headers });
+        if (!ownerName || !repositoryName || !branchName || !key) {
+            return of('');
+        }
+
+        const headers =  this.getHeaders()
+        return this.http.get(`${this.routes.githubApiRepositories}/${ownerName}/${repositoryName}/${this.routes.githubApiContents}/${key}/?ref=${branchName}`, { headers });
     }
 
     getStructureTreeNodes(containerKey: any): any {

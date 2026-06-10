@@ -20,25 +20,34 @@ import { StructureApiService } from '../../api-services/structure-api.service';
 })
 export class StructureViewComponent
     extends BaseDataComponent {
-    private cdr = inject(ChangeDetectorRef);        
-
+    private cdr = inject(ChangeDetectorRef);   
+    
+    protected api = inject(StructureApiService);
+    // protected routes = inject(AppRoutes);
+    
     title: string | undefined;    
     sourceHtml: string | undefined;
-
-    constructor(
-        protected override readonly route: ActivatedRoute,
-        protected readonly api: StructureApiService
-    ) {
-        super(route);
-    }
 
     override async refreshData() {
         this.isDataLoading = true;
         try {
             // const p = (await this.api.getStructureTreeRootNodes().toPromise()) as DataPackage;
-            this.api.getStructureRaw().subscribe({
+            this.api.getStructureRaw(
+                this.owner, 
+                this.repository, 
+                this.branch,
+                this.key
+            ).subscribe({
                 next: (data) => {
+                    console.log('Raw Structure content fetched successfully:', data);    
+
                     this.title = this.key;
+
+                    if (!data || !data.content) {
+                        this.sourceHtml = '';
+                        this.isDataLoading = false;
+                        return;
+                    }
 
                     const cleanBase64 = data.content.replace(/\s/g, '');
                     const binaryString = atob(cleanBase64);
