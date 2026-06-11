@@ -111,7 +111,7 @@ export class StructureDesignerComponent
                 this.branch
             ).subscribe({
                 next: (data) => {
-                    this.dataSource.data = data.map(x => 
+                    const nodes = data.map(x => 
                         new StructureTreeNode(
                             x.path, 
                             undefined, 
@@ -122,6 +122,18 @@ export class StructureDesignerComponent
                             x.type === 'dir' 
                         )
                     );
+                    this.dataSource.data = nodes.sort((a: StructureTreeNode, b: StructureTreeNode) => {
+                        if (a.isFolder && !b.isFolder) {
+                            return -1;   
+                        } else if (!a.isFolder && b.isFolder) {
+                            return 1;    
+                        } else if (!a.name){
+                            return -1;
+                        }
+
+                        return a.name.localeCompare(b.name ?? '', undefined, { sensitivity: 'base' });
+                    });
+
                     this.isDataLoading = false;
                 },
                 error: (err) => {

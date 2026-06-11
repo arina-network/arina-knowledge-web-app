@@ -1,4 +1,4 @@
-import { StructureIcons } from "../../functions/structure-icons";
+// import { StructureIcons } from "../../functions/structure-icons";
 
 export class StructureTreeNode {
     constructor(
@@ -13,6 +13,16 @@ export class StructureTreeNode {
     ) { }
 
     getIconName() {
-        return StructureIcons.getIconName(this);
+        console.log('Getting icon name for node:', this);
+        if (this.isFolder) {
+            return 'folder';
+        } else if (this.name?.toLowerCase().endsWith('.md')) {
+            return 'description';
+        } else if (this.name?.toLowerCase().endsWith('.svg')) {
+            return 'schema';
+        }
+
+        return 'draft';
+        // return StructureIcons.getIconName(this);
     }
 }

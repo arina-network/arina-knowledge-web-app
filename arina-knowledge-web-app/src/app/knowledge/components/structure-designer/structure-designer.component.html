@@ -8,6 +8,7 @@
                 class="rounded-md hover:bg-gray-200/50 hover:text-white transition-colors duration-150 my-0.5 px-2 text-sm cursor-pointer"
                 matTooltip="{{node.description}}" matTooltipShowDelay="1000">
                 <button mat-icon-button disabled class="w-6"></button>
+                <mat-icon class="mr-2" fontSet="material-symbols-outlined">{{node.getIconName()}}</mat-icon>
                 {{node.name}}
             </mat-tree-node>
             <mat-tree-node *matTreeNodeDef="let node; when: hasChild" matTreeNodePadding routerLink="/{{routes.knowledge}}/{{owner}}/{{repository}}/{{branch}}/{{node.key}}" [routerLinkActive]='["node-active"]'
@@ -18,7 +19,7 @@
                         {{treeControl.isExpanded(node) ? 'expand_more' : 'chevron_right'}}
                     </mat-icon>
                 </button>
-                <mat-icon class="mr-2 text-indigo-400 scale-90">{{node.getIconName()}}</mat-icon>
+                <mat-icon class="mr-2" fontSet="material-symbols-outlined">{{node.getIconName()}}</mat-icon>
                 {{node.name}}&nbsp;
                 @if(node.isLoading){
                     <mat-progress-bar class="ml-2 max-w-[50px]" mode="indeterminate"></mat-progress-bar>
