@@ -1,6 +1,7 @@
 import { Component, inject, signal } from '@angular/core';
 import { RouterLink, RouterLinkActive } from '@angular/router'; 
 
+import { MatDividerModule } from '@angular/material/divider';
 import { MatIconModule } from '@angular/material/icon';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { MatSidenavModule } from '@angular/material/sidenav';
@@ -10,9 +11,11 @@ import { MatTree, MatTreeModule } from '@angular/material/tree';
 
 import { AppRoutes } from '@/app/core/constants/app-routes';
 
+import { Breadcrumb } from '@/app/core/models/breadcrumb';
+import { NotificationService } from '@/app/core/services/notification.service';
 import { BaseDataComponent } from '@/app/core/components/base-data/base-data.component';
 import { ProgressComponent } from '@/app/core/components/progress/progress.component';
-import { DataNotificationService } from '@/app/core/services/data-notification.service';
+// import { DataNotificationService } from '@/app/core/services/data-notification.service';
 
 import { Structure } from '@/app/knowledge/models/structure';
 import { StructureDetailsComponent } from '../structure-details/structure-details.component';
@@ -27,6 +30,7 @@ import { RepositoryService } from '../../services/repository.service';
     imports: [
         RouterLink, 
         RouterLinkActive,
+        MatDividerModule,
         MatIconModule,
         MatProgressBarModule,
         MatSidenavModule,
@@ -40,7 +44,8 @@ import { RepositoryService } from '../../services/repository.service';
 export class StructureDesignerComponent
     extends BaseDataComponent {
 
-    protected dataNotificationService = inject(DataNotificationService);    
+    // protected dataNotificationService = inject(DataNotificationService);
+    protected notificationService = inject(NotificationService);        
     protected repositoryService = inject(RepositoryService);
     protected routes = inject(AppRoutes);
 
@@ -108,7 +113,7 @@ export class StructureDesignerComponent
                 this.isDataLoading = false;
             },
             error: (err) => {
-                console.error('Error fetching Root Nodes from GitHub:', err);
+                this.notificationService.showError('Fetching data from GitHub failed: ' + err.message);
                 this.isDataLoading = false;
             }
         });
@@ -147,7 +152,9 @@ export class StructureDesignerComponent
                 // animate opening state now that structural nodes exist in memory
                 tree.expand(node);
             },
-            error: () => {
+            error: (err) => {
+                console.error('getStructureTreeChildNodes: ', err);
+                this.notificationService.showError('Fetching data from GitHub failed: ' + err.message);
                 node.isLoading = false;
             }
         });
@@ -169,111 +176,37 @@ export class StructureDesignerComponent
             
             this.refreshRootNodes();
         }
-
-        // // get route and expand
-        // if (this.key?.length ?? 0 > 0) {
-        //     if (!this.isLastInCurrentRoute(this.key)) {
-        //         this.currentRoute = this.api.getRoute(this.key);
-        //         this.nodesToExpand = [...this.currentRoute];
-
-        //         this.openRoute();
-        //     }
-        // } else {
-        //     this.currentRoute = [];
-        // }
     }
 
-    // refreshTree(p: any) {
-    //     this.dataSource.data = p.map(x => new StructureTreeNode(x.key, x.containerKey,  x.name, x.description, 0, true, x.isFolder));
+    get isShowBreadcrumb() : boolean {
+        return !!this.key;
+    }
 
-    //     this.openRoute();
-    // }
+    get githubUrl() : string | undefined {
+        if (!this.key) {
+            return undefined;
+        }
 
-    // openRoute() {
-    //     if (!this.dataSource.data || !this.treeControl.dataNodes || !this.nodesToExpand) {
-    //         return;
-    //     }
-    //     if (!(this.nodesToExpand.length > 0)) {
-    //         return;
-    //     }
+        return `${this.routes.github}/${this.owner}/${this.repository}/${this.routes.githubBlob}/${this.branch}/${this.key}`;
+    }
 
-    //     const entity = this.nodesToExpand[0];
-    //     const node = this.treeControl.dataNodes.find(x => x.key === entity.key && !x?.isLoading);
-    //     if (node) {
-    //         // remove node from list
-    //         this.nodesToExpand = this.nodesToExpand.filter(x => !(x.key === node.key));
-    //         // expand
-    //         if (!this.treeControl.isExpanded(node)) {
-    //             this.treeControl.expand(node);
-    //         } else if (this.nodesToExpand.length > 0) {
-    //             this.openRoute();
-    //         }
+    get breadcrumbs() : Breadcrumb[] {
+        const result: Breadcrumb[] = [];
 
-    //         // scroll to selected node
-    //         if (this.nodesToExpand.length === 0) {
-    //             this.showSelectedNode();
-    //         }
-    //     } else if (!(entity.containerKey?.length ?? 0 > 0)) { // root node was not found
-    //         this.refreshRootNodes();
-    //     } else { // try to find parent node and reopen it
-    //         const parentNode = this.treeControl.dataNodes.find(x =>
-    //             x.key === entity.containerKey && !x?.isLoading);
-    //         if (parentNode && this.treeControl.isExpanded(parentNode)) {
-    //             this.treeControl.collapse(parentNode);
-    //             //this.treeControl.expand(parentNode);
-    //         }
-    //     }
-    // }
+        // empty route
+        if (!(this.key?.length ?? 0 > 0)) {
+            return result;
+        }
 
-    // expandFromRoute(nodes: StructureTreeNode[]) {
-    //     if (!nodes || !this.nodesToExpand) {
-    //         return;
-    //     }
 
-    //     nodes.forEach(node => {
-    //         const current = this.nodesToExpand.find(x => x.key === node.key);
-    //         if (current) {
-    //             // expand if not expanded and not last
-    //             if (this.nodesToExpand[this.nodesToExpand.length - 1] !== current) {
-    //                 if (this.treeControl.isExpanded(node)) {
-    //                     this.expandFromRoute(this.treeControl.getDescendants(node));
-    //                 }
-    //                 else {
-    //                     this.treeControl.expand(node);
-    //                 }
-    //             }
-    //             // remove node from list
-    //             this.nodesToExpand = this.nodesToExpand.filter(x => !(x.key === node.key));
-    //             // show node
-    //             if (this.nodesToExpand.length === 0) {
-    //                 this.showSelectedNode();
-    //             }
-    //         }
-    //     });
-    // }
+        const route = this.key?.split('/').filter(x => x?.length > 0) ?? [];
+        for (let i = 0; i < route.length; i++) {
+            result.push({
+                name: route[i]!,
+                url: `/${this.routes.knowledge}/${this.owner}/${this.repository}/${this.branch}/${route.slice(0, i + 1).join('/')}`
+            });
+        }
 
-    // showSelectedNode() {
-    //     setTimeout(() => {
-    //         const element = document.querySelector('.node-active');
-    //         if (element) {
-    //             element.scrollIntoView({ behavior: 'smooth', block: 'center' });
-    //         }
-    //     }, 50);
-    // }
-
-    // isShowBreadcrumb() {
-    //     if (!this.currentRoute) {
-    //         return false;
-    //     }
-
-    //     return this.currentRoute.length > 0;
-    // }
-
-    // isLastInCurrentRoute(key: string) {
-    //     if (!this.currentRoute) {
-    //         return false;
-    //     }
-
-    //     return this.currentRoute[this.currentRoute.length - 1]?.key === key;
-    // }
+        return result;
+    }
 }

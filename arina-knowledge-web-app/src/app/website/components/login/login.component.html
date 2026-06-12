@@ -27,7 +27,10 @@
         </div>
     </div>
 } @else {
-    <div class="dashboard">
+    <div class="h-full w-full flex flex-col items-center justify-center gap-6">
+        <button (click)="authorizationService.logout()">Log Out</button>
+    </div>
+    <!-- <div class="dashboard">
         <button (click)="authorizationService.logout()">Log Out</button>
         <button (click)="loadRepos()">Fetch My Repos</button>
 
@@ -36,5 +39,5 @@
                 <li>{{ repo.name }}</li>
             }
         </ul>
-    </div>
+    </div> -->
 }

@@ -37,8 +37,6 @@ export class BaseDataComponent
     private readonly subscriptions: Subscription[] = [];
 
     async refreshParams(params: Params) {
-        console.log('Route params changed:', params);
-
         this.owner = params[AppParams.Owner];
         this.repository = params[AppParams.Repository];
         this.branch = params[AppParams.Branch];

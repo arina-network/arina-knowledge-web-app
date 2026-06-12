@@ -1,8 +1,9 @@
 import { ChangeDetectorRef, Component, inject } from '@angular/core';
-import { ActivatedRoute } from '@angular/router';
+// import { ActivatedRoute } from '@angular/router';
 
 import { BaseDataComponent } from '@/app/core/components/base-data/base-data.component';
 import { ProgressComponent } from '@/app/core/components/progress/progress.component';
+import { NotificationService } from '@/app/core/services/notification.service';
 import { AppMarkdownPipe } from '@/app/core/pipes/app-marked.pipe';
 import { AppSafeHtmlPipe } from '@/app/core/pipes/app-safe-html.pipe';
 
@@ -21,7 +22,9 @@ import { StructureApiService } from '../../api-services/structure-api.service';
 export class StructureViewComponent
     extends BaseDataComponent {
     private cdr = inject(ChangeDetectorRef);   
-    
+
+    protected notificationService = inject(NotificationService);        
+   
     protected api = inject(StructureApiService);
     // protected routes = inject(AppRoutes);
     
@@ -29,60 +32,35 @@ export class StructureViewComponent
     sourceHtml: string | undefined;
 
     override async refreshData() {
-        this.isDataLoading = true;
-        try {
-            // const p = (await this.api.getStructureTreeRootNodes().toPromise()) as DataPackage;
-            this.api.getStructureRaw(
-                this.owner, 
-                this.repository, 
-                this.branch,
-                this.key
-            ).subscribe({
-                next: (data) => {
-                    console.log('Raw Structure content fetched successfully:', data);    
+        this.api.getStructureRaw(
+            this.owner, 
+            this.repository, 
+            this.branch,
+            this.key
+        ).subscribe({
+            next: (data) => {
+                this.title = this.key;
 
-                    this.title = this.key;
-
-                    if (!data || !data.content) {
-                        this.sourceHtml = '';
-                        this.isDataLoading = false;
-                        return;
-                    }
-
-                    const cleanBase64 = data.content.replace(/\s/g, '');
-                    const binaryString = atob(cleanBase64);
-                    const bytes = Uint8Array.from(binaryString, m => m.charCodeAt(0));
-    
-                    this.sourceHtml = new TextDecoder('utf-8').decode(bytes);
-                    
-                    console.log('Raw Structure content fetched successfully:', this.sourceHtml);
-                    // this.sourceHtml = data
-
+                if (!data || !data.content) {
+                    this.sourceHtml = '';
                     this.isDataLoading = false;
-
-                    this.cdr.detectChanges(); 
-                },
-                error: (err) => {
-                    console.error('Error fetching Raw Structure from GitHub:', err);
-                    this.isDataLoading = false;
+                    return;
                 }
-            });
 
-            // const p = this.api.getStructureTreeRootNodes()
-            // this.dataSource.data = p.map(x => new StructureTreeNode(x.key, x.containerName, x.name, x.description, 0, true, x.isFolder));
-            // this.showSelectedNode();
-        } finally {
-            this.isDataLoading = false;
-        }
+                const cleanBase64 = data.content.replace(/\s/g, '');
+                const binaryString = atob(cleanBase64);
+                const bytes = Uint8Array.from(binaryString, m => m.charCodeAt(0));
 
-        // this.isDataLoading = true;
-        // try {
-        //     const p = this.api.getStructure(this.key);
-        //     // this.messages = p.messages;
-        //     this.title = p.name;
-        //     this.sourceHtml = p.source
-        // } finally {
-        //     this.isDataLoading = false;
-        // }
+                this.sourceHtml = new TextDecoder('utf-8').decode(bytes);
+                
+                this.isDataLoading = false;
+
+                this.cdr.detectChanges(); 
+            },
+            error: (err) => {
+                this.notificationService.showError('Error fetching Raw Data from GitHub: ' + err.message);
+                this.isDataLoading = false;
+            }
+        });
     }
 }

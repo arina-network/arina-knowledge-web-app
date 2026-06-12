@@ -10,6 +10,8 @@ export class AppRoutes {
 
     // github
     public readonly github = 'https://github.com';
+    public readonly githubBlob = `blob`;
+
     public readonly githubApi = 'https://api.github.com';
 
     public readonly githubApiUserInfo = `${this.githubApi}/user`;

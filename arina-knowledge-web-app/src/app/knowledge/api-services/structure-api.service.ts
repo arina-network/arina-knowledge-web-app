@@ -90,44 +90,6 @@ export class StructureApiService {
         const headers =  this.getHeaders()
 
         return this.http.get(`${this.routes.githubApiRepositories}/${ownerName}/${repositoryName}/${this.routes.githubApiContents}/${containerKey}?ref=${branchName}`, { headers });
-        // // fake data for testing
-        // if (containerKey === 'logic') {
-        //     return [
-        //         {
-        //             key: 'logic/core',
-        //             name: 'core',
-        //             isFolder: true
-        //         },
-        //         {
-        //             key: 'logic/knowledge',
-        //             name: 'knowledge',
-        //             isFolder: true
-        //         },
-        //         {
-        //             key: 'logic/README.md',
-        //             name: 'README.md'
-        //         }
-        //     ];
-        // } else if (containerKey === 'architecture') {
-        //     return [
-        //         {
-        //             key: 'architecture/api',
-        //             name: 'api',
-        //             isFolder: true
-        //         },
-        //         {
-        //             key: 'architecture/ui',
-        //             name: 'ui',
-        //             isFolder: true
-        //         },
-        //         {
-        //             key: 'architecture/README.md',
-        //             name: 'README.md'
-        //         }
-        //     ];
-        // } else {
-        //     return [];
-        // }
     }
 
     getStructureRaw(
@@ -136,7 +98,7 @@ export class StructureApiService {
         branchName: string | undefined = this.repositoryService.getSelectedBranch()?.name ?? 'main',
         key: string | undefined = 'README.md'
     ): Observable<any> {
-        console.log('Fetching Raw Structure with params:', { ownerName, repositoryName, branchName, key });
+        // console.log('Fetching Raw Structure with params:', { ownerName, repositoryName, branchName, key });
 
         if (!ownerName || !repositoryName || !branchName || !key) {
             return of('');

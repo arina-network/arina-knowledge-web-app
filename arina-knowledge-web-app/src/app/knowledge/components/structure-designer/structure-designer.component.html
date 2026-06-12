@@ -59,7 +59,30 @@
             </mat-tree-node>
         </mat-tree> -->
     </mat-sidenav>
-    <mat-sidenav-content class="h-full p-6 overflow-y-auto">
+    <mat-sidenav-content class="h-full p-2 overflow-y-auto">
+        <!-- breadcrumb -->
+        @if (isShowBreadcrumb) { 
+            <nav class="flex items-center justify-between w-full p-2 bg-gray-50 rounded-md">
+                <div class="flex flex-wrap items-center gap-1">
+                    @for (crumb of breadcrumbs; track crumb.url; let last = $last) {
+                        <a [routerLink]="crumb.url" 
+                             class="text-slate-600 hover:text-slate-800 hover:underline text-m font-medium transition-colors">
+                            {{ crumb.name }}
+                        </a>
+                        @if (!last) {
+                            <mat-icon class="text-gray-400 !text-lg !h-7 !w-7">chevron_right</mat-icon>
+                        }
+                    }
+                </div>
+                <a mat-button href="{{githubUrl}}" target="_blank"
+                    class="ml-auto inline-flex items-center gap-1 font-medium">
+                    <mat-icon class="!text-lg !h-7 !w-7">api</mat-icon>
+                    <span class="hover:underline">Open in GitHub</span>
+                </a>            
+            </nav>
+            <mat-divider class="p-2"></mat-divider>            
+        } 
+        <!-- details -->
         <div class="h-full w-full">
             <app-structure-details [currentRoute]="currentRoute"></app-structure-details>
         </div>
