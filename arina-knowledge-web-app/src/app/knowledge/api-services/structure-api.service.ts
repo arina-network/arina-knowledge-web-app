@@ -77,6 +77,59 @@ export class StructureApiService {
         return this.http.get(`${this.routes.githubApiRepositories}/${ownerName}/${repositoryName}/${this.routes.githubApiContents}/?ref=${branchName}`, { headers });
     }
 
+    getStructureTreeChildNodes(
+        ownerName: string | undefined = this.repositoryService.getSelectedRepository()?.ownerName,
+        repositoryName: string | undefined = this.repositoryService.getSelectedRepository()?.repositoryName,
+        branchName: string | undefined = this.repositoryService.getSelectedBranch()?.name ?? 'main',
+        containerKey: any
+    ): Observable<any> {
+        if (!ownerName || !repositoryName || !branchName || !containerKey) {
+            return of([]);
+        }
+        
+        const headers =  this.getHeaders()
+
+        return this.http.get(`${this.routes.githubApiRepositories}/${ownerName}/${repositoryName}/${this.routes.githubApiContents}/${containerKey}?ref=${branchName}`, { headers });
+        // // fake data for testing
+        // if (containerKey === 'logic') {
+        //     return [
+        //         {
+        //             key: 'logic/core',
+        //             name: 'core',
+        //             isFolder: true
+        //         },
+        //         {
+        //             key: 'logic/knowledge',
+        //             name: 'knowledge',
+        //             isFolder: true
+        //         },
+        //         {
+        //             key: 'logic/README.md',
+        //             name: 'README.md'
+        //         }
+        //     ];
+        // } else if (containerKey === 'architecture') {
+        //     return [
+        //         {
+        //             key: 'architecture/api',
+        //             name: 'api',
+        //             isFolder: true
+        //         },
+        //         {
+        //             key: 'architecture/ui',
+        //             name: 'ui',
+        //             isFolder: true
+        //         },
+        //         {
+        //             key: 'architecture/README.md',
+        //             name: 'README.md'
+        //         }
+        //     ];
+        // } else {
+        //     return [];
+        // }
+    }
+
     getStructureRaw(
         ownerName: string | undefined = this.repositoryService.getSelectedRepository()?.ownerName,
         repositoryName: string | undefined = this.repositoryService.getSelectedRepository()?.repositoryName,
@@ -93,46 +146,7 @@ export class StructureApiService {
         return this.http.get(`${this.routes.githubApiRepositories}/${ownerName}/${repositoryName}/${this.routes.githubApiContents}/${key}/?ref=${branchName}`, { headers });
     }
 
-    getStructureTreeNodes(containerKey: any): any {
-        // fake data for testing
-        if (containerKey === 'logic') {
-            return [
-                {
-                    key: 'logic/core',
-                    name: 'core',
-                    isFolder: true
-                },
-                {
-                    key: 'logic/knowledge',
-                    name: 'knowledge',
-                    isFolder: true
-                },
-                {
-                    key: 'logic/README.md',
-                    name: 'README.md'
-                }
-            ];
-        } else if (containerKey === 'architecture') {
-            return [
-                {
-                    key: 'architecture/api',
-                    name: 'api',
-                    isFolder: true
-                },
-                {
-                    key: 'architecture/ui',
-                    name: 'ui',
-                    isFolder: true
-                },
-                {
-                    key: 'architecture/README.md',
-                    name: 'README.md'
-                }
-            ];
-        } else {
-            return [];
-        }
-    }
+
 
     getRoute(key: any): any {
         return [];

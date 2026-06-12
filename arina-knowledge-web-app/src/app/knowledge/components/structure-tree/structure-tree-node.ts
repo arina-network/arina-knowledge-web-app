@@ -1,19 +1,19 @@
-// import { StructureIcons } from "../../functions/structure-icons";
-
 export class StructureTreeNode {
     constructor(
         public key: string,
         public containerKey?: string,
         public name?: string,
         public description?: string,
+
         public level: number = 0,
-        public expandable = false,
         public isFolder = false,
+        public expandable = false,
+
+        public children?: StructureTreeNode[],
         public isLoading = false
     ) { }
 
     getIconName() {
-        console.log('Getting icon name for node:', this);
         if (this.isFolder) {
             return 'folder';
         } else if (this.name?.toLowerCase().endsWith('.md')) {
@@ -23,6 +23,5 @@ export class StructureTreeNode {
         }
 
         return 'draft';
-        // return StructureIcons.getIconName(this);
     }
 }
