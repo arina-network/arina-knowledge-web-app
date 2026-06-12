@@ -64,10 +64,12 @@ export class StructureApiService {
     }
 
     getStructureTreeRootNodes(
-        ownerName: string | undefined = this.repositoryService.getSelectedRepository()?.ownerName,
-        repositoryName: string | undefined = this.repositoryService.getSelectedRepository()?.repositoryName,
-        branchName: string | undefined = this.repositoryService.getSelectedBranch()?.name ?? 'main'
+        ownerName: string | undefined,
+        repositoryName: string | undefined,
+        branchName: string | undefined
     ): Observable<any> {
+        // console.log('Fetching Structure Tree Root Nodes with params:', { ownerName, repositoryName, branchName });
+
         if (!ownerName || !repositoryName || !branchName) {
             return of([]);
         }
@@ -78,10 +80,10 @@ export class StructureApiService {
     }
 
     getStructureTreeChildNodes(
-        ownerName: string | undefined = this.repositoryService.getSelectedRepository()?.ownerName,
-        repositoryName: string | undefined = this.repositoryService.getSelectedRepository()?.repositoryName,
-        branchName: string | undefined = this.repositoryService.getSelectedBranch()?.name ?? 'main',
-        containerKey: any
+        ownerName: string | undefined,
+        repositoryName: string | undefined,
+        branchName: string | undefined,
+        containerKey: string | undefined,
     ): Observable<any> {
         if (!ownerName || !repositoryName || !branchName || !containerKey) {
             return of([]);
@@ -93,8 +95,8 @@ export class StructureApiService {
     }
 
     getStructureRaw(
-        ownerName: string | undefined = this.repositoryService.getSelectedRepository()?.ownerName,
-        repositoryName: string | undefined = this.repositoryService.getSelectedRepository()?.repositoryName,
+        ownerName: string | undefined,
+        repositoryName: string | undefined,
         branchName: string | undefined = this.repositoryService.getSelectedBranch()?.name ?? 'main',
         key: string | undefined = 'README.md'
     ): Observable<any> {

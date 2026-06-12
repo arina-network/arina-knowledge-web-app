@@ -11,7 +11,7 @@
         <ul>
             @for (item of repositories; track item.url){
                 <li>
-                    <a routerLink="{{`/${routes.knowledge}/${item.ownerName}/${item.repositoryName}/main`}}"                         
+                    <a routerLink="{{`/${routes.knowledge}/${item.ownerName}/${item.repositoryName}`}}"                         
                         matTooltip="{{item.url}}"
                         [matTooltipPosition]="'below'">
                         {{item.name}}

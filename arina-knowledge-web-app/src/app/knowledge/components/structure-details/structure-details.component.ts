@@ -106,15 +106,17 @@ export class StructureDetailsComponent
     }
 
     isEmpty() {
-        return !(this.key?.length ?? 0 > 0);
+        return !this.owner || !this.repository;
+        // return !(this.key?.length ?? 0 > 0);
     }
 
     isShow() {
-        if (!(this.key?.length ?? 0 > 0)) {
-            return false;
-        }
+        return this.owner && this.repository;
+        // if (!(this.key?.length ?? 0 > 0)) {
+        //     return false;
+        // }
 
-        return !this.action || this.action === AppActions.Show;
+        // return !this.action || this.action === AppActions.Show;
     }
 
     isShowSource() {

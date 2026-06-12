@@ -15,7 +15,6 @@ import { Breadcrumb } from '@/app/core/models/breadcrumb';
 import { NotificationService } from '@/app/core/services/notification.service';
 import { BaseDataComponent } from '@/app/core/components/base-data/base-data.component';
 import { ProgressComponent } from '@/app/core/components/progress/progress.component';
-// import { DataNotificationService } from '@/app/core/services/data-notification.service';
 
 import { Structure } from '@/app/knowledge/models/structure';
 import { StructureDetailsComponent } from '../structure-details/structure-details.component';
@@ -44,7 +43,6 @@ import { RepositoryService } from '../../services/repository.service';
 export class StructureDesignerComponent
     extends BaseDataComponent {
 
-    // protected dataNotificationService = inject(DataNotificationService);
     protected notificationService = inject(NotificationService);        
     protected repositoryService = inject(RepositoryService);
     protected routes = inject(AppRoutes);
@@ -100,6 +98,8 @@ export class StructureDesignerComponent
     }        
 
     async refreshRootNodes() {
+        // console.log('Refreshing root nodes with params:', { owner: this.owner, repository: this.repository, branch: this.branch });
+
         this.isDataLoading = true;
 
         this.api.getStructureTreeRootNodes(
@@ -108,13 +108,12 @@ export class StructureDesignerComponent
             this.branch
         ).subscribe({
             next: (data) => {
-                this.dataSource.set(this.convertToNodes(data));
-
                 this.isDataLoading = false;
+                this.dataSource.set(this.convertToNodes(data));
             },
             error: (err) => {
-                this.notificationService.showError('Fetching data from GitHub failed: ' + err.message);
                 this.isDataLoading = false;
+                this.notificationService.showError('Fetching data from GitHub failed: ' + err.message);
             }
         });
     }
@@ -153,7 +152,7 @@ export class StructureDesignerComponent
                 tree.expand(node);
             },
             error: (err) => {
-                console.error('getStructureTreeChildNodes: ', err);
+                // console.error('getStructureTreeChildNodes: ', err);
                 this.notificationService.showError('Fetching data from GitHub failed: ' + err.message);
                 node.isLoading = false;
             }
@@ -175,6 +174,12 @@ export class StructureDesignerComponent
             this.currentBranch = this.branch;
             
             this.refreshRootNodes();
+
+            this.repositoryService.setOwnerAndRepositoryAndBranch(
+                this.owner,
+                this.repository,
+                this.branch
+            );
         }
     }
 

@@ -1,4 +1,4 @@
-import { ChangeDetectorRef, Component, inject } from '@angular/core';
+import { Component, inject } from '@angular/core';
 // import { ActivatedRoute } from '@angular/router';
 
 import { BaseDataComponent } from '@/app/core/components/base-data/base-data.component';
@@ -21,7 +21,6 @@ import { StructureApiService } from '../../api-services/structure-api.service';
 })
 export class StructureViewComponent
     extends BaseDataComponent {
-    private cdr = inject(ChangeDetectorRef);   
 
     protected notificationService = inject(NotificationService);        
    
@@ -32,14 +31,20 @@ export class StructureViewComponent
     sourceHtml: string | undefined;
 
     override async refreshData() {
+        this.isDataLoading = true;
+
+        const branchOrMain = this.branch ?? 'main';
+        const keyOrReadme = this.key?.includes('.') ? this.key : 
+            (this.key ? `${this.key}/README.md` : 'README.md');
+
         this.api.getStructureRaw(
             this.owner, 
             this.repository, 
-            this.branch,
-            this.key
+            branchOrMain,
+            keyOrReadme
         ).subscribe({
             next: (data) => {
-                this.title = this.key;
+                this.title = keyOrReadme;
 
                 if (!data || !data.content) {
                     this.sourceHtml = '';
@@ -52,7 +57,9 @@ export class StructureViewComponent
                 const bytes = Uint8Array.from(binaryString, m => m.charCodeAt(0));
 
                 this.sourceHtml = new TextDecoder('utf-8').decode(bytes);
-                
+
+                // console.log('getStructureRaw:', this.sourceHtml);
+
                 this.isDataLoading = false;
 
                 this.cdr.detectChanges(); 

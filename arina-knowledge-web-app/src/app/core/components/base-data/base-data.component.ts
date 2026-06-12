@@ -1,4 +1,4 @@
-import { Component, inject, OnDestroy, OnInit } from "@angular/core";
+import { ChangeDetectorRef, Component, inject, OnDestroy, OnInit } from "@angular/core";
 import { ActivatedRoute, Params } from "@angular/router";
 import { Subscription } from "rxjs";
 
@@ -12,6 +12,7 @@ import { AppParams } from "../../constants/app-params";
 })
 export class BaseDataComponent
     implements OnInit, OnDestroy {
+    protected cdr = inject(ChangeDetectorRef);   
 
     protected route = inject(ActivatedRoute);
 
@@ -32,6 +33,7 @@ export class BaseDataComponent
 
     public set isDataLoading(value: boolean) {
         this._isDataLoading = value;
+        this.cdr.detectChanges();
     }
 
     private readonly subscriptions: Subscription[] = [];
@@ -39,7 +41,7 @@ export class BaseDataComponent
     async refreshParams(params: Params) {
         this.owner = params[AppParams.Owner];
         this.repository = params[AppParams.Repository];
-        this.branch = params[AppParams.Branch];
+        this.branch = params[AppParams.Branch] ?? 'main';
         this.key = params[AppParams.Key];
 
         this.action = params[AppParams.Action];

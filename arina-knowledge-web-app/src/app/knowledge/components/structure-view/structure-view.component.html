@@ -2,7 +2,9 @@
 <!-- <app-messages [messages]="messages"></app-messages> -->
 
 @if(sourceHtml){
-    <!-- <h2 class="text-xl font-bold mb-4">{{title}}</h2> -->
-    <div class="prose" [innerHTML]="sourceHtml | markdown | safeHtml">
+    <div class="flex items-center justify-center p-4">
+        <!-- <h2 class="text-xl font-bold mb-4">{{title}}</h2> -->
+        <div class="prose max-w-5xl mx-4" [innerHTML]="sourceHtml | markdown | safeHtml">
+        </div>
     </div>
 } 
