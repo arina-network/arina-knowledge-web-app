@@ -1,3 +1,13 @@
+/*  snackbar */
+.success-snackbar {
+   background-color: #4caf50; 
+   color: white; 
+  }
+.error-snackbar { 
+  background-color: #f44336; 
+  color: white; 
+}
+
 /* progress */
 .data-loading-shade {
     position: absolute;
@@ -11,6 +21,14 @@
     align-items: center;
     justify-content: center;
 }
+
+/* tooltip matTooltipClass="tooltip-nowrap" */
+/* .tooltip-nowrap .mdc-tooltip__surface {
+  white-space: nowrap !important;
+  max-width: none !important;
+  min-width: max-content !important;
+  display: inline-block !important;
+} */
 
 /* ordered list */
 
@@ -36,6 +54,7 @@
 }
 
 /* tree */
+/* 
 mat-tree-node.node-active {
     border-radius: 5px;
     background-color: steelblue;
@@ -59,3 +78,4 @@ mat-tree-node.node-selected {
     border-width: 1px;
     border-color: steelblue;
 }
+*/

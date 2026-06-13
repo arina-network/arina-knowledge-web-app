@@ -42,14 +42,14 @@ export class StructureDetailsComponent
     isShowRelations = false;
 
     constructor(
-        protected override readonly route: ActivatedRoute,
+        // protected override readonly route: ActivatedRoute,
         protected readonly api: StructureApiService,
         protected readonly router: Router,
         // public readonly types: StructureTypes, // used in HTML
         public readonly routes: AppRoutes, // used in HTML
         // public readonly keys: AppStorageKeys // used in HTML
     ) {
-        super(route);
+        super();
     }
 
     @HostListener('click', ['$event'])
@@ -106,15 +106,17 @@ export class StructureDetailsComponent
     }
 
     isEmpty() {
-        return !(this.key?.length ?? 0 > 0);
+        return !this.owner || !this.repository;
+        // return !(this.key?.length ?? 0 > 0);
     }
 
     isShow() {
-        if (!(this.key?.length ?? 0 > 0)) {
-            return false;
-        }
+        return this.owner && this.repository;
+        // if (!(this.key?.length ?? 0 > 0)) {
+        //     return false;
+        // }
 
-        return !this.action || this.action === AppActions.Show;
+        // return !this.action || this.action === AppActions.Show;
     }
 
     isShowSource() {

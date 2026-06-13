@@ -1,3 +1,32 @@
 /* You can add global styles to this file, and also import other style files */
 
 @import 'tailwindcss';
+@plugin "@tailwindcss/typography";
+
+/* @layer utilities {
+  .tooltip-nowrap .mdc-tooltip__surface {
+    @apply whitespace-nowrap max-w-none w-auto;
+  }
+} */
+
+@layer base {
+  body, 
+  .mat-app-background,
+  .mat-typography,
+  mat-sidenav-container,
+  mat-sidenav-content,
+  mat-nav-list {
+    @apply font-sans antialiased text-[#24292f] !bg-white; 
+    --mat-app-background-color: #ffffff !important; /* Forces Material 3 tokens to white */
+  }
+
+  /* body {
+    @apply font-sans antialiased text-[#24292f]; /* Sets GitHub's font stack, smooths text, and uses GitHub's dark gray text color  * /
+  } */
+
+  .mat-typography, 
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji" !important;
+  }  
+
+}

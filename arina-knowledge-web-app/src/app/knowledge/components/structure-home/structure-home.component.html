@@ -1,3 +1,16 @@
-<div class="ms-5 me-5" style="width:300px">
-    PLACEHOLDER FOR HOME PAGE
+<div class="h-full w-full flex flex-col items-center justify-center gap-6">
+    <h1 class="text-2xl font-semibold">Welcome to Arina Knowledge!</h1>
+        
+    <p class="text-gray-600">Knowledge repositories:</p>
+        <ul>
+            @for (item of repositories; track item.url){
+                <li>
+                    <a routerLink="{{`/${routes.knowledge}/${item.ownerName}/${item.repositoryName}`}}"                         
+                        matTooltip="{{item.url}}"
+                        [matTooltipPosition]="'below'">
+                        {{item.name}}
+                    </a>             
+                </li>
+            }            
+        </ul>    
 </div>

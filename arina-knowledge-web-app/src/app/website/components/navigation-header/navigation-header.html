@@ -1,31 +1,49 @@
-<header class="bg-gray-100 border-b border-gray-100 text-gray-800 font-medium px-6 py-4 sticky top-0 z-50 shadow-sm">
+<header class="bg-gray-100 border-b border-gray-100 text-gray-800 font-medium px-4 py-2 sticky top-0 z-50 shadow-sm">
     <div class="mx-auto">
         <nav class="flex items-center justify-between">
             <!-- Home Link -->
-            <a routerLink="{{routes.home}}" 
-                class="text-gray-800 text-xl font-bold tracking-wider hover:text-indigo-400 transition-colors duration-200">
+            <a routerLink="{{routes.knowledge}}" 
+                class="text-gray-800 text-xl font-bold tracking-wider hover:text-slate-400 transition-colors duration-200">
                 Knowledge
-            </a>             
-            <ul class="flex items-center space-x-6 text-sm">
+            </a>
+            <ul class="flex items-center space-x-6 text-base">
                 <!-- Repository Selector -->
                 <li class="relative">
                     <button mat-button [matMenuTriggerFor]="versionRepositories"
-                        class="flex items-center space-x-1 px-3 py-1.5 rounded-md hover:bg-gray-800 hover:text-white transition-colors duration-200 focus:outline-none" >
+                        class="flex items-center space-x-1 px-3 py-1.5 rounded-md hover:bg-gray-500 hover:text-white transition-colors duration-200 focus:outline-none" >
                         <span>{{repositoryName}}</span>
                         <mat-icon class="text-gray-500 scale-90 -mr-1">arrow_drop_down</mat-icon>
                     </button>
                     <mat-menu #versionRepositories="matMenu">
                         @for (item of repositories; track item.url){
-                            <button mat-menu-item (click)="setRepository(item)">
+                            <a mat-menu-item routerLink="/{{`${routes.knowledge}/${item.ownerName}/${item.repositoryName}`}}"
+                                class="p-2 text-base block">
+                                {{item.name}}
+                            </a>                            
+                        }
+                    </mat-menu>
+                </li>                
+                <!-- Branch Selector -->
+                <li class="relative">
+                    <button mat-button [matMenuTriggerFor]="versionBranches"
+                        class="flex items-center space-x-1 px-3 py-1.5 rounded-md hover:bg-gray-500 hover:text-white transition-colors duration-200 focus:outline-none" >
+                        <span>{{branchName}}</span>
+                        <mat-icon class="text-gray-500 scale-90 -mr-1">arrow_drop_down</mat-icon>
+                    </button>
+                    <mat-menu #versionBranches="matMenu">
+                        @for (item of branches; track item.name){
+                            <button mat-menu-item class="p-2 text-base" (click)="setBranch(item)">
                                 {{item.name}}
                             </button>
                         }
                     </mat-menu>
-                </li>
+                </li>                
+            </ul>             
+            <ul class="flex items-center space-x-6 text-base">
                 <!-- Guide Link -->
                 <li>
                     <a href="{{routes.guide}}" target="_blank"
-                        class="hover:text-indigo-400 transition-colors duration-200 px-2 py-1 block">
+                        class="hover:text-slate-400 transition-colors duration-200 px-2 py-1 block">
                         Guide
                     </a>
                 </li>
@@ -33,16 +51,16 @@
                 <li>
                     @if (!authorizationService.isAuthorized()) {
                         <a routerLink="/{{routes.login}}"
-                            class="hover:text-indigo-400 transition-colors duration-200 px-2 py-1 block">
+                            class="hover:text-slate-400 transition-colors duration-200 px-2 py-1 block">
                             Login
                         </a>
                     } 
                     @else {
                         <!-- 1. The Trigger Button -->
                         <button mat-button [matMenuTriggerFor]="profileMenu" 
-                                class="text-gray-700 hover:text-indigo-400 transition-colors duration-200 px-2 py-1 flex items-center gap-1">
+                                class="text-gray-700 hover:text-slate-400 transition-colors duration-200 px-2 py-1 flex items-center gap-1">
                             <img [src]="authorizationService.getUserInfo().avatar_url" alt="GitHub Profile" 
-                                class="w-8 h-8 rounded-full border border-slate-200 object-cover">
+                                class="w-8 h-8 mx-2 rounded-full border border-slate-200 object-cover">
 
                             <span>{{ authorizationService.getUserInfo().login }}</span>
                             <mat-icon class="text-sm">expand_more</mat-icon>

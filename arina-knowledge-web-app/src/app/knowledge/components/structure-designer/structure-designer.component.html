@@ -3,30 +3,62 @@
         <app-progress [loading]="isDataLoading"></app-progress>
         <!-- <app-messages [messages]="messages"></app-messages> -->
 
-        <mat-tree [dataSource]="dataSource" [treeControl]="treeControl">
-            <mat-tree-node *matTreeNodeDef="let node" matTreeNodePadding routerLink="/{{node.key}}" [routerLinkActive]='["node-active"]'
-                class="rounded-md hover:bg-gray-200/50 hover:text-white transition-colors duration-150 my-0.5 px-2 text-sm cursor-pointer"
-                matTooltip="{{node.description}}" matTooltipShowDelay="1000">
+        <mat-tree #tree [dataSource]="dataSource()" [childrenAccessor]="getChildren" class="mx-1">
+            
+            <!-- leaf nodes -->
+            <mat-tree-node *matTreeNodeDef="let node" matTreeNodePadding
+                routerLink="/{{routes.knowledge}}/{{owner}}/{{repository}}/{{branch}}/{{node.key}}" [routerLinkActive]='["node-active"]'>
                 <button mat-icon-button disabled class="w-6"></button>
+                <mat-icon class="mr-2" fontSet="material-symbols-outlined">{{node.getIconName()}}</mat-icon>
                 {{node.name}}
             </mat-tree-node>
-            <mat-tree-node *matTreeNodeDef="let node; when: hasChild" matTreeNodePadding routerLink="/{{node.key}}" [routerLinkActive]='["node-active"]'
-                class="rounded-md hover:bg-gray-200/50 hover:text-white transition-colors duration-150 my-0.5 px-2 text-sm cursor-pointer"
-                matTooltip="{{node.description}}" matTooltipShowDelay="1000">
-                <button mat-icon-button [attr.aria-label]="'toggle ' + node.filename" matTreeNodeToggle>
-                    <mat-icon class="mat-icon-rtl-mirror scale-90">
-                        {{treeControl.isExpanded(node) ? 'expand_more' : 'chevron_right'}}
-                    </mat-icon>
+
+            <!-- expandable branch nodes -->
+            <mat-tree-node *matTreeNodeDef="let node; when: hasChild" matTreeNodePadding
+                routerLink="/{{routes.knowledge}}/{{owner}}/{{repository}}/{{branch}}/{{node.key}}" [routerLinkActive]='["node-active"]'>
+                <!-- Handle dynamic lazy loading on user toggle action -->
+                <button mat-icon-button 
+                        (click)="onNodeToggle(tree, node)" 
+                        [attr.aria-label]="'Toggle ' + node.name">
+                <mat-icon class="mat-icon-rtl-mirror">
+                    {{ tree.isExpanded(node) ? 'expand_more' : 'chevron_right' }}
+                </mat-icon>
+                <mat-icon class="mr-2" fontSet="material-symbols-outlined">{{node.getIconName()}}</mat-icon>
                 </button>
-                <mat-icon class="mr-2 text-indigo-400 scale-90">{{node.getIconName()}}</mat-icon>
-                {{node.name}}&nbsp;
-                @if(node.isLoading){
-                    <mat-progress-bar class="ml-2 max-w-[50px]" mode="indeterminate"></mat-progress-bar>
+                {{node.name}}
+                
+                <!-- loading indicator per node -->
+                @if (node.isLoading) {
+                    <!-- <span class="loading-text">Loading...</span> -->
+                    &nbsp;<mat-progress-bar class="ml-2 max-w-[50px]" mode="indeterminate"></mat-progress-bar>
                 }
             </mat-tree-node>
         </mat-tree>
     </mat-sidenav>
-    <mat-sidenav-content class="h-full p-6 overflow-y-auto">
+    <mat-sidenav-content class="h-full p-2 overflow-y-auto">
+        <!-- breadcrumb -->
+        @if (isShowBreadcrumb) { 
+            <nav class="flex items-center justify-between w-full p-2 rounded-md">
+                <div class="flex flex-wrap items-center gap-1">
+                    @for (crumb of breadcrumbs; track crumb.url; let last = $last) {
+                        <a [routerLink]="crumb.url" 
+                             class="text-slate-600 hover:text-slate-800 hover:underline text-m font-medium transition-colors">
+                            {{ crumb.name }}
+                        </a>
+                        @if (!last) {
+                            <mat-icon class="text-gray-400 !text-lg !h-7 !w-7">chevron_right</mat-icon>
+                        }
+                    }
+                </div>
+                <a mat-button href="{{githubUrl}}" target="_blank"
+                    class="ml-auto inline-flex items-center gap-1 font-medium">
+                    <mat-icon class="!text-lg !h-7 !w-7">api</mat-icon>
+                    <span class="hover:underline">Open in GitHub</span>
+                </a>            
+            </nav>
+            <mat-divider class="p-2"></mat-divider>            
+        } 
+        <!-- details -->
         <div class="h-full w-full">
             <app-structure-details [currentRoute]="currentRoute"></app-structure-details>
         </div>

@@ -83,11 +83,11 @@ export class StructureTreeDataSource implements DataSource<StructureTreeNode> {
     }
 
     toggleNode(node: StructureTreeNode, expand: boolean) {
-        this.children = this.api.getStructureTreeNodes(node.key);
-        // this.api.getStructureTreeNodes(node.key).subscribe(
-        //     (p: any) => { this.children = p.data; }
-        // );
-        this._node = node;
-        this._expand = expand;
+        // this.children = this.api.getStructureTreeNodes(node.key);
+        // // this.api.getStructureTreeNodes(node.key).subscribe(
+        // //     (p: any) => { this.children = p.data; }
+        // // );
+        // this._node = node;
+        // this._expand = expand;
     }
 }
