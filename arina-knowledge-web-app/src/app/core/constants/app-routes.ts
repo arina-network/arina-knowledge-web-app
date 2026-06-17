@@ -6,7 +6,6 @@ import { Injectable } from '@angular/core';
 export class AppRoutes {
     // arina network
     public readonly company = 'https://arina.network';
-    public readonly guide = 'https://github.com/arina-network/arina-knowledge-guide';
 
     // github
     public readonly github = 'https://github.com';
@@ -28,4 +27,6 @@ export class AppRoutes {
     public readonly logout = '/logout';
     public readonly settings = '/settings';
     public readonly knowledge = '/knowledge';
+    public readonly guide = `/${this.knowledge}/arina-network/arina-knowledge-guide/main`
+    // public readonly guide = 'https://github.com/arina-network/arina-knowledge-guide';
 }

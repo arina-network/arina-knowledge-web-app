@@ -11,7 +11,6 @@ import { MatTree, MatTreeModule } from '@angular/material/tree';
 
 import { AppRoutes } from '@/app/core/constants/app-routes';
 
-import { Breadcrumb } from '@/app/core/models/breadcrumb';
 import { NotificationService } from '@/app/core/services/notification.service';
 import { BaseDataComponent } from '@/app/core/components/base-data/base-data.component';
 import { ProgressComponent } from '@/app/core/components/progress/progress.component';
@@ -181,37 +180,5 @@ export class StructureDesignerComponent
                 this.branch
             );
         }
-    }
-
-    get isShowBreadcrumb() : boolean {
-        return !!this.key;
-    }
-
-    get githubUrl() : string | undefined {
-        if (!this.key) {
-            return undefined;
-        }
-
-        return `${this.routes.github}/${this.owner}/${this.repository}/${this.routes.githubBlob}/${this.branch}/${this.key}`;
-    }
-
-    get breadcrumbs() : Breadcrumb[] {
-        const result: Breadcrumb[] = [];
-
-        // empty route
-        if (!(this.key?.length ?? 0 > 0)) {
-            return result;
-        }
-
-
-        const route = this.key?.split('/').filter(x => x?.length > 0) ?? [];
-        for (let i = 0; i < route.length; i++) {
-            result.push({
-                name: route[i]!,
-                url: `/${this.routes.knowledge}/${this.owner}/${this.repository}/${this.branch}/${route.slice(0, i + 1).join('/')}`
-            });
-        }
-
-        return result;
     }
 }
