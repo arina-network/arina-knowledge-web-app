@@ -33,6 +33,12 @@ export class StructureApiService {
     }
 
     getUserInfo(): Observable<any> {
+        const headers =  this.getHeaders(true);
+
+        return this.http.get(`${this.routes.githubApiUserInfo}`, { headers });
+    }
+
+    getRepositories(): Observable<any> {
         // const token = this.authorizationService.getToken();
         // if (!token) {
         //     throw new Error('No GitHub token provided.');
@@ -44,21 +50,6 @@ export class StructureApiService {
         //     Accept: 'application/vnd.github.v3+json'
         // });
         const headers =  this.getHeaders(true);
-
-        return this.http.get(`${this.routes.githubApiUserInfo}`, { headers });
-    }
-
-    getRepositories(): Observable<any> {
-        const token = this.authorizationService.getToken();
-        if (!token) {
-            throw new Error('No GitHub token provided.');
-        }
-
-        // Attach user's token to the Authorization header
-        const headers = new HttpHeaders({
-            Authorization: `Bearer ${token}`,
-            Accept: 'application/vnd.github.v3+json'
-        });
 
         return this.http.get(`${this.routes.githubApi}/user/repos`, { headers });
     }
@@ -97,17 +88,21 @@ export class StructureApiService {
     getStructureRaw(
         ownerName: string | undefined,
         repositoryName: string | undefined,
-        branchName: string | undefined = this.repositoryService.getSelectedBranch()?.name ?? 'main',
-        key: string | undefined = 'README.md'
+        branchName: string | undefined,
+        key: string | undefined
     ): Observable<any> {
         // console.log('Fetching Raw Structure with params:', { ownerName, repositoryName, branchName, key });
 
-        if (!ownerName || !repositoryName || !branchName || !key) {
+        if (!ownerName || !repositoryName || !branchName) {
             return of('');
         }
 
         const headers =  this.getHeaders()
-        return this.http.get(`${this.routes.githubApiRepositories}/${ownerName}/${repositoryName}/${this.routes.githubApiContents}/${key}/?ref=${branchName}`, { headers });
+        if (key) {
+            return this.http.get(`${this.routes.githubApiRepositories}/${ownerName}/${repositoryName}/${this.routes.githubApiContents}/${key}/?ref=${branchName}`, { headers });
+        } else {
+            return this.http.get(`${this.routes.githubApiRepositories}/${ownerName}/${repositoryName}/${this.routes.githubApiContents}/?ref=${branchName}`, { headers });
+        }
     }
 
 

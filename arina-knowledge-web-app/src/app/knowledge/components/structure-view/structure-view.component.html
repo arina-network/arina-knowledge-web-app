@@ -25,13 +25,15 @@
                     </a>            
                 </li>
             }
-            <li>
-                <a mat-button href="{{githubUrl}}" target="_blank"
-                    class="ml-auto inline-flex items-center gap-1 font-medium">
-                    <mat-icon class="!text-lg !h-7 !w-7" fontSet="material-symbols-outlined">api</mat-icon>
-                    <span class="hover:underline">Open in GitHub</span>
-                </a>
-            </li>
+            @if (githubUrl) {
+                <li>
+                    <a mat-button href="{{githubUrl}}" target="_blank"
+                        class="ml-auto inline-flex items-center gap-1 font-medium">
+                        <mat-icon class="!text-lg !h-7 !w-7" fontSet="material-symbols-outlined">api</mat-icon>
+                        <span class="hover:underline">Open in GitHub</span>
+                    </a>
+                </li>
+            }
         </ul>            
     </nav>
     <mat-divider class="p-2"></mat-divider>            

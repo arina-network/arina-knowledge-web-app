@@ -44,36 +44,119 @@ export class StructureViewComponent
     override async refreshData() {
         this.isDataLoading = true;
 
-        const branchOrMain = this.branch ?? 'main';
-        const keyOrReadme = this.key?.includes('.') ? this.key : 
-            (this.key ? `${this.key}/README.md` : 'README.md');
-
         this.api.getStructureRaw(
             this.owner, 
             this.repository, 
-            branchOrMain,
-            keyOrReadme
+            this.branch ?? 'main',
+            this.key
         ).subscribe({
             next: (data) => {
-                this.title = keyOrReadme;
 
-                if (!data || !data.content) {
-                    this.sourceHtml = '';
+                // no data
+                if (!data) {
+                    this.title = undefined;
+                    this.sourceHtml = undefined;
+                    this.rawUrl = undefined;
+                    this.githubUrl = undefined;
+
                     this.isDataLoading = false;
+                    this.cdr.detectChanges(); 
+
                     return;
                 }
 
-                const cleanBase64 = data.content.replace(/\s/g, '');
-                const binaryString = atob(cleanBase64);
-                const bytes = Uint8Array.from(binaryString, m => m.charCodeAt(0));
+                // content
+                if (data.content) {
+                    const cleanBase64 = data.content.replace(/\s/g, '');
+                    const binaryString = atob(cleanBase64);
+                    const bytes = Uint8Array.from(binaryString, m => m.charCodeAt(0));
 
-                this.sourceHtml = new TextDecoder('utf-8').decode(bytes);
+                    this.title = this.key;
+                    this.sourceHtml = new TextDecoder('utf-8').decode(bytes);
 
-                this.rawUrl = data.download_url;
-                this.githubUrl = `${this.routes.github}/${this.owner}/${this.repository}/${this.routes.githubBlob}/${this.branch}/${this.key}`;
-                // console.log('getStructureRaw:', this.sourceHtml);
+                    this.rawUrl = data.download_url;
+                    this.githubUrl = `${this.routes.github}/${this.owner}/${this.repository}/${this.routes.githubBlob}/${this.branch}/${this.key}`;
 
-                this.isDataLoading = false;
+                    this.isDataLoading = false;
+                    
+                    this.cdr.detectChanges(); 
+                } else {
+                    this.api.getStructureRaw(
+                        this.owner, 
+                        this.repository, 
+                        this.branch ?? 'main',
+                        this.key ? `${this.key}/README.md` : 'README.md'
+                    ).subscribe({
+                        next: (readmeData) => {
+                            if (readmeData?.content) {
+                                const cleanBase64 = readmeData.content.replace(/\s/g, '');
+                                const binaryString = atob(cleanBase64);
+                                const bytes = Uint8Array.from(binaryString, m => m.charCodeAt(0));
+
+                                this.title = this.key;
+                                this.sourceHtml = new TextDecoder('utf-8').decode(bytes);
+                                this.rawUrl = undefined;
+                                this.githubUrl = undefined;
+
+                                this.isDataLoading = false;
+                                this.cdr.detectChanges(); 
+                            } else {
+                                let listHtml = "<ul>";
+                                data.map(x => {
+                                        const parsedUrl = new URL(x.url);
+                                        const segments = parsedUrl.pathname.split('/');
+                                        
+                                        const ownerName = segments[2]
+                                        const repositoryName = segments[3]
+                                        const branchName = parsedUrl.searchParams.get('ref')
+
+                                        const itemUrl = `${this.routes.knowledge}/${ownerName}/${repositoryName}/${branchName}/${x.path}`
+
+                                        listHtml += '<li>';   
+                                        listHtml += `<a href="${itemUrl}" _target="blank">${x.name}</a>`;   
+                                        listHtml += '</li>';   
+                                    }
+                                )
+                                listHtml += '</ul>'
+
+                                this.title = this.key;
+                                this.sourceHtml = listHtml;
+                                this.rawUrl = undefined;
+                                this.githubUrl = undefined;
+
+                                this.isDataLoading = false;
+                                this.cdr.detectChanges(); 
+                            }
+                        },
+                        error: (err) => {
+                            let listHtml = "<ul>";
+                            data.map(x => {
+                                    const parsedUrl = new URL(x.url);
+                                    const segments = parsedUrl.pathname.split('/');
+                                    
+                                    const ownerName = segments[2]
+                                    const repositoryName = segments[3]
+                                    const branchName = parsedUrl.searchParams.get('ref')
+
+                                    const itemUrl = `${this.routes.knowledge}/${ownerName}/${repositoryName}/${branchName}/${x.path}`
+
+                                    listHtml += '<li>';   
+                                    listHtml += `<a href="${itemUrl}" _target="blank">${x.name}</a>`;   
+                                    listHtml += '</li>';   
+                                }
+                            )
+                            listHtml += '</ul>'
+
+                            this.title = this.key;
+                            this.sourceHtml = listHtml;
+                            this.rawUrl = undefined;
+                            this.githubUrl = undefined;
+
+                            this.isDataLoading = false;
+                            this.cdr.detectChanges();                             
+                        }
+                    });
+                }
 
                 this.cdr.detectChanges(); 
             },
@@ -89,14 +172,6 @@ export class StructureViewComponent
         return !!this.key;
     }
 
-    // get githubUrl() : string | undefined {
-    //     if (!this.key) {
-    //         return undefined;
-    //     }
-
-    //     return `${this.routes.github}/${this.owner}/${this.repository}/${this.routes.githubBlob}/${this.branch}/${this.key}`;
-    // }
-
     get breadcrumbs() : Breadcrumb[] {
         const result: Breadcrumb[] = [];
 
@@ -105,6 +180,10 @@ export class StructureViewComponent
             return result;
         }
 
+        result.push({
+            name: this.repository!,
+            url: `/${this.routes.knowledge}/${this.owner}/${this.repository}/${this.branch}`
+        });
 
         const route = this.key?.split('/').filter(x => x?.length > 0) ?? [];
         for (let i = 0; i < route.length; i++) {
