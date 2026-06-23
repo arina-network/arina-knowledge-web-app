@@ -40,10 +40,23 @@
 }     
 
 
-@if(sourceHtml){
+@if (source){
     <div class="flex items-center justify-center p-4">
         <!-- <h2 class="text-xl font-bold mb-4">{{title}}</h2> -->
-        <div class="prose max-w-5xl mx-4" [innerHTML]="sourceHtml | markdown | safeHtml">
+        <div class="prose max-w-5xl mx-4" [innerHTML]="source | markdown | safeHtml">
         </div>
     </div>
-} 
+}
+
+@if (contentLinks?.length > 0)  {
+    <div class="p-4">
+        <h2 class="text-xl font-bold mb-4">Content</h2>
+        <ul class="prose text-xl mb-4">
+            @for (item of contentLinks; track item.url) {
+                <li>
+                    <a [routerLink]="[item.url]">{{item.name}}</a>
+                </li>
+            }
+        </ul>
+    </div>
+}

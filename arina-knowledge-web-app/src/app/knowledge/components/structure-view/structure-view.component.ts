@@ -14,6 +14,7 @@ import { NotificationService } from '@/app/core/services/notification.service';
 
 
 import { StructureApiService } from '../../api-services/structure-api.service';
+import { StructureLink } from '../../models/structure-link';
 
 @Component({
     selector: 'app-structure-view',
@@ -39,7 +40,8 @@ export class StructureViewComponent
     title: string | undefined;
     githubUrl: string | undefined;    
     rawUrl: string | undefined;
-    sourceHtml: string | undefined;
+    source: string | undefined;
+    contentLinks: StructureLink[] = [];  
 
     override async refreshData() {
         this.isDataLoading = true;
@@ -51,13 +53,11 @@ export class StructureViewComponent
             this.key
         ).subscribe({
             next: (data) => {
+                this.clearData()
 
                 // no data
                 if (!data) {
-                    this.title = undefined;
-                    this.sourceHtml = undefined;
-                    this.rawUrl = undefined;
-                    this.githubUrl = undefined;
+                    this.notificationService.showError('GitHub returns no data.');
 
                     this.isDataLoading = false;
                     this.cdr.detectChanges(); 
@@ -67,60 +67,78 @@ export class StructureViewComponent
 
                 // content
                 if (data.content) {
-                    const cleanBase64 = data.content.replace(/\s/g, '');
-                    const binaryString = atob(cleanBase64);
-                    const bytes = Uint8Array.from(binaryString, m => m.charCodeAt(0));
+                    this.setSource(data)
 
-                    this.title = this.key;
-                    this.sourceHtml = new TextDecoder('utf-8').decode(bytes);
+                    // const cleanBase64 = data.content.replace(/\s/g, '');
+                    // const binaryString = atob(cleanBase64);
+                    // const bytes = Uint8Array.from(binaryString, m => m.charCodeAt(0));
+
+                    // this.title = this.key;
+                    // this.source = new TextDecoder('utf-8').decode(bytes);
 
                     this.rawUrl = data.download_url;
                     this.githubUrl = `${this.routes.github}/${this.owner}/${this.repository}/${this.routes.githubBlob}/${this.branch}/${this.key}`;
 
+                    // this.contentLinks = [];
                     this.isDataLoading = false;
                     
                     this.cdr.detectChanges(); 
                 } else {
+                    let readme: any = undefined;
+                    data.map(item => {
+                        const parsedUrl = new URL(item.url);
+                        const segments = parsedUrl.pathname.split('/');
+                        
+                        const ownerName = segments[2]
+                        const repositoryName = segments[3]
+                        const branchName = parsedUrl.searchParams.get('ref')
+
+                        const itemUrl = `${this.routes.knowledge}/${ownerName}/${repositoryName}/${branchName}/${item.path}`
+
+                        if (item.name === 'README.md') {
+                            readme = item;
+                        }
+
+                        this.contentLinks.push({
+                            name: item.name,
+                            url: itemUrl,
+                            isFolder: item.type === 'dir'
+
+                        })                                        
+                    })
+
+                    if (!readme) {
+                        this.isDataLoading = false;
+                        this.cdr.detectChanges(); 
+                        return;
+                    }
+
                     this.api.getStructureRaw(
                         this.owner, 
                         this.repository, 
                         this.branch ?? 'main',
-                        this.key ? `${this.key}/README.md` : 'README.md'
-                    ).subscribe({
+                        `${readme.path}`
+                    ).subscribe({                        
                         next: (readmeData) => {
                             if (readmeData?.content) {
-                                const cleanBase64 = readmeData.content.replace(/\s/g, '');
-                                const binaryString = atob(cleanBase64);
-                                const bytes = Uint8Array.from(binaryString, m => m.charCodeAt(0));
+                                this.setSource(readmeData)
 
-                                this.title = this.key;
-                                this.sourceHtml = new TextDecoder('utf-8').decode(bytes);
+                                // const cleanBase64 = readmeData.content.replace(/\s/g, '');
+                                // const binaryString = atob(cleanBase64);
+                                // const bytes = Uint8Array.from(binaryString, m => m.charCodeAt(0));
+
+                                // this.title = this.key;
+                                // this.source = new TextDecoder('utf-8').decode(bytes);
+                                
                                 this.rawUrl = undefined;
                                 this.githubUrl = undefined;
+                                this.contentLinks = [];
 
                                 this.isDataLoading = false;
                                 this.cdr.detectChanges(); 
                             } else {
-                                let listHtml = "<ul>";
-                                data.map(x => {
-                                        const parsedUrl = new URL(x.url);
-                                        const segments = parsedUrl.pathname.split('/');
-                                        
-                                        const ownerName = segments[2]
-                                        const repositoryName = segments[3]
-                                        const branchName = parsedUrl.searchParams.get('ref')
-
-                                        const itemUrl = `${this.routes.knowledge}/${ownerName}/${repositoryName}/${branchName}/${x.path}`
-
-                                        listHtml += '<li>';   
-                                        listHtml += `<a href="${itemUrl}" _target="blank">${x.name}</a>`;   
-                                        listHtml += '</li>';   
-                                    }
-                                )
-                                listHtml += '</ul>'
-
                                 this.title = this.key;
-                                this.sourceHtml = listHtml;
+                                this.source = undefined;
                                 this.rawUrl = undefined;
                                 this.githubUrl = undefined;
 
@@ -129,44 +147,43 @@ export class StructureViewComponent
                             }
                         },
                         error: (err) => {
-                            let listHtml = "<ul>";
-                            data.map(x => {
-                                    const parsedUrl = new URL(x.url);
-                                    const segments = parsedUrl.pathname.split('/');
-                                    
-                                    const ownerName = segments[2]
-                                    const repositoryName = segments[3]
-                                    const branchName = parsedUrl.searchParams.get('ref')
+                            this.notificationService.showError('Error fetching README.md from GitHub: ' + err.message);
 
-                                    const itemUrl = `${this.routes.knowledge}/${ownerName}/${repositoryName}/${branchName}/${x.path}`
-
-                                    listHtml += '<li>';   
-                                    listHtml += `<a href="${itemUrl}" _target="blank">${x.name}</a>`;   
-                                    listHtml += '</li>';   
-                                }
-                            )
-                            listHtml += '</ul>'
-
-                            this.title = this.key;
-                            this.sourceHtml = listHtml;
-                            this.rawUrl = undefined;
-                            this.githubUrl = undefined;
-
+                            this.clearData()
                             this.isDataLoading = false;
                             this.cdr.detectChanges();                             
                         }
-                    });
+                    });                   
                 }
 
                 this.cdr.detectChanges(); 
             },
             error: (err) => {
                 this.notificationService.showError('Error fetching Raw Data from GitHub: ' + err.message);
+                
+                this.clearData()
                 this.isDataLoading = false;
+                this.cdr.detectChanges();                             
             }
         });
     }
 
+    protected setSource(data: any) {
+        const cleanBase64 = data.content.replace(/\s/g, '');
+        const binaryString = atob(cleanBase64);
+        const bytes = Uint8Array.from(binaryString, m => m.charCodeAt(0));
+
+        this.title = this.key;
+        this.source = new TextDecoder('utf-8').decode(bytes);
+    }
+
+    protected clearData() {
+        this.title = undefined;
+        this.source = undefined;
+        this.rawUrl = undefined;
+        this.githubUrl = undefined;
+        this.contentLinks = [];
+    }
 
     get isShowBreadcrumb() : boolean {
         return !!this.key;
