@@ -1,4 +1,4 @@
-import { Component, inject, signal } from '@angular/core';
+import { Component, inject, signal, viewChild } from '@angular/core';
 import { RouterLink, RouterLinkActive } from '@angular/router'; 
 
 import { MatDividerModule } from '@angular/material/divider';
@@ -11,7 +11,6 @@ import { MatTree, MatTreeModule } from '@angular/material/tree';
 
 import { AppRoutes } from '@/app/core/constants/app-routes';
 
-import { Breadcrumb } from '@/app/core/models/breadcrumb';
 import { NotificationService } from '@/app/core/services/notification.service';
 import { BaseDataComponent } from '@/app/core/components/base-data/base-data.component';
 import { ProgressComponent } from '@/app/core/components/progress/progress.component';
@@ -50,6 +49,7 @@ export class StructureDesignerComponent
     protected api = inject(StructureApiService);
 
     dataSource = signal<StructureTreeNode[]>([]);
+    readonly tree = viewChild<MatTree<StructureTreeNode>>('tree');
 
     currentRoute: Structure[] = [];
     nodesToExpand: Structure[] = [];
@@ -98,8 +98,6 @@ export class StructureDesignerComponent
     }        
 
     async refreshRootNodes() {
-        // console.log('Refreshing root nodes with params:', { owner: this.owner, repository: this.repository, branch: this.branch });
-
         this.isDataLoading = true;
 
         this.api.getStructureTreeRootNodes(
@@ -109,10 +107,15 @@ export class StructureDesignerComponent
         ).subscribe({
             next: (data) => {
                 this.isDataLoading = false;
-                this.dataSource.set(this.convertToNodes(data));
+
+                const rootNodes = this.convertToNodes(data)
+                this.dataSource.set(rootNodes);
+                
+                this.expandNodeByKey(rootNodes);
             },
             error: (err) => {
                 this.isDataLoading = false;
+
                 this.notificationService.showError('Fetching data from GitHub failed: ' + err.message);
             }
         });
@@ -150,11 +153,13 @@ export class StructureDesignerComponent
 
                 // animate opening state now that structural nodes exist in memory
                 tree.expand(node);
+
+                this.expandNodeByKey(node.children);
             },
             error: (err) => {
-                // console.error('getStructureTreeChildNodes: ', err);
-                this.notificationService.showError('Fetching data from GitHub failed: ' + err.message);
                 node.isLoading = false;
+
+                this.notificationService.showError('Fetching data from GitHub failed: ' + err.message);
             }
         });
     }    
@@ -183,35 +188,21 @@ export class StructureDesignerComponent
         }
     }
 
-    get isShowBreadcrumb() : boolean {
-        return !!this.key;
+    private expandNodeByKey(nodes: StructureTreeNode[]) {
+        const treeInstance = this.tree();
+        if (treeInstance && this.key) {
+            const matchNode = this.findNodeInArray(nodes, this.key);
+            if (matchNode) {
+                if (this.hasChild(0, matchNode)) {
+                    this.onNodeToggle(treeInstance, matchNode);
+                    
+                    this.cdr.detectChanges(); 
+                }
+            }
+        }
     }
 
-    get githubUrl() : string | undefined {
-        if (!this.key) {
-            return undefined;
-        }
-
-        return `${this.routes.github}/${this.owner}/${this.repository}/${this.routes.githubBlob}/${this.branch}/${this.key}`;
-    }
-
-    get breadcrumbs() : Breadcrumb[] {
-        const result: Breadcrumb[] = [];
-
-        // empty route
-        if (!(this.key?.length ?? 0 > 0)) {
-            return result;
-        }
-
-
-        const route = this.key?.split('/').filter(x => x?.length > 0) ?? [];
-        for (let i = 0; i < route.length; i++) {
-            result.push({
-                name: route[i]!,
-                url: `/${this.routes.knowledge}/${this.owner}/${this.repository}/${this.branch}/${route.slice(0, i + 1).join('/')}`
-            });
-        }
-
-        return result;
-    }
+    private findNodeInArray(nodes: StructureTreeNode[], key: string): StructureTreeNode | undefined {
+        return nodes.find(n => key.startsWith(n.key));
+    }    
 }

@@ -3,30 +3,32 @@
         <app-progress [loading]="isDataLoading"></app-progress>
         <!-- <app-messages [messages]="messages"></app-messages> -->
 
-        <mat-tree #tree [dataSource]="dataSource()" [childrenAccessor]="getChildren" class="mx-1">
+        <mat-tree #tree [dataSource]="dataSource()" [childrenAccessor]="getChildren" class="m-1">
             
             <!-- leaf nodes -->
             <mat-tree-node *matTreeNodeDef="let node" matTreeNodePadding
-                routerLink="/{{routes.knowledge}}/{{owner}}/{{repository}}/{{branch}}/{{node.key}}" [routerLinkActive]='["node-active"]'>
+                routerLink="/{{routes.knowledge}}/{{owner}}/{{repository}}/{{branch}}/{{node.key}}" routerLinkActive="bg-blue-100 text-blue-700 rounded-[5px]" [routerLinkActiveOptions]="{ exact: true }">
                 <button mat-icon-button disabled class="w-6"></button>
-                <mat-icon class="mr-2" fontSet="material-symbols-outlined">{{node.getIconName()}}</mat-icon>
+                <mat-icon class="mr-2" fontSet="material-symbols-outlined">
+                    {{node.getIconName()}}
+                </mat-icon>
                 {{node.name}}
             </mat-tree-node>
 
             <!-- expandable branch nodes -->
+                <!-- routerLink="/{{routes.knowledge}}/{{owner}}/{{repository}}/{{branch}}/{{node.key}}" [routerLinkActive]='["node-active"]'> -->
             <mat-tree-node *matTreeNodeDef="let node; when: hasChild" matTreeNodePadding
-                routerLink="/{{routes.knowledge}}/{{owner}}/{{repository}}/{{branch}}/{{node.key}}" [routerLinkActive]='["node-active"]'>
+                routerLink="/{{routes.knowledge}}/{{owner}}/{{repository}}/{{branch}}/{{node.key}}" routerLinkActive="bg-blue-100 text-blue-700 rounded-[5px]" [routerLinkActiveOptions]="{ exact: true }">
                 <!-- Handle dynamic lazy loading on user toggle action -->
                 <button mat-icon-button 
                         (click)="onNodeToggle(tree, node)" 
                         [attr.aria-label]="'Toggle ' + node.name">
-                <mat-icon class="mat-icon-rtl-mirror">
-                    {{ tree.isExpanded(node) ? 'expand_more' : 'chevron_right' }}
-                </mat-icon>
-                <mat-icon class="mr-2" fontSet="material-symbols-outlined">{{node.getIconName()}}</mat-icon>
+                    <mat-icon class="mat-icon-rtl-mirror">
+                        {{ tree.isExpanded(node) ? 'expand_more' : 'chevron_right' }}
+                    </mat-icon>
+                    <mat-icon class="mr-2" fontSet="material-symbols-outlined">{{node.getIconName()}}</mat-icon>
                 </button>
                 {{node.name}}
-                
                 <!-- loading indicator per node -->
                 @if (node.isLoading) {
                     <!-- <span class="loading-text">Loading...</span> -->
@@ -36,29 +38,6 @@
         </mat-tree>
     </mat-sidenav>
     <mat-sidenav-content class="h-full p-2 overflow-y-auto">
-        <!-- breadcrumb -->
-        @if (isShowBreadcrumb) { 
-            <nav class="flex items-center justify-between w-full p-2 rounded-md">
-                <div class="flex flex-wrap items-center gap-1">
-                    @for (crumb of breadcrumbs; track crumb.url; let last = $last) {
-                        <a [routerLink]="crumb.url" 
-                             class="text-slate-600 hover:text-slate-800 hover:underline text-m font-medium transition-colors">
-                            {{ crumb.name }}
-                        </a>
-                        @if (!last) {
-                            <mat-icon class="text-gray-400 !text-lg !h-7 !w-7">chevron_right</mat-icon>
-                        }
-                    }
-                </div>
-                <a mat-button href="{{githubUrl}}" target="_blank"
-                    class="ml-auto inline-flex items-center gap-1 font-medium">
-                    <mat-icon class="!text-lg !h-7 !w-7">api</mat-icon>
-                    <span class="hover:underline">Open in GitHub</span>
-                </a>            
-            </nav>
-            <mat-divider class="p-2"></mat-divider>            
-        } 
-        <!-- details -->
         <div class="h-full w-full">
             <app-structure-details [currentRoute]="currentRoute"></app-structure-details>
         </div>
