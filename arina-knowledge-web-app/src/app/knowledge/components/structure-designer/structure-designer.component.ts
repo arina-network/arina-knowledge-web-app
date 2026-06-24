@@ -1,4 +1,4 @@
-import { Component, inject, signal } from '@angular/core';
+import { Component, inject, signal, viewChild } from '@angular/core';
 import { RouterLink, RouterLinkActive } from '@angular/router'; 
 
 import { MatDividerModule } from '@angular/material/divider';
@@ -49,6 +49,7 @@ export class StructureDesignerComponent
     protected api = inject(StructureApiService);
 
     dataSource = signal<StructureTreeNode[]>([]);
+    readonly tree = viewChild<MatTree<StructureTreeNode>>('tree');
 
     currentRoute: Structure[] = [];
     nodesToExpand: Structure[] = [];
@@ -97,8 +98,6 @@ export class StructureDesignerComponent
     }        
 
     async refreshRootNodes() {
-        // console.log('Refreshing root nodes with params:', { owner: this.owner, repository: this.repository, branch: this.branch });
-
         this.isDataLoading = true;
 
         this.api.getStructureTreeRootNodes(
@@ -108,10 +107,15 @@ export class StructureDesignerComponent
         ).subscribe({
             next: (data) => {
                 this.isDataLoading = false;
-                this.dataSource.set(this.convertToNodes(data));
+
+                const rootNodes = this.convertToNodes(data)
+                this.dataSource.set(rootNodes);
+                
+                this.expandNodeByKey(rootNodes);
             },
             error: (err) => {
                 this.isDataLoading = false;
+
                 this.notificationService.showError('Fetching data from GitHub failed: ' + err.message);
             }
         });
@@ -149,11 +153,13 @@ export class StructureDesignerComponent
 
                 // animate opening state now that structural nodes exist in memory
                 tree.expand(node);
+
+                this.expandNodeByKey(node.children);
             },
             error: (err) => {
-                // console.error('getStructureTreeChildNodes: ', err);
-                this.notificationService.showError('Fetching data from GitHub failed: ' + err.message);
                 node.isLoading = false;
+
+                this.notificationService.showError('Fetching data from GitHub failed: ' + err.message);
             }
         });
     }    
@@ -181,4 +187,22 @@ export class StructureDesignerComponent
             );
         }
     }
+
+    private expandNodeByKey(nodes: StructureTreeNode[]) {
+        const treeInstance = this.tree();
+        if (treeInstance && this.key) {
+            const matchNode = this.findNodeInArray(nodes, this.key);
+            if (matchNode) {
+                if (this.hasChild(0, matchNode)) {
+                    this.onNodeToggle(treeInstance, matchNode);
+                    
+                    this.cdr.detectChanges(); 
+                }
+            }
+        }
+    }
+
+    private findNodeInArray(nodes: StructureTreeNode[], key: string): StructureTreeNode | undefined {
+        return nodes.find(n => key.startsWith(n.key));
+    }    
 }

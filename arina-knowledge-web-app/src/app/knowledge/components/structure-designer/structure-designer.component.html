@@ -9,7 +9,9 @@
             <mat-tree-node *matTreeNodeDef="let node" matTreeNodePadding
                 routerLink="/{{routes.knowledge}}/{{owner}}/{{repository}}/{{branch}}/{{node.key}}" [routerLinkActive]='["node-active"]'>
                 <button mat-icon-button disabled class="w-6"></button>
-                <mat-icon class="mr-2" fontSet="material-symbols-outlined">{{node.getIconName()}}</mat-icon>
+                <mat-icon class="mr-2" fontSet="material-symbols-outlined">
+                    {{node.getIconName()}}
+                </mat-icon>
                 {{node.name}}
             </mat-tree-node>
 
@@ -20,13 +22,12 @@
                 <button mat-icon-button 
                         (click)="onNodeToggle(tree, node)" 
                         [attr.aria-label]="'Toggle ' + node.name">
-                <mat-icon class="mat-icon-rtl-mirror">
-                    {{ tree.isExpanded(node) ? 'expand_more' : 'chevron_right' }}
-                </mat-icon>
-                <mat-icon class="mr-2" fontSet="material-symbols-outlined">{{node.getIconName()}}</mat-icon>
+                    <mat-icon class="mat-icon-rtl-mirror">
+                        {{ tree.isExpanded(node) ? 'expand_more' : 'chevron_right' }}
+                    </mat-icon>
+                    <mat-icon class="mr-2" fontSet="material-symbols-outlined">{{node.getIconName()}}</mat-icon>
                 </button>
                 {{node.name}}
-                
                 <!-- loading indicator per node -->
                 @if (node.isLoading) {
                     <!-- <span class="loading-text">Loading...</span> -->
