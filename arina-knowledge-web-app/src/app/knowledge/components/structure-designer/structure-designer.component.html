@@ -3,11 +3,11 @@
         <app-progress [loading]="isDataLoading"></app-progress>
         <!-- <app-messages [messages]="messages"></app-messages> -->
 
-        <mat-tree #tree [dataSource]="dataSource()" [childrenAccessor]="getChildren" class="mx-1">
+        <mat-tree #tree [dataSource]="dataSource()" [childrenAccessor]="getChildren" class="m-1">
             
             <!-- leaf nodes -->
             <mat-tree-node *matTreeNodeDef="let node" matTreeNodePadding
-                routerLink="/{{routes.knowledge}}/{{owner}}/{{repository}}/{{branch}}/{{node.key}}" [routerLinkActive]='["node-active"]'>
+                routerLink="/{{routes.knowledge}}/{{owner}}/{{repository}}/{{branch}}/{{node.key}}" routerLinkActive="bg-blue-100 text-blue-700 rounded-[5px]" [routerLinkActiveOptions]="{ exact: true }">
                 <button mat-icon-button disabled class="w-6"></button>
                 <mat-icon class="mr-2" fontSet="material-symbols-outlined">
                     {{node.getIconName()}}
@@ -16,8 +16,9 @@
             </mat-tree-node>
 
             <!-- expandable branch nodes -->
+                <!-- routerLink="/{{routes.knowledge}}/{{owner}}/{{repository}}/{{branch}}/{{node.key}}" [routerLinkActive]='["node-active"]'> -->
             <mat-tree-node *matTreeNodeDef="let node; when: hasChild" matTreeNodePadding
-                routerLink="/{{routes.knowledge}}/{{owner}}/{{repository}}/{{branch}}/{{node.key}}" [routerLinkActive]='["node-active"]'>
+                routerLink="/{{routes.knowledge}}/{{owner}}/{{repository}}/{{branch}}/{{node.key}}" routerLinkActive="bg-blue-100 text-blue-700 rounded-[5px]" [routerLinkActiveOptions]="{ exact: true }">
                 <!-- Handle dynamic lazy loading on user toggle action -->
                 <button mat-icon-button 
                         (click)="onNodeToggle(tree, node)" 
