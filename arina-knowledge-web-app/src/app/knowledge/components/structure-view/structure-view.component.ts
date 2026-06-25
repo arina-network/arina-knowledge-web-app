@@ -46,7 +46,7 @@ export class StructureViewComponent
     contentLinks: StructureLink[] = [];  
 
     override async refreshData() {
-        this.isDataLoading = true;
+        this.isDataLoading.set(true);
 
         this.api.getStructureRaw(
             this.owner, 
@@ -59,34 +59,21 @@ export class StructureViewComponent
 
                 // no data
                 if (!data) {
-                    this.isDataLoading = false;
+                    this.isDataLoading.set(false);
 
                     this.notificationService.showError('GitHub returns no data.');
-
-                    this.cdr.detectChanges(); 
 
                     return;
                 }
 
                 // content
                 if (data.content) {
-                    this.isDataLoading = false;
+                    this.isDataLoading.set(false);
 
                     this.setSource(data)
 
-                    // const cleanBase64 = data.content.replace(/\s/g, '');
-                    // const binaryString = atob(cleanBase64);
-                    // const bytes = Uint8Array.from(binaryString, m => m.charCodeAt(0));
-
-                    // this.title = this.key;
-                    // this.source = new TextDecoder('utf-8').decode(bytes);
-
                     this.rawUrl = data.download_url;
                     this.githubUrl = `${this.routes.github}/${this.owner}/${this.repository}/${this.routes.githubBlob}/${this.branch}/${this.key}`;
-
-                    // this.contentLinks = [];
-                    
-                    this.cdr.detectChanges(); 
                 } else {
                     let readme: any = undefined;
                     data.map(item => {
@@ -112,8 +99,7 @@ export class StructureViewComponent
                     })
 
                     if (!readme) {
-                        this.isDataLoading = false;
-                        this.cdr.detectChanges(); 
+                        this.isDataLoading.set(false);
                         return;
                     }
 
@@ -125,39 +111,27 @@ export class StructureViewComponent
                     ).subscribe({                        
                         next: (readmeData) => {
                             if (readmeData?.content) {
-                                this.isDataLoading = false;
+                                this.isDataLoading.set(false);
 
                                 this.setSource(readmeData)
-
-                                // const cleanBase64 = readmeData.content.replace(/\s/g, '');
-                                // const binaryString = atob(cleanBase64);
-                                // const bytes = Uint8Array.from(binaryString, m => m.charCodeAt(0));
-
-                                // this.title = this.key;
-                                // this.source = new TextDecoder('utf-8').decode(bytes);
                                 
                                 this.rawUrl = undefined;
                                 this.githubUrl = undefined;
                                 this.contentLinks = [];
-
-                                this.cdr.detectChanges(); 
                             } else {
-                                this.isDataLoading = false;
+                                this.isDataLoading.set(false);
 
                                 this.title = this.key;
                                 this.source = undefined;
                                 this.rawUrl = undefined;
                                 this.githubUrl = undefined;
-
-                                this.cdr.detectChanges(); 
                             }
                         },
                         error: (err) => {
-                            this.notificationService.showError('Error fetching README.md from GitHub: ' + err.message);
-
                             this.clearData()
-                            this.isDataLoading = false;
-                            this.cdr.detectChanges();                             
+                            this.isDataLoading.set(false);
+
+                            this.notificationService.showError('Error fetching README.md from GitHub: ' + err.message);
                         }
                     });                   
                 }
@@ -165,12 +139,10 @@ export class StructureViewComponent
                 this.cdr.detectChanges(); 
             },
             error: (err) => {
-                this.isDataLoading = false;
                 this.clearData()
+                this.isDataLoading.set(false);
 
                 this.notificationService.showError('Error fetching Raw Data from GitHub: ' + err.message);
-                
-                this.cdr.detectChanges();                             
             }
         });
     }

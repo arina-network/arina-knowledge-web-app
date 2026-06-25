@@ -16,7 +16,6 @@ export class AppSafeHtmlPipe implements PipeTransform {
     }
 
     transform(value: string): SafeHtml | null{
-        // console.log('AppSafeHtmlPipe', {value})
         if (!value || value === '\n') {
             return '';
         }

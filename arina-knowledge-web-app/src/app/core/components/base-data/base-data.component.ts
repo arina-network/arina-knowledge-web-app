@@ -1,4 +1,4 @@
-import { ChangeDetectorRef, Component, inject, OnDestroy, OnInit } from "@angular/core";
+import { ChangeDetectorRef, Component, inject, OnDestroy, OnInit, signal } from "@angular/core";
 import { ActivatedRoute, Params } from "@angular/router";
 import { Subscription } from "rxjs";
 
@@ -25,16 +25,7 @@ export class BaseDataComponent
 
     protected messages: Message[] = [];
 
-    private _isDataLoading = false;
-
-    public get isDataLoading(): boolean {
-        return this._isDataLoading;
-    }
-
-    public set isDataLoading(value: boolean) {
-        this._isDataLoading = value;
-        this.cdr.detectChanges();
-    }
+    public isDataLoading = signal<boolean>(false);    
 
     private readonly subscriptions: Subscription[] = [];
 

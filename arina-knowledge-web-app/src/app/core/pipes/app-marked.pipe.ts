@@ -2,7 +2,6 @@ import { ChangeDetectorRef, inject, Pipe, PipeTransform } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { catchError, firstValueFrom, from, Observable, of, tap } from 'rxjs';
 
-// import * as marked from 'marked';
 import { Marked } from 'marked';
 
 import { AppParams } from '../constants/app-params';
@@ -30,14 +29,12 @@ export class AppMarkdownPipe implements PipeTransform {
             return of('');
         }
 
-        // Configure marked to intercept links
-//      marked.use({
+        // create marked to intercept links
         const localMarked = new Marked({
             async: true,
             // synchronous Link Renderer Strategy
             renderer: {
                 link({ href, title, text }) {
-                    // console.log('renderer link: ', {href})
                     let finalHref = href;
 
                     if (href.startsWith('/')) { // process only local links
@@ -49,7 +46,7 @@ export class AppMarkdownPipe implements PipeTransform {
                     return `<a href="${finalHref}"${titleAttr}>${text}</a>`;
                 }
             },
-            // asynchronous Token Modifier Strategy for Images/SVGs
+            // asynchronous Token Modifier Strategy for SVGs
             walkTokens: async (token) => {
                 if (token.type === 'image' && token.href.startsWith('/') && token.href.endsWith('.svg')) {
                     // console.log('walkTokens svg: ', {token})
@@ -69,16 +66,13 @@ export class AppMarkdownPipe implements PipeTransform {
                         
                             token.type = 'html';
                             token.text = source || '';
-                            // console.log('walkTokens svg completed: ', {source})                            
                         } else {
                             token.type = 'html';
                             token.text = '<div>Diagram Error: no data.</div>';
-                            // console.log('walkTokens svg failed')
                         }
                     } catch (e) {
                         token.type = 'html';
                         token.text = `<div>Diagram Error: ${e}</div>`;
-                        // console.log('walkTokens svg failed')
                     }
                 }
             }
