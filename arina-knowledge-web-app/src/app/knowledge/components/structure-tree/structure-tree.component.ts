@@ -103,13 +103,15 @@ export class StructureTreeComponent
     }
 
     async refreshRootNodes() {
-        this.isDataLoading = true;
+        this.isDataLoading.set(true);
+        // this.isDataLoading = true;
         try {
             // const p = this.api.getStructureTreeRootNodes();
             // this.dataSource.data = p.map(x => new StructureTreeNode(x.key, x.containerKey, x.name, x.description, 0, true));
             // await this.restoreSelectedNode();
         } finally {
-            this.isDataLoading = false;
+            this.isDataLoading.set(false);
+            // this.isDataLoading = false;
         }
     }
 

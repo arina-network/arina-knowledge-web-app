@@ -98,7 +98,7 @@ export class StructureDesignerComponent
     }        
 
     async refreshRootNodes() {
-        this.isDataLoading = true;
+        this.isDataLoading.set(true);
 
         this.api.getStructureTreeRootNodes(
             this.owner, 
@@ -106,7 +106,7 @@ export class StructureDesignerComponent
             this.branch
         ).subscribe({
             next: (data) => {
-                this.isDataLoading = false;
+                this.isDataLoading.set(false);
 
                 const rootNodes = this.convertToNodes(data)
                 this.dataSource.set(rootNodes);
@@ -114,7 +114,7 @@ export class StructureDesignerComponent
                 this.expandNodeByKey(rootNodes);
             },
             error: (err) => {
-                this.isDataLoading = false;
+                this.isDataLoading.set(false);
 
                 this.notificationService.showError('Fetching data from GitHub failed: ' + err.message);
             }
@@ -195,8 +195,6 @@ export class StructureDesignerComponent
             if (matchNode) {
                 if (this.hasChild(0, matchNode)) {
                     this.onNodeToggle(treeInstance, matchNode);
-                    
-                    this.cdr.detectChanges(); 
                 }
             }
         }

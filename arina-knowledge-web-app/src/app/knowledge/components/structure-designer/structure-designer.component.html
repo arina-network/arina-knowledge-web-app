@@ -1,6 +1,6 @@
 <mat-sidenav-container autosize class="h-full">
     <mat-sidenav mode="side" opened>
-        <app-progress [loading]="isDataLoading"></app-progress>
+        <app-progress [loading]="isDataLoading()"></app-progress>
         <!-- <app-messages [messages]="messages"></app-messages> -->
 
         <mat-tree #tree [dataSource]="dataSource()" [childrenAccessor]="getChildren" class="m-1">

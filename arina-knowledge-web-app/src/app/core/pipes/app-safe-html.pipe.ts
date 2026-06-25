@@ -16,8 +16,8 @@ export class AppSafeHtmlPipe implements PipeTransform {
     }
 
     transform(value: string): SafeHtml | null{
-        if (!value) {
-            return null;
+        if (!value || value === '\n') {
+            return '';
         }
 
         return this._sanitizer.bypassSecurityTrustHtml(value);

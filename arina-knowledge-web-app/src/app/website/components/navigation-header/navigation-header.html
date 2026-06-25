@@ -61,9 +61,10 @@
                         <!-- 1. The Trigger Button -->
                         <button mat-button [matMenuTriggerFor]="profileMenu" 
                                 class="text-gray-700 hover:text-slate-400 transition-colors duration-200 px-2 py-1 flex items-center gap-1">
-                            <img [src]="authorizationService.getUserInfo().avatar_url" alt="GitHub Profile" 
-                                class="w-8 h-8 mx-2 rounded-full border border-slate-200 object-cover">
-
+                            @if (authorizationService.getUserInfo().avatar_url) {
+                                <img [src]="authorizationService.getUserInfo().avatar_url" alt="GitHub Profile" 
+                                    class="w-8 h-8 mx-2 rounded-full border border-slate-200 object-cover">
+                            }
                             <span>{{ authorizationService.getUserInfo().login }}</span>
                             <mat-icon class="text-sm">expand_more</mat-icon>
                         </button>

@@ -91,7 +91,7 @@ export class StructureApiService {
         branchName: string | undefined,
         key: string | undefined
     ): Observable<any> {
-        // console.log('Fetching Raw Structure with params:', { ownerName, repositoryName, branchName, key });
+        // console.log('Fetching Raw Structure with params: ', { ownerName, repositoryName, branchName, key });
 
         if (!ownerName || !repositoryName || !branchName) {
             return of('');
