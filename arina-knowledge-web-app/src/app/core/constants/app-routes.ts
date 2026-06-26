@@ -27,6 +27,6 @@ export class AppRoutes {
     public readonly logout = '/logout';
     public readonly settings = '/settings';
     public readonly knowledge = '/knowledge';
+    public readonly models = `/${this.knowledge}/arina-network/arina-knowledge/main`
     public readonly guide = `/${this.knowledge}/arina-network/arina-knowledge-guide/main`
-    // public readonly guide = 'https://github.com/arina-network/arina-knowledge-guide';
 }

@@ -1,5 +1,5 @@
 import { Component, inject } from '@angular/core';
-import { RouterLink } from '@angular/router';
+import { ActivatedRoute, NavigationEnd, Router, RouterLink } from '@angular/router';
 
 import { MatDividerModule } from '@angular/material/divider';
 import { MatMenuModule } from '@angular/material/menu'; // Import the module
@@ -12,6 +12,8 @@ import { RepositoryService } from '@/app/knowledge/services/repository.service';
 import { AppRoutes } from '@/app/core/constants/app-routes';
 import { Branch } from '@/app/knowledge/models/branch';
 import { Repository } from '@/app/knowledge/models/repository';
+import { filter } from 'rxjs';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 @Component({
   selector: 'app-navigation-header',
@@ -25,10 +27,44 @@ import { Repository } from '@/app/knowledge/models/repository';
   templateUrl: './navigation-header.html'
 })
 export class NavigationHeader {
-    protected authorizationService = inject(AuthorizationService);
-    protected repositoryService = inject(RepositoryService);
-    protected routes = inject(AppRoutes);
+  private router = inject(Router);
+  private route = inject(ActivatedRoute);
 
+  protected authorizationService = inject(AuthorizationService);
+  protected repositoryService = inject(RepositoryService);
+  protected routes = inject(AppRoutes);
+
+  constructor() {
+    this.router.events.pipe(
+      filter((event): event is NavigationEnd => event instanceof NavigationEnd),
+      takeUntilDestroyed() // Auto-unsubscribes
+    ).subscribe(() => {
+      const params = this.getDeepestRouteParams(this.route.root);      
+      this.refreshHeaderData(params);
+    });
+  }
+  
+  private getDeepestRouteParams(route: ActivatedRoute): Record<string, string> {
+    let currentRoute = route;
+    let combinedParams: Record<string, string> = { ...currentRoute.snapshot.params };
+
+    // Traverse down to the deepest nested active route inside the router-outlet
+    while (currentRoute.firstChild) {
+      currentRoute = currentRoute.firstChild;
+      combinedParams = { ...combinedParams, ...currentRoute.snapshot.params };
+    }
+
+    return combinedParams;
+  }
+
+  private refreshHeaderData(params: Record<string, string>): void {
+    console.log('Header successfully updated with params:', params);
+
+    if (!params["owner"] || !params["repository"]) {
+      this.repositoryService.clear()
+    }
+  }  
+    
     get repositories() : Repository[] {
       return this.repositoryService.getRepositories(); 
     }

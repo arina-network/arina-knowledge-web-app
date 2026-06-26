@@ -1,23 +1,89 @@
-<div class="h-full w-full flex flex-col items-center justify-center gap-6">
-    <h1 class="text-2xl font-semibold">Welcome to Arina Knowledge!</h1>
+<div class="w-full h-screen flex flex-col items-center gap-6 overflow-y-auto pb-6">
+    <h1 class="text-2xl font-semibold mt-8">Welcome to Arina Knowledge!</h1>
     @if (!authorizationService.isAuthorized()) {
-        <p class="text-gray-600">Please login to access your private knowledge repositories.</p>
-        <a routerLink="{{routes.login}}" 
-            class="text-gray-800 text-xl font-bold tracking-wider hover:text-indigo-400 transition-colors duration-200">
-            Login
-        </a>
-    }             
-    <p class="text-gray-600">You can access public knowledge repositories:</p>
+        <div class="max-w-5xl mx-4">
+            <span class="prose mx-2">Please login to access your private knowledge repositories:</span>
+            <a routerLink="{{routes.login}}" 
+                class="text-gray-800 text-xl font-bold tracking-wider hover:text-indigo-400 transition-colors duration-200">
+                login
+            </a>
+        </div>
+    }
+    
+    <h1 class="text-2xl font-semibold">Knowledge Repositories</h1>
+
+    <div class="max-w-5xl mx-4">
         <ul>
-            @for (item of repositories; track item.url){
-                <li>
-                    <a routerLink="{{`/${routes.knowledge}/${item.ownerName}/${item.repositoryName}`}}"                         
-                        matTooltip="{{item.url}}"
-                        [matTooltipPosition]="'below'">
-                        {{item.name}}
-                    </a>             
-                </li>
-            }            
+            <li>
+                <span class="prose mx-2">Semantic Models for business logic, architecture and infrastructure:</span>
+                <a routerLink="{{routes.models}}" 
+                    class="text-gray-800 text-xl font-bold tracking-wider hover:text-indigo-400 transition-colors duration-200">
+                    Arina Knowledge
+                </a>
+            </li>
+            <li>
+                <span class="prose mx-2">Guide for semantic models in software engineering, natural langauge and communucation:</span>
+                <a routerLink="{{routes.guide}}" 
+                    class="text-gray-800 text-xl font-bold tracking-wider hover:text-indigo-400 transition-colors duration-200">
+                    Arina Knowledge Guide
+                </a>    
+            </li>
         </ul>    
+    </div>
+
+    <h1 class="text-2xl font-semibold">Knowledge Fragmentation</h1>
+    <div class="prose max-w-5xl mx-4">
+        <p>
+            Modern software development suffers from a fundamental problem: knowledge fragmentation.
+            Business requirements live in documents. Process descriptions live in diagrams.
+            Architecture decisions live in presentations. Data models live in databases. Infrastructure lives in deployment scripts. Code lives in repositories.
+        </p>
+
+        <p>
+            Each representation describes the same reality from a different perspective, yet none of them is the system itself.
+            As projects evolve, these representations inevitably diverge.
+            Specifications become outdated. Documentation falls behind implementation.
+            Architecture diagrams no longer reflect deployed systems. Business logic becomes buried inside source code.
+        </p>     
+
+        <p>
+            Traditional software development treats knowledge as text:
+        </p>        
+        <ul>
+            <li>Requirements Documents</li>
+            <li>Tehcnicals Specifications</li>
+            <li>User stories</li>
+            <li>Tickets</li>
+            <li>Comments</li>
+            <li>Conversations</li>
+        </ul>
+
+        <p>
+            In <b>Arina Network</b>, knowledge is represented as a <b>semantic model</b> composed of a small set of fundamental concepts:
+        </p>
+        <ul>
+            <li>Spaces</li>
+            <li>Structures</li>
+            <li>Time</li>
+            <li>Actors</li>
+            <li>Processes</li>
+            <li>Entities</li>
+            <li>Categories</li>
+            <li>Constants</li>
+        </ul>
+
+        <p>
+            These concepts form a coordinate system for describing reality. 
+            Every actor, process, category, entity and attribute has a natural language name, making the semantic model understandable to humans.
+            At the same time, the semantic relationships are explicit and machine-readable.
+        </p>
+    </div>
+
+    <!-- fix for footer hight -->
+    <div class="prose max-w-5xl mx-4">
+        <br/>
+        <br/>
+    </div>
+
 </div>
 
