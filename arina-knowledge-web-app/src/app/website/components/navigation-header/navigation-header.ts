@@ -1,19 +1,21 @@
 import { Component, inject } from '@angular/core';
 import { ActivatedRoute, NavigationEnd, Router, RouterLink } from '@angular/router';
+import { filter } from 'rxjs';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 import { MatDividerModule } from '@angular/material/divider';
 import { MatMenuModule } from '@angular/material/menu'; // Import the module
 import { MatIconModule } from '@angular/material/icon';
 import { MatTooltipModule } from '@angular/material/tooltip';
 
-import { AuthorizationService } from '@/app/core/services/authorization.service';
-import { RepositoryService } from '@/app/knowledge/services/repository.service';
-
 import { AppRoutes } from '@/app/core/constants/app-routes';
+import { AuthorizationService } from '@/app/core/services/authorization.service';
+
 import { Branch } from '@/app/knowledge/models/branch';
 import { Repository } from '@/app/knowledge/models/repository';
-import { filter } from 'rxjs';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { RepositoryGroup } from '@/app/knowledge/models/repository-group';
+import { RepositoryService } from '@/app/knowledge/services/repository.service';
+
 
 @Component({
   selector: 'app-navigation-header',
@@ -58,14 +60,12 @@ export class NavigationHeader {
   }
 
   private refreshHeaderData(params: Record<string, string>): void {
-    console.log('Header successfully updated with params:', params);
-
     if (!params["owner"] || !params["repository"]) {
       this.repositoryService.clear()
     }
   }  
     
-    get repositories() : Repository[] {
+    get repositories() : RepositoryGroup[] {
       return this.repositoryService.getRepositories(); 
     }
 

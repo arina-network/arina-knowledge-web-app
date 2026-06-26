@@ -5,7 +5,8 @@ import { MatTooltipModule } from '@angular/material/tooltip';
 
 import { AppRoutes } from '@/app/core/constants/app-routes';
 
-import { Repository } from '@/app/knowledge/models/repository';
+// import { Repository } from '@/app/knowledge/models/repository';
+import { RepositoryGroup } from "../../models/repository-group";
 import { RepositoryService } from '@/app/knowledge/services/repository.service';
 
 
@@ -21,7 +22,7 @@ export class StructureHomeComponent {
     protected repositoryService = inject(RepositoryService);
     protected routes = inject(AppRoutes)
 
-    get repositories() : Repository[] {
+    get repositories() : RepositoryGroup[] {
       return this.repositoryService.getRepositories(); 
     }    
 }

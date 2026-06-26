@@ -1,11 +1,13 @@
-export interface Repository {
-    name: string;
-    url: string;
-
-    ownerName: string;
-    repositoryName: string;
-
+export class Repository {
+    key: string = crypto.randomUUID();
+    name?: string;
     description?: string;
 
-    isPublic: boolean;
+    url?: string;
+
+    ownerName?: string;
+    repositoryName?: string;
+
+
+    isPublic: boolean = true;
 }
