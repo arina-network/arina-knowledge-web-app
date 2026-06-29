@@ -14,14 +14,33 @@
                         <span>{{repositoryName}}</span>
                         <mat-icon class="text-gray-500 scale-90 -mr-1">arrow_drop_down</mat-icon>
                     </button>
-                    <mat-menu #versionRepositories="matMenu">
+                    <mat-menu #versionRepositories="matMenu" class="mt-1">
+                        @for (group of repositories; track group.category; let isFirst = $first) {
+                            <!-- Section Divider & Header Label -->
+                            @if (!isFirst) {
+                                <div class="my-1 border-t border-gray-100"></div>
+                            }
+                            <div class="px-4 py-1.5 text-xs font-semibold text-gray-400 tracking-wider uppercase select-none">
+                                {{ group.category }}
+                            </div>
+
+                            <!-- Section Repository Links -->
+                            @for (item of group.repositories; track item.url) {
+                                <a mat-menu-item routerLink="/{{`${routes.knowledge}/${item.ownerName}/${item.repositoryName}`}}"
+                                    class="!px-6 !py-2 text-sm block text-gray-700 hover:bg-gray-50">
+                                    {{ item.name }}
+                                </a>                            
+                            }
+                        }
+                    </mat-menu>                    
+                    <!-- <mat-menu #versionRepositories="matMenu">
                         @for (item of repositories; track item.url){
                             <a mat-menu-item routerLink="/{{`${routes.knowledge}/${item.ownerName}/${item.repositoryName}`}}"
                                 class="p-2 text-base block">
                                 {{item.name}}
                             </a>                            
                         }
-                    </mat-menu>
+                    </mat-menu> -->
                 </li>                
                 <!-- Branch Selector -->
                 <li class="relative">
@@ -31,9 +50,9 @@
                         <mat-icon class="text-gray-500 scale-90 -mr-1">arrow_drop_down</mat-icon>
                     </button>
                     <mat-menu #versionBranches="matMenu">
-                        @for (item of branches; track item.name){
+                        @for (item of branches; track item.branchName){
                             <button mat-menu-item class="p-2 text-base" (click)="setBranch(item)">
-                                {{item.name}}
+                                {{item.branchName}}
                             </button>
                         }
                     </mat-menu>

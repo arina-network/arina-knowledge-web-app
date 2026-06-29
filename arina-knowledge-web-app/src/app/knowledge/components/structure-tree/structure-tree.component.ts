@@ -134,7 +134,7 @@ export class StructureTreeComponent
         var key = localStorage.getItem(this.settingsStorageCode);
         if (key?.length && 0 > 0) {
             if (!this.isLastInCurrentRoute(key)) {
-                this.currentRoute = (await this.api.getRoute(KeyValuePipe).toPromise()).data;
+                this.currentRoute = [] // OLD (await this.api.getRoute(KeyValuePipe).toPromise()).data;
                 this.nodesToExpand = [...this.currentRoute];
 
                 this.openRoute();

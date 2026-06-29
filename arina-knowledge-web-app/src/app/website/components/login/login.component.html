@@ -1,23 +1,9 @@
 @if (!authorizationService.isAuthorized()) {
     <div class="h-full w-full flex flex-col items-center justify-center gap-6">
-        <h1 class="text-2xl font-semibold">Access Your Repositories Safely</h1>
-        <p class="text-gray-600">This app has no backend. Your token stays inside your browser's memory and disappears on refresh.</p>
-        <mat-list class="integer-mat-list">
-            <mat-list-item>
-                Go to your GitHub Settings -> Developer Settings.
-            </mat-list-item>
-            <mat-list-item>
-                Generate a <strong>Personal Access Token (classic)</strong> with <code>repo</code> scope.
-            </mat-list-item>
-        </mat-list>
-        <div class="action-link-container">
-            <a mat-button color="primary" href="https://github.com/settings/personal-access-tokens" target="_blank">
-                <mat-icon>open_in_new</mat-icon>
-                Generate Token
-            </a>
-        </div>
+        <h1 class="prose text-2xl font-semibold">Access Your Repositories Safely</h1>
+        <p class="prose text-gray-600">This app has no backend. Your GitHub PAT (Personal Access Token) stays inside your browser's memory and disappears on refresh.</p>
         <div>
-            <mat-form-field class="w-[700px]" appearance="outline">
+            <mat-form-field class="w-[590px]" appearance="outline">
                 <mat-label>GitHub PAT</mat-label>
                 <input matInput #tokenInput type="password" autocomplete="off" placeholder="Paste GitHub PAT here..." />
             </mat-form-field>
@@ -25,19 +11,33 @@
                 Login
             </button>
         </div>
+
+        <h1 class="text-2xl font-semibold">How to create an access token in GitHub</h1>
+        <div class="prose">
+            <ol>
+                <li>
+                    Go to your GitHub Settings -> Developer Settings.
+                </li>
+                <li>
+                    Generate a <strong>Personal Access Token (classic)</strong> with <strong>owner</strong> and <strong>repositories</strong> scope.
+                    Permissions:
+                    <ul>
+                        <li>Contents: Read-only</li>
+                        <li>Issues: Read-only</li>
+                    </ul>
+                </li>
+            </ol>
+        </div>
+
+        <div class="action-link-container">
+            <a mat-button color="primary" href="https://github.com/settings/personal-access-tokens" target="_blank">
+                <mat-icon>open_in_new</mat-icon>
+                Generate Token
+            </a>
+        </div>
     </div>
 } @else {
     <div class="h-full w-full flex flex-col items-center justify-center gap-6">
         <button (click)="authorizationService.logout()">Log Out</button>
     </div>
-    <!-- <div class="dashboard">
-        <button (click)="authorizationService.logout()">Log Out</button>
-        <button (click)="loadRepos()">Fetch My Repos</button>
-
-        <ul>
-            @for (repo of repos; track repo.id) {
-                <li>{{ repo.name }}</li>
-            }
-        </ul>
-    </div> -->
 }

@@ -5,7 +5,7 @@ import { Observable, of } from 'rxjs';
 import { AppRoutes } from '@/app/core/constants/app-routes';
 import { AuthorizationService } from '@/app/core/services/authorization.service';
 
-import { RepositoryService } from '../services/repository.service';
+// import { RepositoryService } from '../services/repository.service';
 
 @Injectable({
   providedIn: 'root'
@@ -13,7 +13,7 @@ import { RepositoryService } from '../services/repository.service';
 export class StructureApiService {
     private http = inject(HttpClient);
     private authorizationService = inject(AuthorizationService);
-    private repositoryService = inject(RepositoryService);
+    // private repositoryService = inject(RepositoryService);
     private routes = inject(AppRoutes)
 
     private getHeaders(throwError: boolean = false): HttpHeaders {
@@ -39,19 +39,22 @@ export class StructureApiService {
     }
 
     getRepositories(): Observable<any> {
-        // const token = this.authorizationService.getToken();
-        // if (!token) {
-        //     throw new Error('No GitHub token provided.');
-        // }
-
-        // // Attach user's token to the Authorization header
-        // const headers = new HttpHeaders({
-        //     Authorization: `Bearer ${token}`,
-        //     Accept: 'application/vnd.github.v3+json'
-        // });
         const headers =  this.getHeaders(true);
 
         return this.http.get(`${this.routes.githubApi}/user/repos`, { headers });
+    }
+
+    getBranches(
+        ownerName: string | undefined,
+        repositoryName: string | undefined
+    ): Observable<any> {
+        if (!ownerName || !repositoryName) {
+            return of([]);
+        }
+
+        const headers =  this.getHeaders()
+
+        return this.http.get(`${this.routes.githubApiRepositories}/${ownerName}/${repositoryName}/${this.routes.githubApiBranches}`, { headers });
     }
 
     getStructureTreeRootNodes(
@@ -107,16 +110,16 @@ export class StructureApiService {
 
 
 
-    getRoute(key: any): any {
-        return [];
-    }
+    // getRoute(key: any): any {
+    //     return [];
+    // }
 
-    getStructure(key: any): any {
-        return {
-            key,
-            name: 'TEST NAME for ' + key,
-            source: 'TEST SOURCE for ' + key,
-            isFolder: false
-        }        
-    }
+    // getStructure(key: any): any {
+    //     return {
+    //         key,
+    //         name: 'TEST NAME for ' + key,
+    //         source: 'TEST SOURCE for ' + key,
+    //         isFolder: false
+    //     }        
+    // }
 }

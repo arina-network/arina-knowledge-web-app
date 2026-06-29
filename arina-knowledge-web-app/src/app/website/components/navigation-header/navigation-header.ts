@@ -1,17 +1,21 @@
 import { Component, inject } from '@angular/core';
-import { RouterLink } from '@angular/router';
+import { ActivatedRoute, NavigationEnd, Router, RouterLink } from '@angular/router';
+import { filter } from 'rxjs';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 import { MatDividerModule } from '@angular/material/divider';
 import { MatMenuModule } from '@angular/material/menu'; // Import the module
 import { MatIconModule } from '@angular/material/icon';
 import { MatTooltipModule } from '@angular/material/tooltip';
 
-import { AuthorizationService } from '@/app/core/services/authorization.service';
-import { RepositoryService } from '@/app/knowledge/services/repository.service';
-
 import { AppRoutes } from '@/app/core/constants/app-routes';
+import { AuthorizationService } from '@/app/core/services/authorization.service';
+
 import { Branch } from '@/app/knowledge/models/branch';
 import { Repository } from '@/app/knowledge/models/repository';
+import { RepositoryGroup } from '@/app/knowledge/models/repository-group';
+import { RepositoryService } from '@/app/knowledge/services/repository.service';
+
 
 @Component({
   selector: 'app-navigation-header',
@@ -25,11 +29,43 @@ import { Repository } from '@/app/knowledge/models/repository';
   templateUrl: './navigation-header.html'
 })
 export class NavigationHeader {
-    protected authorizationService = inject(AuthorizationService);
-    protected repositoryService = inject(RepositoryService);
-    protected routes = inject(AppRoutes);
+  private router = inject(Router);
+  private route = inject(ActivatedRoute);
 
-    get repositories() : Repository[] {
+  protected authorizationService = inject(AuthorizationService);
+  protected repositoryService = inject(RepositoryService);
+  protected routes = inject(AppRoutes);
+
+  constructor() {
+    this.router.events.pipe(
+      filter((event): event is NavigationEnd => event instanceof NavigationEnd),
+      takeUntilDestroyed() // Auto-unsubscribes
+    ).subscribe(() => {
+      const params = this.getDeepestRouteParams(this.route.root);      
+      this.refreshHeaderData(params);
+    });
+  }
+  
+  private getDeepestRouteParams(route: ActivatedRoute): Record<string, string> {
+    let currentRoute = route;
+    let combinedParams: Record<string, string> = { ...currentRoute.snapshot.params };
+
+    // Traverse down to the deepest nested active route inside the router-outlet
+    while (currentRoute.firstChild) {
+      currentRoute = currentRoute.firstChild;
+      combinedParams = { ...combinedParams, ...currentRoute.snapshot.params };
+    }
+
+    return combinedParams;
+  }
+
+  private refreshHeaderData(params: Record<string, string>): void {
+    if (!params["owner"] || !params["repository"]) {
+      this.repositoryService.clear()
+    }
+  }  
+    
+    get repositories() : RepositoryGroup[] {
       return this.repositoryService.getRepositories(); 
     }
 
@@ -41,12 +77,12 @@ export class NavigationHeader {
       this.repositoryService.setSelectedRepository(repository);
     }
 
-    get branches() : Branch[] {
-      return this.repositoryService.getBranches(); 
+    get branches() : Branch[] | null {
+      return this.repositoryService.branches(); 
     }
 
     get branchName() {
-      return this.repositoryService.getSelectedBranch()?.name || 'Select Branch';
+      return this.repositoryService.getSelectedBranch()?.branchName || 'Select Branch';
     }
 
     setBranch(branch: Branch) {

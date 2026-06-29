@@ -1,5 +1,5 @@
-export interface Branch {
-    name: string;
+export class Branch {
+    branchName: string = 'unknown';
     description?: string;
-    isMain: boolean;
+    isMain: boolean = false;
 }
