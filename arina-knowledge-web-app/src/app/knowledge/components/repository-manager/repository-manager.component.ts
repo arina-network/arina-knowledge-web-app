@@ -11,7 +11,6 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 
 
 import { Repository } from '../../models/repository';
-import { RepositoryGroup } from '../../models/repository-group';
 import { RepositoryCategory } from '../../constants/repository-category';
 import { RepositoryService } from '../../services/repository.service';
 
@@ -36,21 +35,9 @@ export class RepositoryManagerComponent {
 
     @Input() repositoryCategory: RepositoryCategory = RepositoryCategory.Public;  
 
-//   private readonly STORAGE_KEY = 'github_repositories';
-
-  // 1. Initialize signal with data from LocalStorage or fallback to seed data
-//   repositories = signal<Repository[]>(this.loadFromLocalStorage());
-
     newRepoName = '';
     newRepoOwner = '';
     newRepoRepository = '';
-
-//   constructor() {
-//     // 2. Automatically save to localStorage whenever the signal changes
-//     effect(() => {
-//       localStorage.setItem(this.STORAGE_KEY, JSON.stringify(this.repositories()));
-//     });
-//   }
 
     get repositories() : Repository[] {
         if (this.repositoryCategory === RepositoryCategory.Private) {
@@ -74,16 +61,7 @@ export class RepositoryManagerComponent {
                 isPublic: true                
             }
 
-        // const newRepo: Repository = {
-        //   id: Date.now(),
-        //   name: this.newRepoName,
-        //   description: this.newRepoDesc || 'No description provided',
-        //   stars: 0,
-        //   language: this.newRepoLang || 'Unknown',
-        //   url: `https://github.com{this.newRepoName}`
-        // };
 
-        // The effect will automatically trigger and update localStorage
         if (this.repositoryCategory === RepositoryCategory.Private) {
             this.repositoryService.privateRepositories.update(current => ({
                 ...current,
@@ -95,7 +73,6 @@ export class RepositoryManagerComponent {
                 repositories: [...current.repositories, newRepository]
             }));    
         }
-        // this.repositoryService.publicRepositories.update(repos => [...repos, newRepo]);
         
         this.newRepoName = '';
         this.newRepoOwner = '';

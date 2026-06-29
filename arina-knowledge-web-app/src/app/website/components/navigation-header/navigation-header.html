@@ -50,9 +50,9 @@
                         <mat-icon class="text-gray-500 scale-90 -mr-1">arrow_drop_down</mat-icon>
                     </button>
                     <mat-menu #versionBranches="matMenu">
-                        @for (item of branches; track item.name){
+                        @for (item of branches; track item.branchName){
                             <button mat-menu-item class="p-2 text-base" (click)="setBranch(item)">
-                                {{item.name}}
+                                {{item.branchName}}
                             </button>
                         }
                     </mat-menu>

@@ -3,42 +3,38 @@ import { effect, inject, Injectable, Signal, signal } from '@angular/core';
 import { AppInfo } from '@/app/core/constants/app-info';
 
 import { AuthorizationService } from '@/app/core/services/authorization.service';
+import { NotificationService } from '@/app/core/services/notification.service';
+
+import { RepositoryCategory } from '../constants/repository-category';
 
 import { Branch } from '../models/branch';
 import { Repository } from '../models/repository';
 import { RepositoryGroup } from '../models/repository-group';
-import { RepositoryCategory } from '../constants/repository-category';
+
+import { StructureApiService } from '../api-services/structure-api.service';
 
 @Injectable({
     providedIn: 'root'
 })
 export class RepositoryService {
     protected authorizationService = inject(AuthorizationService);
+    protected notificationService = inject(NotificationService);        
+
+    protected api = inject(StructureApiService);
 
     public publicRepositories = signal<RepositoryGroup>(this.loadRepositoriesFromLocalStorage(RepositoryCategory.Public));
     public privateRepositories = signal<RepositoryGroup>(this.loadRepositoriesFromLocalStorage(RepositoryCategory.Private));
     public arinaRepositories = signal<RepositoryGroup>(this.loadArinaRepositories());
 
+    public branches = signal<Branch[] | null>(null);
     constructor() {
         effect(() => {
             this.saveRepositoriesToLocalStorage(RepositoryCategory.Public, this.publicRepositories());
-            // localStorage.setItem(this.getRepositoriesStorageCode(RepositoryGroupCategory.Public), JSON.stringify(this.publicRepositories()));
         });
         effect(() => {
             this.saveRepositoriesToLocalStorage(RepositoryCategory.Private, this.privateRepositories());
-            // localStorage.setItem(this.getRepositoriesStorageCode(RepositoryGroupCategory.Private), JSON.stringify(this.privateRepositories()));
         });
     }    
-
-    // TEST BRANCHES for demonstration purposes
-    private testBranches: Branch[] = [
-        { 
-            name: 'main', 
-            description: 'Main Branch', 
-            isMain: true 
-        }
-    ]
-
 
     private selectedRepository = signal<Repository | null>(null);
     private selectedBranch = signal<Branch | null>(null);
@@ -54,6 +50,24 @@ export class RepositoryService {
     setSelectedRepository(repository: Repository): void {
         this.selectedRepository.set(repository);
         this.selectedBranch.set(null);
+
+        this.api.getBranches(
+            repository.ownerName, 
+            repository.repositoryName 
+        ).subscribe({
+            next: (data) => {
+                const branches = data.map(item => ({
+                        branchName: item.name,
+                        isMain: item.protected
+                    })
+                );                
+
+                this.branches.set(branches)
+            },
+            error: (err) => {
+                this.notificationService.showError('Fetching data from GitHub failed: ' + err.message);
+            }
+        });        
     }
 
     isRepositorySelected(): boolean {
@@ -66,7 +80,6 @@ export class RepositoryService {
             this.publicRepositories(),
             this.arinaRepositories(),
         ]    
-        // return this.testRepositories;
     }
 
     getSelectedBranch(): Branch | null {
@@ -77,17 +90,10 @@ export class RepositoryService {
         this.selectedBranch.set(branch);
     }
 
-    getBranches(): Branch[] {
-        if (!this.selectedRepository()) {
-            return [];
-        }
-
-        return this.testBranches;      
-    }
-
     clear(): void {
-        this.selectedRepository.set(null);
+        this.branches.set(null);
         this.selectedBranch.set(null);
+        this.selectedRepository.set(null);
     }
     
     setOwnerAndRepositoryAndBranch(
@@ -100,7 +106,7 @@ export class RepositoryService {
             return;
         }
 
-        console.log('setOwnerAndRepositoryAndBranch: ', {ownerName, repositoryName})
+        // console.log('setOwnerAndRepositoryAndBranch: ', {ownerName, repositoryName})
 
         const arinaRepository = this.arinaRepositories().repositories.find(r => 
             r.ownerName?.toLowerCase() === ownerName?.toLowerCase() 
@@ -153,23 +159,27 @@ export class RepositoryService {
             }
         }
 
-        const branch = this.getBranches().find(b => 
-            b.name.toLowerCase() === branchName?.toLowerCase()
+        const branches = this.branches();
+        let branch: Branch | undefined = undefined;
+
+        if (branches) {
+            branch = branches.find(b => 
+            b.branchName.toLowerCase() === branchName?.toLowerCase()
         );
+        }
 
         if (!branch) {
             const newBranch = {
-                name: branchName ?? 'unknown',
-                description: branchName ?? 'unknown',
+                branchName: branchName ?? 'unknown',
+                description: branchName ?? null,
                 isMain: false
             }
-            this.testBranches.push(newBranch);
+            this.branches.update(current => (current ? [...current, newBranch] : [newBranch]));
 
-            this.setSelectedBranch(newBranch);
-        } else {
-            this.setSelectedBranch(branch);
+            branch = newBranch;
         }
-
+         
+        this.setSelectedBranch(branch);
     }   
     
     private loadArinaRepositories() : RepositoryGroup {
@@ -196,9 +206,10 @@ export class RepositoryService {
         return result;
     }
 
-    protected get settingsCode(): string {
-        return 'repositories';
-    }
+    private settingsCode = 'repositories';
+    // protected get settingsCode(): string {
+    //     return 'repositories';
+    // }
 
     private getRepositoriesStorageCode(category: RepositoryCategory): string {
         if (category === RepositoryCategory.Private && this.authorizationService.isAuthorized())
@@ -210,9 +221,8 @@ export class RepositoryService {
     }
 
     private saveRepositoriesToLocalStorage(category: RepositoryCategory, group: RepositoryGroup) {
-        // do not store private without this.authorization
-        if (category === RepositoryCategory.Private &&  !this.authorizationService.isAuthorized())
-        {
+        // do not store private repositories without authorization
+        if (category === RepositoryCategory.Private && !this.authorizationService.isAuthorized()) {
             return;
         }
 
@@ -223,7 +233,7 @@ export class RepositoryService {
         let result = new RepositoryGroup();
         result.category = category;
 
-        // check authorizaed for private
+        // check authorized for private repositories
         if (category === RepositoryCategory.Private &&  !this.authorizationService.isAuthorized())
         {
             return result;
@@ -233,15 +243,11 @@ export class RepositoryService {
         if (data) {
             try {
                 result = JSON.parse(data);
-                // const list = JSON.parse(data);
-
-                // result.repositories.push(list)
             } catch (e) {
                 console.error('Error parsing localStorage repositories data:', e);
             }
         }
 
         return result;
-
     }    
 }

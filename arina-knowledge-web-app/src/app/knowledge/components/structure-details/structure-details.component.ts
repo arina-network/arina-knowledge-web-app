@@ -68,18 +68,18 @@ export class StructureDetailsComponent
     }
 
     override async refreshData() {
-        this.detailsTabIndex = 0;
-        this.detailsMode = StructureDetailsMode.View;
+        // this.detailsTabIndex = 0;
+        // this.detailsMode = StructureDetailsMode.View;
 
-        if (this.structure?.key !== this.key) {
-            if (this.key?.length ?? 0 > 0) {
-                if (this.structure?.key !== this.key) {
-                    this.setStructure(this.api.getStructure(this.key));
-                }
-            } else {
-                this.structure = null;
-            }
-        }
+        // if (this.structure?.key !== this.key) {
+        //     if (this.key?.length ?? 0 > 0) {
+        //         if (this.structure?.key !== this.key) {
+        //             this.setStructure(this.api.getStructure(this.key));
+        //         }
+        //     } else {
+        //         this.structure = null;
+        //     }
+        // }
     }
 
     setStructure(p: any) {

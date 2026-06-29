@@ -77,12 +77,12 @@ export class NavigationHeader {
       this.repositoryService.setSelectedRepository(repository);
     }
 
-    get branches() : Branch[] {
-      return this.repositoryService.getBranches(); 
+    get branches() : Branch[] | null {
+      return this.repositoryService.branches(); 
     }
 
     get branchName() {
-      return this.repositoryService.getSelectedBranch()?.name || 'Select Branch';
+      return this.repositoryService.getSelectedBranch()?.branchName || 'Select Branch';
     }
 
     setBranch(branch: Branch) {
