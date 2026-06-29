@@ -67,24 +67,5 @@ export const routes: Routes = [
         }
     ]
     }    
-    // {  path: 'knowledge',
-    //     children: [
-    //         {
-    //             path: '',
-    //             component: StructureDesignerComponent
-    //         },
-    //         {
-    //             path: ':owner/:repository',
-    //             component: StructureDesignerComponent
-    //         },
-    //         {
-    //             path: ':owner/:repository/:branch',
-    //             component: StructureDesignerComponent
-    //         },
-    //         {
-    //             path: ':owner/:repository/:branch/**key',
-    //             component: StructureDesignerComponent
-    //         }
-    //     ]
-    // }
 ];
+
