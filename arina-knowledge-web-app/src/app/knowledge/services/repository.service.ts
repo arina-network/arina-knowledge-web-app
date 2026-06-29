@@ -7,7 +7,7 @@ import { AuthorizationService } from '@/app/core/services/authorization.service'
 import { Branch } from '../models/branch';
 import { Repository } from '../models/repository';
 import { RepositoryGroup } from '../models/repository-group';
-import { RepositoryGroupCategory } from '../constants/repository-group-category';
+import { RepositoryCategory } from '../constants/repository-category';
 
 @Injectable({
     providedIn: 'root'
@@ -15,13 +15,18 @@ import { RepositoryGroupCategory } from '../constants/repository-group-category'
 export class RepositoryService {
     protected authorizationService = inject(AuthorizationService);
 
+    public publicRepositories = signal<RepositoryGroup>(this.loadRepositoriesFromLocalStorage(RepositoryCategory.Public));
+    public privateRepositories = signal<RepositoryGroup>(this.loadRepositoriesFromLocalStorage(RepositoryCategory.Private));
     public arinaRepositories = signal<RepositoryGroup>(this.loadArinaRepositories());
-    public privateRepositories = signal<RepositoryGroup>(this.loadRepositoriesFromLocalStorage(RepositoryGroupCategory.Public));
-    public publicRepositories = signal<RepositoryGroup>(this.loadRepositoriesFromLocalStorage(RepositoryGroupCategory.Private));
 
     constructor() {
         effect(() => {
-            localStorage.setItem(this.getRepositoriesStorageCode(RepositoryGroupCategory.Public), JSON.stringify(this.publicRepositories()));
+            this.saveRepositoriesToLocalStorage(RepositoryCategory.Public, this.publicRepositories());
+            // localStorage.setItem(this.getRepositoriesStorageCode(RepositoryGroupCategory.Public), JSON.stringify(this.publicRepositories()));
+        });
+        effect(() => {
+            this.saveRepositoriesToLocalStorage(RepositoryCategory.Private, this.privateRepositories());
+            // localStorage.setItem(this.getRepositoriesStorageCode(RepositoryGroupCategory.Private), JSON.stringify(this.privateRepositories()));
         });
     }    
 
@@ -95,6 +100,8 @@ export class RepositoryService {
             return;
         }
 
+        console.log('setOwnerAndRepositoryAndBranch: ', {ownerName, repositoryName})
+
         const arinaRepository = this.arinaRepositories().repositories.find(r => 
             r.ownerName?.toLowerCase() === ownerName?.toLowerCase() 
             && r.repositoryName?.toLowerCase() === repositoryName?.toLowerCase()
@@ -167,7 +174,7 @@ export class RepositoryService {
     
     private loadArinaRepositories() : RepositoryGroup {
         const result = new RepositoryGroup();
-        result.category = RepositoryGroupCategory.Arina;
+        result.category = RepositoryCategory.ArinaNetwork;
 
         result.repositories.push({
             key: crypto.randomUUID(),
@@ -193,16 +200,31 @@ export class RepositoryService {
         return 'repositories';
     }
 
-    private getRepositoriesStorageCode(category: RepositoryGroupCategory): string {
+    private getRepositoriesStorageCode(category: RepositoryCategory): string {
+        if (category === RepositoryCategory.Private && this.authorizationService.isAuthorized())
+        {
+            return `${AppInfo.companyName}_${AppInfo.applicationName}_${this.settingsCode}_${category}_${this.authorizationService.getUserInfo()?.login}`;
+        }
+
         return `${AppInfo.companyName}_${AppInfo.applicationName}_${this.settingsCode}_${category}`;
     }
 
-    private loadRepositoriesFromLocalStorage(category: RepositoryGroupCategory): RepositoryGroup {
-        const result = new RepositoryGroup();
+    private saveRepositoriesToLocalStorage(category: RepositoryCategory, group: RepositoryGroup) {
+        // do not store private without this.authorization
+        if (category === RepositoryCategory.Private &&  !this.authorizationService.isAuthorized())
+        {
+            return;
+        }
+
+        localStorage.setItem(this.getRepositoriesStorageCode(category), JSON.stringify(group));
+    }
+
+    private loadRepositoriesFromLocalStorage(category: RepositoryCategory): RepositoryGroup {
+        let result = new RepositoryGroup();
         result.category = category;
 
         // check authorizaed for private
-        if (category === RepositoryGroupCategory.Private &&  !this.authorizationService.isAuthorized())
+        if (category === RepositoryCategory.Private &&  !this.authorizationService.isAuthorized())
         {
             return result;
         }
@@ -210,9 +232,10 @@ export class RepositoryService {
         const data = localStorage.getItem(this.getRepositoriesStorageCode(category));
         if (data) {
             try {
-                const list = JSON.parse(data);
+                result = JSON.parse(data);
+                // const list = JSON.parse(data);
 
-                result.repositories.push(list)
+                // result.repositories.push(list)
             } catch (e) {
                 console.error('Error parsing localStorage repositories data:', e);
             }

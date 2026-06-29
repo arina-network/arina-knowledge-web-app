@@ -1,4 +1,4 @@
-import { Component, inject } from '@angular/core';
+import { Component, inject, Input } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 
@@ -12,6 +12,7 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 
 import { Repository } from '../../models/repository';
 import { RepositoryGroup } from '../../models/repository-group';
+import { RepositoryCategory } from '../../constants/repository-category';
 import { RepositoryService } from '../../services/repository.service';
 
 
@@ -30,8 +31,10 @@ import { RepositoryService } from '../../services/repository.service';
   ],
   templateUrl: './repository-manager.component.html'
 })
-export class RepoManagerComponent {
-  protected repositoryService = inject(RepositoryService);
+export class RepositoryManagerComponent {
+    protected repositoryService = inject(RepositoryService);
+
+    @Input() repositoryCategory: RepositoryCategory = RepositoryCategory.Public;  
 
 //   private readonly STORAGE_KEY = 'github_repositories';
 
@@ -50,7 +53,13 @@ export class RepoManagerComponent {
 //   }
 
     get repositories() : Repository[] {
-        return this.repositoryService.publicRepositories().repositories; 
+        if (this.repositoryCategory === RepositoryCategory.Private) {
+            return this.repositoryService.privateRepositories().repositories; 
+        } else if (this.repositoryCategory === RepositoryCategory.Public) {
+            return this.repositoryService.publicRepositories().repositories;
+        }
+        
+        return [];
     }
 
     addRepository() {
@@ -75,10 +84,17 @@ export class RepoManagerComponent {
         // };
 
         // The effect will automatically trigger and update localStorage
-        this.repositoryService.publicRepositories.update(current => ({
-            ...current,
-            repositories: [...current.repositories, newRepository]
-        }));    
+        if (this.repositoryCategory === RepositoryCategory.Private) {
+            this.repositoryService.privateRepositories.update(current => ({
+                ...current,
+                repositories: [...current.repositories, newRepository]
+            }));    
+        } else if (this.repositoryCategory === RepositoryCategory.Public) {
+            this.repositoryService.publicRepositories.update(current => ({
+                ...current,
+                repositories: [...current.repositories, newRepository]
+            }));    
+        }
         // this.repositoryService.publicRepositories.update(repos => [...repos, newRepo]);
         
         this.newRepoName = '';
@@ -87,15 +103,16 @@ export class RepoManagerComponent {
     }
 
     deleteRepository(key: string) {
-    // The effect will automatically trigger and update localStorage
-    // this.repositories.update(repos => repos.filter(repo => repo.id !== id));
+        if (this.repositoryCategory === RepositoryCategory.Private) {
+            this.repositoryService.privateRepositories.update(current => ({
+                ...current,
+                repositories: current.repositories.filter(item => item.key !== key)
+            }));       
+        } else if (this.repositoryCategory === RepositoryCategory.Public) {
         this.repositoryService.publicRepositories.update(current => ({
             ...current,
             repositories: current.repositories.filter(item => item.key !== key)
         }));       
+        }
     }
-
-//   openRepo(url: string) {
-//     window.open(url, '_blank');
-//   }
 }

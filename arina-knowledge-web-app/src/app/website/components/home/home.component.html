@@ -1,34 +1,33 @@
 <div class="w-full h-screen flex flex-col items-center gap-6 overflow-y-auto pb-6">
-    <h1 class="text-2xl font-semibold mt-8">Welcome to Arina Knowledge!</h1>
+    <h1 class="text-2xl font-semibold mt-8">Welcome to Arina Network!</h1>
     @if (!authorizationService.isAuthorized()) {
-        <div class="max-w-5xl mx-4">
-            <span class="prose mx-2">Please login to access your private knowledge repositories:</span>
+        <div class="prose max-w-5xl mx-4">
+            <span class="mx-2">Please login to access your private knowledge repositories:</span>
             <a routerLink="{{routes.login}}" 
                 class="text-gray-800 text-xl font-bold tracking-wider hover:text-indigo-400 transition-colors duration-200">
                 login
             </a>
+            <div class="mx-2">Access to public knowledge repositories is free, though restricted by GitHub's rate limits for unauthenticated requests.</div>
         </div>
     }
     
     <h1 class="text-2xl font-semibold">Knowledge Repositories</h1>
 
-    <div class="max-w-5xl mx-4">
-        <ul>
-            <li>
-                <span class="prose mx-2">Semantic Models for business logic, architecture and infrastructure:</span>
-                <a routerLink="{{routes.models}}" 
-                    class="text-gray-800 text-xl font-bold tracking-wider hover:text-indigo-400 transition-colors duration-200">
-                    Arina Knowledge
-                </a>
-            </li>
-            <li>
-                <span class="prose mx-2">Guide for semantic models in software engineering, natural langauge and communucation:</span>
-                <a routerLink="{{routes.guide}}" 
-                    class="text-gray-800 text-xl font-bold tracking-wider hover:text-indigo-400 transition-colors duration-200">
-                    Arina Knowledge Guide
-                </a>    
-            </li>
-        </ul>    
+    <div class="prose max-w-5xl mx-4">
+        <div>
+            <span class="mr-2">Semantic Models for business logic, architecture and infrastructure:</span>
+            <a routerLink="{{routes.models}}" 
+                class="text-gray-800 text-xl font-bold tracking-wider hover:text-indigo-400 transition-colors duration-200">
+                Arina Knowledge
+            </a>
+        </div>
+        <div>
+            <span class="mr-2">Guide for semantic models in software engineering, natural langauge and communucation:</span>
+            <a routerLink="{{routes.guide}}" 
+                class="text-gray-800 text-xl font-bold tracking-wider hover:text-indigo-400 transition-colors duration-200">
+                Arina Knowledge Guide
+            </a>    
+        </div>
     </div>
 
     <h1 class="text-2xl font-semibold">Knowledge Fragmentation</h1>
@@ -57,25 +56,53 @@
             <li>Comments</li>
             <li>Conversations</li>
         </ul>
+    </div>
 
+    <h1 class="text-2xl font-semibold">Knowledge as Code</h1>
+    <div class="prose max-w-5xl mx-4">
         <p>
-            In <b>Arina Network</b>, knowledge is represented as a <b>semantic model</b> composed of a small set of fundamental concepts:
+            Knowledge is not text. Knowledge is code. Not metaphorically — structurally:
         </p>
+
         <ul>
-            <li>Spaces</li>
-            <li>Structures</li>
-            <li>Time</li>
-            <li>Actors</li>
-            <li>Processes</li>
-            <li>Entities</li>
-            <li>Categories</li>
-            <li>Constants</li>
+            <li>Information becomes knowledge only when it drives decisions and actions.</li>
+            <li>A piece of knowledge should behave consistently under similar conditions.</li>
+            <li>Isolated insights don’t scale. Connected ones do.</li>
+            <li>Knowledge doesn’t run in a vacuum — it runs inside a system with memory.</li>
+            <li>In real environments, you don’t get certainty — you get likelihoods.</li>
+            <li>If knowledge is executable, it must produce outcomes you can evaluate.</li>
         </ul>
 
         <p>
-            These concepts form a coordinate system for describing reality. 
-            Every actor, process, category, entity and attribute has a natural language name, making the semantic model understandable to humans.
-            At the same time, the semantic relationships are explicit and machine-readable.
+            Using a GitHub repository as a knowledge base may sound unconventional at first, but it turns out to be surprisingly natural.
+            When knowledge lives in Markdown files inside a repository, it automatically gains the same lifecycle as code:
+        </p>
+
+        <ul>
+            <li>Version control: changes are tracked.</li>
+            <li>Collaboration: authors are visible.</li>
+            <li>Traceability: history is preserved</li>
+            <li>Review processes: discussions happen in pull requests.</li>
+            <li>Branching: improvements are incremental.</li>
+        </ul>        
+
+        <p>
+            Markdown is the simplest text format that is natively supported by GitHub and has several advantages:
+        </p>
+
+        <ul>
+            <li>Human-readable</li>
+            <li>LLM-readable</li>
+            <li>Easy to edit</li>
+            <li>Diff-friendly</li>
+            <li>Platform-independent</li>
+        </ul>        
+
+        <p>
+            Instead of static documentation, knowledge in GitHub repository becomes a living system.
+            Knowledge does not need to be a complicated system.
+            Sometimes the best solution is the simplest one: store knowledge as text, version it, review it, and improve it collaboratively.
+            GitHub repositories already provide the infrastructure for all of this.
         </p>
     </div>
 
