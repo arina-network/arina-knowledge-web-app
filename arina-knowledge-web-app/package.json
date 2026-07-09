@@ -6,7 +6,8 @@
     "start": "ng serve",
     "build": "ng build",
     "watch": "ng build --watch --configuration development",
-    "test": "ng test"
+    "test": "ng test",
+    "deploy": "ng build --configuration production --base-href / && npx angular-cli-ghpages --dir=dist/arina-knowledge-web-app/browser"
   },
   "private": true,
   "packageManager": "npm@11.11.0",
@@ -19,9 +20,9 @@
     "@angular/material": "^21.2.4",
     "@angular/platform-browser": "^21.2.0",
     "@angular/router": "^21.2.0",
+    "marked": "^18.0.0",
     "rxjs": "~7.8.0",
-    "tslib": "^2.3.0",
-    "marked": "^18.0.0"     
+    "tslib": "^2.3.0"
   },
   "devDependencies": {
     "@angular/build": "^21.2.5",
@@ -30,6 +31,7 @@
     "@tailwindcss/postcss": "^4.1.12",
     "@tailwindcss/typography": "^0.5.15",
     "@types/marked": "^5.0.0",
+    "angular-cli-ghpages": "^3.1.0",
     "jsdom": "^28.0.0",
     "postcss": "^8.5.3",
     "prettier": "^3.8.1",
