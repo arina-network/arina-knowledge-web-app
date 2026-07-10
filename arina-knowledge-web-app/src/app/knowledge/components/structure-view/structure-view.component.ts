@@ -45,7 +45,9 @@ export class StructureViewComponent
     githubUrl: string | undefined;    
     rawUrl: string | undefined;
     source: string | undefined;
+
     contentLinks: StructureLink[] = [];  
+    contentReadme: any | undefined;
 
     // structure view
     currentView = signal<'action_view' | 'action_source'>('action_view');
@@ -129,11 +131,13 @@ export class StructureViewComponent
                             if (readmeData?.content) {
                                 this.isDataLoading.set(false);
 
-                                this.setSource(readmeData)
+                                this.setReadme(readmeData);
+                                this.source = undefined;
+                                // this.setSource(readmeData)
                                 
                                 this.rawUrl = undefined;
-                                this.githubUrl = undefined;
-                                this.contentLinks = [];
+                                // this.githubUrl = undefined;
+                                // this.contentLinks = [];
                             } else {
                                 this.isDataLoading.set(false);
 
@@ -141,6 +145,7 @@ export class StructureViewComponent
                                 this.source = undefined;
                                 this.rawUrl = undefined;
                                 this.githubUrl = undefined;
+                                this.contentReadme = undefined;
                             }
                         },
                         error: (err) => {
@@ -172,11 +177,23 @@ export class StructureViewComponent
         this.source = new TextDecoder('utf-8').decode(bytes);
     }
 
+    protected setReadme(data: any) {
+        const cleanBase64 = data.content.replace(/\s/g, '');
+        const binaryString = atob(cleanBase64);
+        const bytes = Uint8Array.from(binaryString, m => m.charCodeAt(0));
+
+        this.title = this.key;
+        this.contentReadme = new TextDecoder('utf-8').decode(bytes);
+    }
+
     protected clearData() {
+        this.githubUrl = undefined;
+
         this.title = undefined;
         this.source = undefined;
         this.rawUrl = undefined;
-        this.githubUrl = undefined;
+        
+        this.contentReadme = undefined;
         this.contentLinks = [];
     }
 

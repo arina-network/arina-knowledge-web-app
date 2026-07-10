@@ -37,7 +37,7 @@
                     List
                 </mat-button-toggle>
                 <mat-button-toggle value="action_content">
-                    <mat-icon fontSet="material-symbols-outlined">content_copy</mat-icon>
+                    <mat-icon fontSet="material-symbols-outlined">book_6</mat-icon>
                     Content
                 </mat-button-toggle>
             </mat-button-toggle-group>                
@@ -78,17 +78,41 @@
             <pre class="bg-gray-100 p-4 rounded-md overflow-x-auto"><code>{{ source }}</code></pre>
         }
     </div>
-}
-
-@if (contentLinks?.length > 0)  {
-    <div class="p-4 ml-8">
-        <h2 class="text-xl font-bold mb-4">Content</h2>
-        <ul class="prose text-xl mb-4">
-            @for (item of contentLinks; track item.url) {
-                <li>
-                    <a [routerLink]="[item.url]">{{item.name}}</a>
-                </li>
-            }
-        </ul>
-    </div>
+} @else if (contentReadme || contentLinks?.length > 0)  {
+    @if (currentListView() === 'action_readme') {
+        @if (contentReadme | markdown | async; as htmlContent) {
+            <div class="prose max-w-5xl p-4 mx-4" [innerHTML]="htmlContent | safeHtml">
+            </div>
+        } @else {
+            <div class="flex flex-col items-center justify-center py-20 text-slate-400">
+                <mat-icon fontSet="material-symbols-outlined" class="text-6xl mb-4 h-16 w-16">folder_open</mat-icon>
+                <p class="text-lg font-medium">No README.md found.</p>
+            </div>
+        }
+    } @else if (currentListView() === 'action_list') {
+        @if (contentLinks?.length > 0) {
+            <div class="prose p-4 ml-4">
+                <h1 class="text-2xl font-bold mb-4">Content</h1>
+                <ul class="text-xl mb-4">
+                    @for (item of contentLinks; track item.url) {
+                        <li>
+                            <a [routerLink]="[item.url]">{{item.name}}</a>
+                        </li>
+                    }
+                </ul>
+            </div>
+        } @else {
+            <div class="flex flex-col items-center justify-center py-20 text-slate-400">
+                <mat-icon fontSet="material-symbols-outlined" class="text-6xl mb-4 h-16 w-16">folder_open</mat-icon>
+                <p class="text-lg font-medium">No content found.</p>
+            </div>
+        }
+    } @else if (currentListView() === 'action_content') {
+            <div class="flex flex-col items-center justify-center py-20 text-slate-400">
+                <mat-icon fontSet="material-symbols-outlined" class="text-6xl mb-4 h-16 w-16">construction</mat-icon>
+                <p class="text-lg font-medium">
+                    IN DEVELOPMENT: Content view is under construction. Please check back later.
+                </p>
+            </div>
+    }  
 }
