@@ -29,5 +29,10 @@ export class StructureHomeComponent {
 
     get repositories() : RepositoryGroup[] {
       return this.repositoryService.getRepositories(); 
-    }    
+    }
+    
+    // openItem(item: any) {
+    //     const url = `${this.routes.knowledge}/${item.ownerName}/${item.repositoryName}`;
+    //     window.location.href = url;
+    // }
 }

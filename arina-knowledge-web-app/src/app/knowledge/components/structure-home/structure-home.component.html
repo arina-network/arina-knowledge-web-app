@@ -17,8 +17,9 @@
             <ul>
                 @for (item of group.repositories; track item.url){
                     <li>
-                        <a routerLink="{{`/${routes.knowledge}/${item.ownerName}/${item.repositoryName}`}}"                         
-                            matTooltip="{{item.url}}"
+                        <!-- <a (click)="openItem(item)"  -->
+                        <a routerLink="{{`${routes.knowledge}/${item.ownerName}/${item.repositoryName}`}}"
+                            matTooltip="{{`owner: ${item.ownerName}, repository: ${item.repositoryName}`}}" 
                             [matTooltipPosition]="'below'">
                             {{item.name}}
                         </a>             

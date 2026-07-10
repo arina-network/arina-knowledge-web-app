@@ -1,6 +1,6 @@
-import { ChangeDetectorRef, Component, inject, OnDestroy, OnInit, signal } from "@angular/core";
+import { ChangeDetectorRef, Component, effect, inject, signal } from "@angular/core";
+import { toSignal } from "@angular/core/rxjs-interop";
 import { ActivatedRoute, Params } from "@angular/router";
-import { Subscription } from "rxjs";
 
 import { Message } from "../../models/message";
 
@@ -10,8 +10,7 @@ import { AppParams } from "../../constants/app-params";
 @Component({
     template: ''
 })
-export class BaseDataComponent
-    implements OnInit, OnDestroy {
+export class BaseDataComponent {
     protected cdr = inject(ChangeDetectorRef);   
 
     protected route = inject(ActivatedRoute);
@@ -25,11 +24,23 @@ export class BaseDataComponent
 
     protected messages: Message[] = [];
 
-    public isDataLoading = signal<boolean>(false);    
+    public isDataLoading = signal<boolean>(false);
+    protected params = toSignal(this.route.params);    
 
-    private readonly subscriptions: Subscription[] = [];
+    constructor() {
+        effect(() => {
+            const currentParams = this.params();
+            if (currentParams) {
+                this.refreshParams(currentParams);
+            } else {
+                this.clearParams();
+            }
+        });
+    }    
 
     async refreshParams(params: Params) {
+        // console.log('refreshParams: ', params);
+
         this.owner = params[AppParams.Owner];
         this.repository = params[AppParams.Repository];
         this.branch = params[AppParams.Branch] ?? 'main';
@@ -37,7 +48,20 @@ export class BaseDataComponent
 
         this.action = params[AppParams.Action];
 
+        // console.log('refreshParams p2');
         this.refreshData();
+        // console.log('refreshParams p3');
+    }
+
+    async clearParams() {
+        // console.log('refreshParams: ', params);
+
+        this.owner = undefined;
+        this.repository = undefined;
+        this.branch = undefined;
+        this.key = undefined;
+
+        this.action = AppActions.Show;
     }
 
     async refreshData() {
@@ -50,28 +74,5 @@ export class BaseDataComponent
 
     clearMessages() {
         this.messages = [];
-    }
-
-    initSubsriptions() {
-        this.addSubscription(this.route.params.subscribe(p =>
-            this.refreshParams(p)
-        ));
-    }
-
-    addSubscription(subscription: Subscription) {
-        this.subscriptions.push(subscription);
-    }
-
-    clearSubscriptions() {
-        this.subscriptions.forEach(x => x.unsubscribe());
-    }
-
-    async ngOnInit() {
-        await this.refreshLookupData()
-        this.initSubsriptions();
-    }
-
-    ngOnDestroy() {
-        this.clearSubscriptions();
     }
 }

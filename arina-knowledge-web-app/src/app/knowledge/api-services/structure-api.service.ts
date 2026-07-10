@@ -100,12 +100,19 @@ export class StructureApiService {
             return of('');
         }
 
+        const url = key ? 
+            `${this.routes.githubApiRepositories}/${ownerName}/${repositoryName}/${this.routes.githubApiContents}/${key}?ref=${branchName}` : 
+            `${this.routes.githubApiRepositories}/${ownerName}/${repositoryName}/${this.routes.githubApiContents}/?ref=${branchName}`;
+        // console.log(url)
+
         const headers =  this.getHeaders()
-        if (key) {
-            return this.http.get(`${this.routes.githubApiRepositories}/${ownerName}/${repositoryName}/${this.routes.githubApiContents}/${key}/?ref=${branchName}`, { headers });
-        } else {
-            return this.http.get(`${this.routes.githubApiRepositories}/${ownerName}/${repositoryName}/${this.routes.githubApiContents}/?ref=${branchName}`, { headers });
-        }
+        return this.http.get(url, { headers });
+
+        // if (key) {
+        //     return this.http.get(`${this.routes.githubApiRepositories}/${ownerName}/${repositoryName}/${this.routes.githubApiContents}/${key}/?ref=${branchName}`, { headers });
+        // } else {
+        //     return this.http.get(`${this.routes.githubApiRepositories}/${ownerName}/${repositoryName}/${this.routes.githubApiContents}/?ref=${branchName}`, { headers });
+        // }
     }
 
 

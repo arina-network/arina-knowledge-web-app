@@ -26,7 +26,7 @@
 
                             <!-- Section Repository Links -->
                             @for (item of group.repositories; track item.url) {
-                                <a mat-menu-item routerLink="/{{`${routes.knowledge}/${item.ownerName}/${item.repositoryName}`}}"
+                                <a mat-menu-item routerLink="{{`${routes.knowledge}/${item.ownerName}/${item.repositoryName}`}}"
                                     class="!px-6 !py-2 text-sm block text-gray-700 hover:bg-gray-50">
                                     {{ item.name }}
                                 </a>                            
@@ -59,13 +59,19 @@
                 </li>                
             </ul>             
             <ul class="flex items-center space-x-6 text-base">
-                <!-- Guide Link -->
+                <!-- Guides Link -->
                 <li>
-                    <!-- <a href="{{routes.guide}}" target="_blank" -->
-                    <a routerLink="/{{routes.guide}}"
+                    <a routerLink="/{{routes.articles}}"
                         routerLinkActive="bg-blue-600 text-white font-semibold"
                         class="hover:text-slate-400 transition-colors duration-200 px-2 py-1 block">
-                        Guide
+                        Articles
+                    </a>
+                </li>
+                <li>
+                    <a routerLink="/{{routes.guides}}"
+                        routerLinkActive="bg-blue-600 text-white font-semibold"
+                        class="hover:text-slate-400 transition-colors duration-200 px-2 py-1 block">
+                        Guides
                     </a>
                 </li>
                 <!-- Login/Logout Link -->

@@ -86,7 +86,10 @@ export class NavigationHeader {
     }
 
     setBranch(branch: Branch) {
-      this.repositoryService.setSelectedBranch(branch);
+        const repository = this.repositoryService.getSelectedRepository();
+        const url = `/${this.routes.knowledge}/${repository?.ownerName}/${repository?.repositoryName}/${branch.branchName}`;
+
+        this.router.navigate([url]);
     }
     
     isExpanded = false;
