@@ -15,8 +15,35 @@
                 }
             }
         </div>
+        @if(rawUrl){
+            <mat-button-toggle-group [value]="currentView()" (change)="onViewChange($event.value)" aria-label="Structure View Switcher">
+                <mat-button-toggle value="action_view">
+                    <mat-icon fontSet="material-symbols-outlined">article</mat-icon>
+                    View
+                </mat-button-toggle>
+                <mat-button-toggle value="action_source">
+                    <mat-icon fontSet="material-symbols-outlined">edit_note</mat-icon>
+                    Source
+                </mat-button-toggle>
+            </mat-button-toggle-group>                
+        } @else {
+            <mat-button-toggle-group [value]="currentListView()" (change)="onListViewChange($event.value)" aria-label="List View Switcher">
+                <mat-button-toggle value="action_readme">
+                    <mat-icon fontSet="material-symbols-outlined">article</mat-icon>
+                    README
+                </mat-button-toggle>
+                <mat-button-toggle value="action_list">
+                    <mat-icon fontSet="material-symbols-outlined">list</mat-icon>
+                    List
+                </mat-button-toggle>
+                <mat-button-toggle value="action_content">
+                    <mat-icon fontSet="material-symbols-outlined">content_copy</mat-icon>
+                    Content
+                </mat-button-toggle>
+            </mat-button-toggle-group>                
+        }
         <ul class="flex items-center space-x-6 text-base">
-            @if(rawUrl){
+            <!-- @if(rawUrl){
                 <li>
                     <a mat-button href="{{rawUrl}}" target="_blank"
                         class="ml-auto inline-flex items-center gap-1 font-medium">
@@ -24,7 +51,7 @@
                         <span class="hover:underline">Raw</span>
                     </a>            
                 </li>
-            }
+            } -->
             @if (githubUrl) {
                 <li>
                     <a mat-button href="{{githubUrl}}" target="_blank"
@@ -41,14 +68,14 @@
 
 
 @if (source){
-    <!-- <div class="flex items-center justify-center p-4"> -->
-    <div class="p-4 ml-8">
-        <!-- <h2 class="text-xl font-bold mb-4">{{title}}</h2> -->
-        <!-- <div class="prose max-w-5xl mx-4" [innerHTML]="(source | markdown | async) ?? '' | safeHtml">
-        </div> -->
-        @if (source | markdown | async; as htmlContent) {
-            <div class="prose max-w-5xl mx-4" [innerHTML]="htmlContent | safeHtml">
-            </div>
+    <div class="ml-4">
+        @if (currentView() === 'action_view') {
+            @if (source | markdown | async; as htmlContent) {
+                <div class="prose max-w-5xl p-4 mx-4" [innerHTML]="htmlContent | safeHtml">
+                </div>
+            }
+        } @else if (currentView() === 'action_source') {
+            <pre class="bg-gray-100 p-4 rounded-md overflow-x-auto"><code>{{ source }}</code></pre>
         }
     </div>
 }

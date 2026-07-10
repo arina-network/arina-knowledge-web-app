@@ -1,9 +1,10 @@
-import { Component, inject } from '@angular/core';
+import { Component, inject, signal } from '@angular/core';
 import { AsyncPipe } from '@angular/common';
 import { RouterLink } from '@angular/router';
 
 import { MatDividerModule } from '@angular/material/divider';
 import { MatIconModule } from '@angular/material/icon';
+import { MatButtonToggleModule } from '@angular/material/button-toggle';
 
 import { AppRoutes } from '@/app/core/constants/app-routes';
 import { Breadcrumb } from '@/app/core/models/breadcrumb';
@@ -25,6 +26,7 @@ import { StructureLink } from '../../models/structure-link';
         RouterLink,
         MatDividerModule,
         MatIconModule,
+        MatButtonToggleModule,
         ProgressComponent,
         AppMarkdownPipe,
         AppSafeHtmlPipe
@@ -44,6 +46,20 @@ export class StructureViewComponent
     rawUrl: string | undefined;
     source: string | undefined;
     contentLinks: StructureLink[] = [];  
+
+    // structure view
+    currentView = signal<'action_view' | 'action_source'>('action_view');
+
+    onViewChange(view: 'action_view' | 'action_source') {
+        this.currentView.set(view);
+    }    
+
+    // folder view
+    currentListView = signal<'action_readme' | 'action_list' | 'action_content' >('action_readme');
+
+    onListViewChange(view: 'action_readme' | 'action_list' | 'action_content') {
+        this.currentListView.set(view);
+    }
 
     override async refreshData() {
         this.isDataLoading.set(true);
