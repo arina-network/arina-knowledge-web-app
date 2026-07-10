@@ -1,11 +1,11 @@
-<div class="p-4 ml-8">
+<div class="p-4 ml-8 h-full overflow-y-auto">
     <h1 class="text-2xl font-semibold">Settings</h1>
-    <h2 class="text-lg font-semibold my-4">Private Repositories</h2>
+    <h2 class="text-lg font-semibold my-4">Repositories</h2>
     @if (authorizationService.isAuthorized()) {
         <app-repository-manager [repositoryCategory]="repositoryCategory.Private"></app-repository-manager>
     } @else {
         <div class="prose">
-            <span class="mx-2">Please login to manage your private knowledge repositories:</span>
+            <span class="mx-2">Please login to manage your <b>private</b> knowledge repositories:</span>
             <a routerLink="{{routes.login}}" 
                 class="text-gray-800 text-xl font-bold tracking-wider hover:text-indigo-400 transition-colors duration-200">
                 login
@@ -13,11 +13,10 @@
         </div>        
     }
 
-    <h2 class="text-lg font-semibold my-4">Public Repositories</h2>
     <app-repository-manager [repositoryCategory]="repositoryCategory.Public"></app-repository-manager>
     
+    <h2 class="text-lg font-semibold my-4">GitHub User</h2>
     @if (authorizationService.isAuthorized()) {
-        <h2 class="text-lg font-semibold my-4">GitHub User</h2>
         <div class="prose text-xl mb-4">
             <ul>
                 <li>
@@ -34,6 +33,14 @@
                 </li>
             </ul>
         </div>
-    } 
+    } @else {
+        <div class="prose">
+            <span class="mx-2">Please login to use GitHub without limitations:</span>
+            <a routerLink="{{routes.login}}" 
+                class="text-gray-800 text-xl font-bold tracking-wider hover:text-indigo-400 transition-colors duration-200">
+                login
+            </a>
+        </div>        
+    }
 </div>
 

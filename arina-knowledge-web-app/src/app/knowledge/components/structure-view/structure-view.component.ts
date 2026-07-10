@@ -61,7 +61,7 @@ export class StructureViewComponent
                 if (!data) {
                     this.isDataLoading.set(false);
 
-                    this.notificationService.showError('GitHub returns no data.');
+                    // this.notificationService.showError('GitHub returns no data.');
 
                     return;
                 }

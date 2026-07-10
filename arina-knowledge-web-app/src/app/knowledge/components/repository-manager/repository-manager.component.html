@@ -1,9 +1,9 @@
-<div class="grid grid-cols-1 md:grid-cols-6 gap-6">
+<div class="grid grid-cols-1 md:grid-cols-6 gap-6 mb-4">
     <!-- List Card -->
     <mat-card class="md:col-span-3 p-6 shadow-lg rounded-2xl bg-white border border-slate-200">
         <h2 class="text-xl font-semibold text-slate-800 mb-4 flex items-center gap-2">
             <mat-icon class="text-indigo-600">folder_opened</mat-icon>
-            List
+            {{repositoryCategory ? repositoryCategory.toUpperCase() + ' Repositories' : 'List of Repositories'}}
         </h2>
 
         <mat-list *ngIf="this.repositories.length > 0; else emptyState" class="divide-y divide-slate-100">
@@ -14,7 +14,7 @@
                 <span matListItemTitle class="flex items-center gap-3 font-bold text-slate-800 text-lg w-full">
                     <span class="font-bold text-slate-800 text-lx">{{ item.name }}</span>
                     <button mat-icon-button color="warn" (click)="deleteRepository(item.key); $event.stopPropagation()">
-                        <mat-icon>delete</mat-icon>
+                        <mat-icon fontSet="material-symbols-outlined" class="text-indigo-600">delete</mat-icon>
                     </button>
                 </span>                        
 
@@ -28,7 +28,7 @@
 
         <ng-template #emptyState>
             <div class="flex flex-col items-center justify-center py-20 text-slate-400">
-                <mat-icon class="text-6xl mb-4 h-16 w-16">folder_open</mat-icon>
+                <mat-icon fontSet="material-symbols-outlined" class="text-6xl mb-4 h-16 w-16">folder_open</mat-icon>
                 <p class="text-lg font-medium">No repositories.</p>
             </div>
         </ng-template>
@@ -37,7 +37,8 @@
     <!-- Form Card -->
     <mat-card class="md:col-span-3 p-6 flex flex-col gap-4 shadow-lg rounded-2xl bg-white border border-slate-200">
         <h2 class="text-xl font-semibold text-slate-800 flex items-center gap-2">
-            <mat-icon class="text-indigo-600">add_circle</mat-icon> Add Repository
+            <mat-icon fontSet="material-symbols-outlined" class="text-indigo-600">add_circle</mat-icon>
+            add Repository
         </h2>
     
         <mat-form-field appearance="outline" class="w-full">

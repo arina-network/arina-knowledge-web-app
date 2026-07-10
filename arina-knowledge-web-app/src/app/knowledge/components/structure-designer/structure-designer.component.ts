@@ -52,14 +52,14 @@ export class StructureDesignerComponent
     readonly tree = viewChild<MatTree<StructureTreeNode>>('tree');
 
     currentRoute: Structure[] = [];
-    nodesToExpand: Structure[] = [];
-    get currentStructure(): Structure | null {
-        if (!(this.currentRoute?.length > 0)) {
-            return null;
-        }
+    // nodesToExpand: Structure[] = [];
+    // get currentStructure(): Structure | null {
+    //     if (!(this.currentRoute?.length > 0)) {
+    //         return null;
+    //     }
 
-        return this.currentRoute[this.currentRoute.length - 1];
-    }
+    //     return this.currentRoute[this.currentRoute.length - 1];
+    // }
 
     getLevel = (node: StructureTreeNode) => node.level;
 
@@ -98,8 +98,10 @@ export class StructureDesignerComponent
     }        
 
     async refreshRootNodes() {
-        this.isDataLoading.set(true);
+        // console.log('refreshRootNodes: ', {owner: this.owner, repository: this.repository, branch: this.branch});
 
+        this.isDataLoading.set(true);
+        
         this.api.getStructureTreeRootNodes(
             this.owner, 
             this.repository, 
@@ -169,6 +171,7 @@ export class StructureDesignerComponent
     private currentBranch?: string;
 
     override async refreshData() {
+        // console.log('refreshData: ', {owner: this.owner, repository: this.repository, branch: this.branch});
         if (
             this.owner !== this.currentOwner 
             || this.repository !== this.currentRepository 

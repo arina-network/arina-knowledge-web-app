@@ -26,7 +26,7 @@
 
                             <!-- Section Repository Links -->
                             @for (item of group.repositories; track item.url) {
-                                <a mat-menu-item routerLink="/{{`${routes.knowledge}/${item.ownerName}/${item.repositoryName}`}}"
+                                <a mat-menu-item routerLink="{{`${routes.knowledge}/${item.ownerName}/${item.repositoryName}`}}"
                                     class="!px-6 !py-2 text-sm block text-gray-700 hover:bg-gray-50">
                                     {{ item.name }}
                                 </a>                            

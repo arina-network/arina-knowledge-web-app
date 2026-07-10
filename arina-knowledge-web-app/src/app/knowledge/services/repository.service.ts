@@ -94,6 +94,7 @@ export class RepositoryService {
         this.branches.set(null);
         this.selectedBranch.set(null);
         this.selectedRepository.set(null);
+        this.privateRepositories.set(this.loadRepositoriesFromLocalStorage(RepositoryCategory.Private));
     }
     
     setOwnerAndRepositoryAndBranch(
@@ -221,8 +222,14 @@ export class RepositoryService {
     }
 
     private saveRepositoriesToLocalStorage(category: RepositoryCategory, group: RepositoryGroup) {
+        // const userInfo = this.authorizationService.getUserInfo();
+        // console.log('saveRepositoriesToLocalStorage: ', {category, group, userInfo });
+
         // do not store private repositories without authorization
-        if (category === RepositoryCategory.Private && !this.authorizationService.isAuthorized()) {
+        if (category === RepositoryCategory.Private 
+            && (!this.authorizationService.isAuthorized()
+            || !(this.authorizationService.getUserInfo()?.login?.length ?? 0 > 0))
+        ) {
             return;
         }
 
@@ -234,8 +241,10 @@ export class RepositoryService {
         result.category = category;
 
         // check authorized for private repositories
-        if (category === RepositoryCategory.Private &&  !this.authorizationService.isAuthorized())
-        {
+        if (category === RepositoryCategory.Private 
+            &&  !this.authorizationService.isAuthorized()
+            && !this.authorizationService.getUserInfo()        
+        ) {
             return result;
         }
 

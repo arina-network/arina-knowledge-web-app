@@ -86,21 +86,21 @@ export class StructureTreeComponent
         this.dataSource = new StructureTreeDataSource(this.treeControl, api);
     }
 
-    override initSubsriptions() {
-        super.initSubsriptions();
+    // override initSubsriptions() {
+    //     super.initSubsriptions();
 
-        this.addSubscription(
-            this.dataSource.dataChange.subscribe(nodes => this.expandFromRoute(nodes))
-        );
+    //     this.addSubscription(
+    //         this.dataSource.dataChange.subscribe(nodes => this.expandFromRoute(nodes))
+    //     );
 
-        this.addSubscription(this.dataNotificationService.notifications.subscribe(event => {
-            if (event?.structure?.key?.length && 0 > 0) {
-                const node = this.treeControl.dataNodes.find(x => x.key === event?.structure?.key);
-                node.name = event.structure.name;
-                node.description = event.structure.description;
-            }
-        }));
-    }
+    //     this.addSubscription(this.dataNotificationService.notifications.subscribe(event => {
+    //         if (event?.structure?.key?.length && 0 > 0) {
+    //             const node = this.treeControl.dataNodes.find(x => x.key === event?.structure?.key);
+    //             node.name = event.structure.name;
+    //             node.description = event.structure.description;
+    //         }
+    //     }));
+    // }
 
     async refreshRootNodes() {
         this.isDataLoading.set(true);
