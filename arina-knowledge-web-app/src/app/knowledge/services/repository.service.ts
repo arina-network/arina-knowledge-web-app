@@ -194,14 +194,14 @@ export class RepositoryService {
             url: 'https://github.com/arina-network/arina-knowledge',
             isPublic: true
         });
-        result.repositories.push({
-            key: crypto.randomUUID(),
-            name: 'Arina Knowledge Guide',
-            ownerName: 'arina-network',
-            repositoryName: 'arina-knowledge-guide',
-            url: 'https://github.com/arina-network/arina-knowledge-guide',
-            isPublic: true
-        });
+        // result.repositories.push({
+        //     key: crypto.randomUUID(),
+        //     name: 'Arina Knowledge Guide',
+        //     ownerName: 'arina-network',
+        //     repositoryName: 'arina-knowledge-guide',
+        //     url: 'https://github.com/arina-network/arina-knowledge-guide',
+        //     isPublic: true
+        // });
 
         return result;
     }

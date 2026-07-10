@@ -38,7 +38,7 @@ export class AppMarkdownPipe implements PipeTransform {
                     let finalHref = href;
 
                     if (href.startsWith('/')) { // process only local links
-                        finalHref = `${knowledge}/${owner}/${repository}/${branch}/${href}`
+                        finalHref = `${knowledge}/${owner}/${repository}/${branch}${href}`
                     }
 
                     const titleAttr = title ? ` title="${title}"` : '';
