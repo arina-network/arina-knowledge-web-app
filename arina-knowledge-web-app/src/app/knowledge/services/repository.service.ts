@@ -22,9 +22,10 @@ export class RepositoryService {
 
     protected api = inject(StructureApiService);
 
-    public publicRepositories = signal<RepositoryGroup>(this.loadRepositoriesFromLocalStorage(RepositoryCategory.Public));
-    public privateRepositories = signal<RepositoryGroup>(this.loadRepositoriesFromLocalStorage(RepositoryCategory.Private));
     public arinaRepositories = signal<RepositoryGroup>(this.loadArinaRepositories());
+    public currentRepositories = signal<RepositoryGroup>(this.loadCurrentRepositories());
+    public privateRepositories = signal<RepositoryGroup>(this.loadRepositoriesFromLocalStorage(RepositoryCategory.Private));
+    public publicRepositories = signal<RepositoryGroup>(this.loadRepositoriesFromLocalStorage(RepositoryCategory.Public));
 
     public branches = signal<Branch[] | null>(null);
     constructor() {
@@ -79,6 +80,7 @@ export class RepositoryService {
             this.privateRepositories(),
             this.publicRepositories(),
             this.arinaRepositories(),
+            this.currentRepositories()
         ]    
     }
 
@@ -114,8 +116,15 @@ export class RepositoryService {
             && r.repositoryName?.toLowerCase() === repositoryName?.toLowerCase()
         );
 
+        const currentRepository = this.currentRepositories().repositories.find(r => 
+            r.ownerName?.toLowerCase() === ownerName?.toLowerCase() 
+            && r.repositoryName?.toLowerCase() === repositoryName?.toLowerCase()
+        );
+
         if (arinaRepository) {
             this.setSelectedRepository(arinaRepository);
+        } else if (currentRepository) {
+            this.setSelectedRepository(currentRepository);
         } else {
             const publicRepository = this.publicRepositories().repositories.find(r => 
                 r.ownerName?.toLowerCase() === ownerName?.toLowerCase() 
@@ -142,18 +151,22 @@ export class RepositoryService {
                         isPublic: true                
                     }
 
-                    if (this.authorizationService.isAuthorized())
-                    {
-                        this.privateRepositories.update(current => ({
-                            ...current,
-                            repositories: [...current.repositories, newRepository]
-                        }));
-                    } else {
-                        this.publicRepositories.update(current => ({
-                            ...current,
-                            repositories: [...current.repositories, newRepository]
-                        }));
-                    }
+                    this.currentRepositories.update(current => ({
+                        ...current,
+                        repositories: [...current.repositories, newRepository]
+                    }));                    
+                    // if (this.authorizationService.isAuthorized())
+                    // {
+                    //     this.privateRepositories.update(current => ({
+                    //         ...current,
+                    //         repositories: [...current.repositories, newRepository]
+                    //     }));
+                    // } else {
+                    //     this.publicRepositories.update(current => ({
+                    //         ...current,
+                    //         repositories: [...current.repositories, newRepository]
+                    //     }));
+                    // }
 
                     this.setSelectedRepository(newRepository);
                 } 
@@ -185,7 +198,7 @@ export class RepositoryService {
     
     private loadArinaRepositories() : RepositoryGroup {
         const result = new RepositoryGroup();
-        result.category = RepositoryCategory.ArinaNetwork;
+        result.category = RepositoryCategory.Arina;
 
         result.repositories.push({
             key: crypto.randomUUID(),
@@ -195,14 +208,13 @@ export class RepositoryService {
             url: 'https://github.com/arina-network/arina-knowledge',
             isPublic: true
         });
-        // result.repositories.push({
-        //     key: crypto.randomUUID(),
-        //     name: 'Arina Knowledge Guide',
-        //     ownerName: 'arina-network',
-        //     repositoryName: 'arina-knowledge-guide',
-        //     url: 'https://github.com/arina-network/arina-knowledge-guide',
-        //     isPublic: true
-        // });
+
+        return result;
+    }
+
+    private loadCurrentRepositories() : RepositoryGroup {
+        const result = new RepositoryGroup();
+        result.category = RepositoryCategory.Current;
 
         return result;
     }

@@ -82,6 +82,13 @@
                         Guides
                     </a>
                 </li>
+                <li>
+                    <a routerLink="/{{routes.models}}"
+                        routerLinkActive="bg-blue-600 text-white font-semibold"
+                        class="hover:text-slate-400 transition-colors duration-200 px-2 py-1 block">
+                        Models
+                    </a>
+                </li>
                 <!-- Login/Logout Link -->
                 <li>
                     @if (!authorizationService.isAuthorized()) {

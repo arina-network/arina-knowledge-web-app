@@ -1,6 +1,6 @@
-import { Component, inject, signal } from '@angular/core';
+import { ChangeDetectorRef, Component, effect, inject, signal } from '@angular/core';
 import { AsyncPipe } from '@angular/common';
-import { RouterLink } from '@angular/router';
+import { ActivatedRoute, NavigationEnd, Router, RouterLink } from '@angular/router';
 
 import { MatDividerModule } from '@angular/material/divider';
 import { MatIconModule } from '@angular/material/icon';
@@ -10,13 +10,14 @@ import { AppRoutes } from '@/app/core/constants/app-routes';
 import { Breadcrumb } from '@/app/core/models/breadcrumb';
 import { AppMarkdownPipe } from '@/app/core/pipes/app-marked.pipe';
 import { AppSafeHtmlPipe } from '@/app/core/pipes/app-safe-html.pipe';
-import { BaseDataComponent } from '@/app/core/components/base-data/base-data.component';
+// import { BaseDataComponent } from '@/app/core/components/base-data/base-data.component';
 import { ProgressComponent } from '@/app/core/components/progress/progress.component';
 import { NotificationService } from '@/app/core/services/notification.service';
 
 
 import { StructureApiService } from '../../api-services/structure-api.service';
 import { StructureLink } from '../../models/structure-link';
+import { toSignal } from '@angular/core/rxjs-interop';
 
 @Component({
     selector: 'app-structure-view',
@@ -33,14 +34,47 @@ import { StructureLink } from '../../models/structure-link';
     ],
     templateUrl: './structure-view.component.html'
 })
-export class StructureViewComponent
-    extends BaseDataComponent {
+export class StructureViewComponent {
+    // extends BaseDataComponent {
+    protected cdr = inject(ChangeDetectorRef);   
+
+    protected route = inject(ActivatedRoute);
+    protected router = inject(Router);
+    protected events = toSignal(this.router.events);
 
     protected notificationService = inject(NotificationService);        
    
     protected api = inject(StructureApiService);
     protected routes = inject(AppRoutes);
-    
+
+    protected owner?: string;
+    protected repository?: string;
+    protected branch?: string;
+    protected key?: string;
+
+    public isDataLoading = signal<boolean>(false);
+
+    constructor() {
+        effect(() => {
+            const currentEvent = this.events();
+            if (currentEvent instanceof NavigationEnd) {
+                const urlTree = this.router.parseUrl(this.router.url);
+                const segments = urlTree.root.children['primary']?.segments || [];
+
+                const newKey = segments.length >= 5 ? 
+                    segments.slice(4).map(s => s.path).join('/') :
+                    '';
+
+                this.refreshData(
+                    this.route.snapshot.paramMap.get('owner') || '',
+                    this.route.snapshot.paramMap.get('repository') || '',
+                    this.route.snapshot.paramMap.get('branch') || 'main',
+                    newKey
+                )
+            }
+        });        
+    }  
+   
     title: string | undefined;
     githubUrl: string | undefined;    
     rawUrl: string | undefined;
@@ -63,8 +97,18 @@ export class StructureViewComponent
         this.currentListView.set(view);
     }
 
-    override async refreshData() {
+    async refreshData(
+        newOwner: string,
+        newRepository: string,
+        newBranch: string,
+        newKey: string
+    ) {
         this.isDataLoading.set(true);
+
+        this.owner = newOwner;
+        this.repository = newRepository;
+        this.branch = newBranch;
+        this.key = newKey;
 
         this.api.getStructureRaw(
             this.owner, 

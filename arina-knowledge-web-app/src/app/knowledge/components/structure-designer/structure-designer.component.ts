@@ -1,6 +1,6 @@
 import { Component, effect, inject, signal, viewChild } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
-import { ActivatedRoute, Params, RouterLink, RouterLinkActive } from '@angular/router'; 
+import { ActivatedRoute, NavigationEnd, Params, Router, RouterLink, RouterLinkActive } from '@angular/router'; 
 
 import { MatDividerModule } from '@angular/material/divider';
 import { MatIconModule } from '@angular/material/icon';
@@ -43,7 +43,12 @@ import { AppParams } from '@/app/core/constants/app-params';
 })
 export class StructureDesignerComponent {
     // extends BaseDataComponent {
+
     protected route = inject(ActivatedRoute);
+    // protected params = toSignal(this.route.params);    
+
+    private router = inject(Router);
+    private events = toSignal(this.router.events);
 
     protected notificationService = inject(NotificationService);        
     protected repositoryService = inject(RepositoryService);
@@ -54,7 +59,7 @@ export class StructureDesignerComponent {
     dataSource = signal<StructureTreeNode[]>([]);
     readonly tree = viewChild<MatTree<StructureTreeNode>>('tree');
 
-    currentRoute: Structure[] = [];
+    // currentRoute: Structure[] = [];
     // nodesToExpand: Structure[] = [];
     // get currentStructure(): Structure | null {
     //     if (!(this.currentRoute?.length > 0)) {
@@ -69,21 +74,47 @@ export class StructureDesignerComponent {
     protected branch?: string;
     protected key?: string;
 
-    protected params = toSignal(this.route.params);    
-
     public isDataLoading = signal<boolean>(false);
 
     constructor() {
         effect(() => {
-            const currentParams = this.params();
-            // console.log('StructureDesignerComponent: params changed', {currentParams, owner: this.owner, repository: this.repository, branch: this.branch, key: this.key});
-            if (currentParams) {
-                this.refreshData(currentParams);
+            const currentEvent = this.events();
+            if (currentEvent instanceof NavigationEnd) {
+                const urlTree = this.router.parseUrl(this.router.url);
+                const segments = urlTree.root.children['primary']?.segments || [];
+
+                // console.log('StructureDesignerComponent: NavigationEnd', {currentEvent, segments});
+                
+                const newKey = segments.length >= 5 ? 
+                    segments.slice(4).map(s => s.path).join('/') :
+                    '';
+
+                this.refreshData(
+                    this.route.snapshot.paramMap.get('owner') || '',
+                    this.route.snapshot.paramMap.get('repository') || '',
+                    this.route.snapshot.paramMap.get('branch') || 'main',
+                    newKey
+                    // segments[1]?.path,
+                    // segments[2]?.path,
+                    // segments[3]?.path ?? 'main',
+                    // segments[4]?.path
+                )
+                // this.refreshData(currentParams);
             }
             // } else {
             //     this.clearParams();
             // }
-        });
+        });        
+        // effect(() => {
+        //     const currentParams = this.params();
+        //     console.log('StructureDesignerComponent: params changed', {currentParams, owner: this.owner, repository: this.repository, branch: this.branch, key: this.key});
+        //     if (currentParams) {
+        //         this.refreshData(currentParams);
+        //     }
+        //     // } else {
+        //     //     this.clearParams();
+        //     // }
+        // });
     }      
 
     getLevel = (node: StructureTreeNode) => node.level;
@@ -122,12 +153,20 @@ export class StructureDesignerComponent {
         return sortedNodes;
     }        
 
-    async refreshData(params: Params) {
-        // console.log('refreshData: ', {params, owner: this.owner, repository: this.repository, branch: this.branch, key: this.key});
-        const newOwner = params[AppParams.Owner];
-        const newRepository = params[AppParams.Repository];
-        const newBranch = params[AppParams.Branch] ?? 'main';
-        const newKey = params[AppParams.Key];
+    async refreshData(
+        newOwner: string,
+        newRepository: string,
+        newBranch: string,
+        newKey: string
+    ) {
+        // console.log('refreshData: ', {newOwner, newRepository, newBranch, newKey});
+
+    // async refreshData(params: Params) {
+    //     // console.log('refreshData: ', {params, owner: this.owner, repository: this.repository, branch: this.branch, key: this.key});
+    //     const newOwner = params[AppParams.Owner];
+    //     const newRepository = params[AppParams.Repository];
+    //     const newBranch = params[AppParams.Branch]?.length > 0 ? params[AppParams.Branch] : 'main';
+    //     const newKey = params[AppParams.Key];
 
         // console.log('new params: ', {newOwner, newRepository, newBranch, newKey});
 
@@ -137,11 +176,15 @@ export class StructureDesignerComponent {
         ) {
             if (this.key != newKey) {
                 this.key = newKey;
+                // console.log('refreshData: key changed, expanding node by key', {newKey});
                 this.expandNodeByKey(this.dataSource());
             }
 
+            //console.log('refreshData: no changes detected, skipping refresh');
             return
         }
+
+        this.dataSource.set([]);
 
         this.owner = newOwner;
         this.repository = newRepository;
@@ -230,7 +273,10 @@ export class StructureDesignerComponent {
             if (matchNode) {
                 // console.log('expandNodeByKey: matchNode', {matchNode, key: this.key});
                 if (this.hasChild(0, matchNode)) {
-                    this.onNodeToggle(treeInstance, matchNode);
+                    if (!treeInstance.isExpanded(matchNode)){
+                        // console.log('expandNodeByKey: matchNode is expandable, toggling', {matchNode, key: this.key});
+                        this.onNodeToggle(treeInstance, matchNode);
+                    }
                 }
             }
         }

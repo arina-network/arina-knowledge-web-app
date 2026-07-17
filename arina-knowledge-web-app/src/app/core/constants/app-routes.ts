@@ -34,6 +34,4 @@ export class AppRoutes {
     public readonly articles = `${this.knowledge}/arina-network/arina-knowledge/main/articles`
     public readonly guides = `${this.knowledge}/arina-network/arina-knowledge/main/guides`
     public readonly models = `${this.knowledge}/arina-network/arina-knowledge/main/models`
-
-    // public readonly guide = `/${this.knowledge}/arina-network/arina-knowledge-guide/main`
 }
