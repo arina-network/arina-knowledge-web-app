@@ -1,4 +1,5 @@
 import { ChangeDetectorRef, Component, effect, inject, signal } from '@angular/core';
+import { toSignal } from '@angular/core/rxjs-interop';
 import { AsyncPipe } from '@angular/common';
 import { ActivatedRoute, NavigationEnd, Router, RouterLink } from '@angular/router';
 
@@ -17,7 +18,7 @@ import { NotificationService } from '@/app/core/services/notification.service';
 
 import { StructureApiService } from '../../api-services/structure-api.service';
 import { StructureLink } from '../../models/structure-link';
-import { toSignal } from '@angular/core/rxjs-interop';
+import { StructureContentComponent } from '../structure-content/structure-content.component';
 
 @Component({
     selector: 'app-structure-view',
@@ -30,7 +31,8 @@ import { toSignal } from '@angular/core/rxjs-interop';
         MatButtonToggleModule,
         ProgressComponent,
         AppMarkdownPipe,
-        AppSafeHtmlPipe
+        AppSafeHtmlPipe,
+        StructureContentComponent
     ],
     templateUrl: './structure-view.component.html'
 })
@@ -155,8 +157,12 @@ export class StructureViewComponent {
                         this.contentLinks.push({
                             name: item.name,
                             url: itemUrl,
-                            isFolder: item.type === 'dir'
+                            isFolder: item.type === 'dir',
 
+                            owner: this.owner,
+                            repository: this.repository,
+                            branch: this.branch,
+                            key: item.path
                         })                                        
                     })
 
