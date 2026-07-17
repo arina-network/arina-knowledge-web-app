@@ -1,21 +1,25 @@
-import { Component, inject } from '@angular/core';
+import { ChangeDetectorRef, Component, effect, inject, signal } from '@angular/core';
+import { toSignal } from '@angular/core/rxjs-interop';
 import { AsyncPipe } from '@angular/common';
-import { RouterLink } from '@angular/router';
+import { ActivatedRoute, NavigationEnd, Router, RouterLink } from '@angular/router';
 
 import { MatDividerModule } from '@angular/material/divider';
 import { MatIconModule } from '@angular/material/icon';
+import { MatButtonToggleModule } from '@angular/material/button-toggle';
 
 import { AppRoutes } from '@/app/core/constants/app-routes';
 import { Breadcrumb } from '@/app/core/models/breadcrumb';
 import { AppMarkdownPipe } from '@/app/core/pipes/app-marked.pipe';
 import { AppSafeHtmlPipe } from '@/app/core/pipes/app-safe-html.pipe';
-import { BaseDataComponent } from '@/app/core/components/base-data/base-data.component';
 import { ProgressComponent } from '@/app/core/components/progress/progress.component';
+import { AppParams } from '@/app/core/constants/app-params';
 import { NotificationService } from '@/app/core/services/notification.service';
 
 
 import { StructureApiService } from '../../api-services/structure-api.service';
 import { StructureLink } from '../../models/structure-link';
+import { StructureContentComponent } from '../structure-content/structure-content.component';
+import { StructureHomeComponent } from '../structure-home/structure-home.component';
 
 @Component({
     selector: 'app-structure-view',
@@ -25,28 +29,91 @@ import { StructureLink } from '../../models/structure-link';
         RouterLink,
         MatDividerModule,
         MatIconModule,
+        MatButtonToggleModule,
         ProgressComponent,
         AppMarkdownPipe,
-        AppSafeHtmlPipe
+        AppSafeHtmlPipe,
+        StructureContentComponent,
+        StructureHomeComponent
     ],
     templateUrl: './structure-view.component.html'
 })
-export class StructureViewComponent
-    extends BaseDataComponent {
+export class StructureViewComponent {
+
+    protected route = inject(ActivatedRoute);
+    protected router = inject(Router);
+    protected events = toSignal(this.router.events);
 
     protected notificationService = inject(NotificationService);        
    
     protected api = inject(StructureApiService);
     protected routes = inject(AppRoutes);
-    
-    title: string | undefined;
-    githubUrl: string | undefined;    
-    rawUrl: string | undefined;
-    source: string | undefined;
-    contentLinks: StructureLink[] = [];  
 
-    override async refreshData() {
+    protected owner?: string;
+    protected repository?: string;
+    protected branch?: string;
+    protected key?: string;
+
+    public isDataLoading = signal<boolean>(false);
+
+    constructor() {
+        effect(() => {
+            const currentEvent = this.events();
+            // console.log('Router event detected: ', currentEvent);
+            if (currentEvent instanceof NavigationEnd) {
+                // console.log('NavigationEnd event detected. Refreshing data...', {route: this.route.url});
+                const urlTree = this.router.parseUrl(this.router.url);
+                const segments = urlTree.root.children['primary']?.segments || [];
+
+                const newKey = segments.length >= 5 ? 
+                    segments.slice(4).map(s => s.path).join('/') :
+                    undefined;
+
+                this.refreshData(
+                    this.route.snapshot.paramMap.get(AppParams.Owner) || '',
+                    this.route.snapshot.paramMap.get(AppParams.Repository) || '',
+                    this.route.snapshot.paramMap.get(AppParams.Branch) || 'main',
+                    newKey
+                )
+            }
+        });        
+    }  
+   
+    // title: string | undefined;
+    public githubUrl = signal<string | undefined>(undefined);
+    public rawUrl = signal<string | undefined>(undefined);
+    // source: string | undefined;
+    public source = signal<string | undefined>(undefined);
+
+    public contentLinks = signal<StructureLink[]>([]);
+    public contentReadme = signal<any | undefined>(undefined);
+
+    // structure view
+    currentView = signal<'action_view' | 'action_source'>('action_view');
+
+    onViewChange(view: 'action_view' | 'action_source') {
+        this.currentView.set(view);
+    }    
+
+    // folder view
+    currentListView = signal<'action_readme' | 'action_list' | 'action_content' >('action_readme');
+
+    onListViewChange(view: 'action_readme' | 'action_list' | 'action_content') {
+        this.currentListView.set(view);
+    }
+
+    async refreshData(
+        newOwner: string,
+        newRepository: string,
+        newBranch: string,
+        newKey?: string
+    ) {
         this.isDataLoading.set(true);
+
+        this.owner = newOwner;
+        this.repository = newRepository;
+        this.branch = newBranch;
+        this.key = newKey;
 
         this.api.getStructureRaw(
             this.owner, 
@@ -72,8 +139,8 @@ export class StructureViewComponent
 
                     this.setSource(data)
 
-                    this.rawUrl = data.download_url;
-                    this.githubUrl = `${this.routes.github}/${this.owner}/${this.repository}/${this.routes.githubBlob}/${this.branch}/${this.key}`;
+                    this.rawUrl.set(data.download_url);
+                    this.githubUrl.set(`${this.routes.github}/${this.owner}/${this.repository}/${this.routes.githubBlob}/${this.branch}/${this.key}`);
                 } else {
                     let readme: any = undefined;
                     data.map(item => {
@@ -90,12 +157,28 @@ export class StructureViewComponent
                             readme = item;
                         }
 
-                        this.contentLinks.push({
+                        const newLink = {
                             name: item.name,
                             url: itemUrl,
-                            isFolder: item.type === 'dir'
+                            isFolder: item.type === 'dir',
 
-                        })                                        
+                            owner: this.owner,
+                            repository: this.repository,
+                            branch: this.branch,
+                            key: item.path
+                        }
+                        this.contentLinks.update(current => [...current, newLink]);  
+
+                        // this.contentLinks.push({
+                        //     name: item.name,
+                        //     url: itemUrl,
+                        //     isFolder: item.type === 'dir',
+
+                        //     owner: this.owner,
+                        //     repository: this.repository,
+                        //     branch: this.branch,
+                        //     key: item.path
+                        // })                                        
                     })
 
                     if (!readme) {
@@ -113,18 +196,20 @@ export class StructureViewComponent
                             if (readmeData?.content) {
                                 this.isDataLoading.set(false);
 
-                                this.setSource(readmeData)
+                                this.setReadme(readmeData);
+                                this.source.set(undefined);
                                 
-                                this.rawUrl = undefined;
-                                this.githubUrl = undefined;
-                                this.contentLinks = [];
+                                this.rawUrl.set(undefined);
+                                // this.githubUrl = undefined;
+                                // this.contentLinks = [];
                             } else {
                                 this.isDataLoading.set(false);
 
-                                this.title = this.key;
-                                this.source = undefined;
-                                this.rawUrl = undefined;
-                                this.githubUrl = undefined;
+                                // this.title = this.key;
+                                this.source.set(undefined);
+                                this.rawUrl.set(undefined);
+                                this.githubUrl.set(undefined);
+                                this.contentReadme.set(undefined);
                             }
                         },
                         error: (err) => {
@@ -136,7 +221,7 @@ export class StructureViewComponent
                     });                   
                 }
 
-                this.cdr.detectChanges(); 
+                // this.cdr.detectChanges(); 
             },
             error: (err) => {
                 this.clearData()
@@ -152,27 +237,44 @@ export class StructureViewComponent
         const binaryString = atob(cleanBase64);
         const bytes = Uint8Array.from(binaryString, m => m.charCodeAt(0));
 
-        this.title = this.key;
-        this.source = new TextDecoder('utf-8').decode(bytes);
+        // this.title = this.key;
+        this.source.set(new TextDecoder('utf-8').decode(bytes));
+    }
+
+    protected setReadme(data: any) {
+        const cleanBase64 = data.content.replace(/\s/g, '');
+        const binaryString = atob(cleanBase64);
+        const bytes = Uint8Array.from(binaryString, m => m.charCodeAt(0));
+
+        // this.title = this.key;
+        this.contentReadme.set(new TextDecoder('utf-8').decode(bytes));
     }
 
     protected clearData() {
-        this.title = undefined;
-        this.source = undefined;
-        this.rawUrl = undefined;
-        this.githubUrl = undefined;
-        this.contentLinks = [];
+        this.githubUrl.set(undefined);
+
+        // this.title = undefined;
+        this.source.set(undefined);
+        this.rawUrl.set(undefined);
+        
+        this.contentReadme.set(undefined);
+        this.contentLinks.set([]);
+    }
+
+    isEmpty() {
+        return !this.owner || !this.repository;
     }
 
     get isShowBreadcrumb() : boolean {
-        return !!this.key;
+        return !this.isEmpty();
+        // return !!this.key;
     }
 
     get breadcrumbs() : Breadcrumb[] {
         const result: Breadcrumb[] = [];
 
-        // empty route
-        if (!(this.key?.length ?? 0 > 0)) {
+        // empty repository
+        if (!(this.repository?.length ?? 0 > 0)) {
             return result;
         }
 
@@ -180,6 +282,11 @@ export class StructureViewComponent
             name: this.repository!,
             url: `/${this.routes.knowledge}/${this.owner}/${this.repository}/${this.branch}`
         });
+
+        // empty key
+        if (!(this.key?.length ?? 0 > 0)) {
+            return result;
+        }
 
         const route = this.key?.split('/').filter(x => x?.length > 0) ?? [];
         for (let i = 0; i < route.length; i++) {

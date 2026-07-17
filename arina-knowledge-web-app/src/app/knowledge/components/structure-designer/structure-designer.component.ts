@@ -1,5 +1,6 @@
-import { Component, inject, signal, viewChild } from '@angular/core';
-import { RouterLink, RouterLinkActive } from '@angular/router'; 
+import { Component, effect, ElementRef, inject, QueryList, signal, viewChild, ViewChildren } from '@angular/core';
+import { toSignal } from '@angular/core/rxjs-interop';
+import { ActivatedRoute, NavigationEnd, Router, RouterLink, RouterLinkActive } from '@angular/router'; 
 
 import { MatDividerModule } from '@angular/material/divider';
 import { MatIconModule } from '@angular/material/icon';
@@ -12,15 +13,15 @@ import { MatTree, MatTreeModule } from '@angular/material/tree';
 import { AppRoutes } from '@/app/core/constants/app-routes';
 
 import { NotificationService } from '@/app/core/services/notification.service';
-import { BaseDataComponent } from '@/app/core/components/base-data/base-data.component';
 import { ProgressComponent } from '@/app/core/components/progress/progress.component';
 
-import { Structure } from '@/app/knowledge/models/structure';
-import { StructureDetailsComponent } from '../structure-details/structure-details.component';
+// import { StructureDetailsComponent } from '../structure-details/structure-details.component';
 import { StructureTreeNode } from '../structure-tree/structure-tree-node';
+import { StructureViewComponent } from '../structure-view/structure-view.component';
 
 import { StructureApiService } from '../../api-services/structure-api.service';
 import { RepositoryService } from '../../services/repository.service';
+import { AppParams } from '@/app/core/constants/app-params';
 
 @Component({
     selector: 'app-structure-designer',
@@ -35,12 +36,16 @@ import { RepositoryService } from '../../services/repository.service';
         MatTooltipModule,
         MatTreeModule,
         ProgressComponent,
-        StructureDetailsComponent
+        StructureViewComponent
     ],
     templateUrl: './structure-designer.component.html'
 })
-export class StructureDesignerComponent
-    extends BaseDataComponent {
+export class StructureDesignerComponent {
+
+    protected route = inject(ActivatedRoute);
+
+    private router = inject(Router);
+    private events = toSignal(this.router.events);
 
     protected notificationService = inject(NotificationService);        
     protected repositoryService = inject(RepositoryService);
@@ -51,15 +56,45 @@ export class StructureDesignerComponent
     dataSource = signal<StructureTreeNode[]>([]);
     readonly tree = viewChild<MatTree<StructureTreeNode>>('tree');
 
-    currentRoute: Structure[] = [];
-    // nodesToExpand: Structure[] = [];
-    // get currentStructure(): Structure | null {
-    //     if (!(this.currentRoute?.length > 0)) {
-    //         return null;
-    //     }
+    protected owner?: string;
+    protected repository?: string;
+    protected branch?: string;
+    protected key?: string;
 
-    //     return this.currentRoute[this.currentRoute.length - 1];
-    // }
+    public isDataLoading = signal<boolean>(false);
+
+    constructor() {
+        effect(() => {
+            const currentEvent = this.events();
+            if (currentEvent instanceof NavigationEnd) {
+                const urlTree = this.router.parseUrl(this.router.url);
+                const segments = urlTree.root.children['primary']?.segments || [];
+
+                // console.log('StructureDesignerComponent: NavigationEnd', {currentEvent, segments});
+                
+                const newKey = segments.length >= 5 ? 
+                    segments.slice(4).map(s => s.path).join('/') :
+                    '';
+
+                this.refreshData(
+                    this.route.snapshot.paramMap.get(AppParams.Owner) || '',
+                    this.route.snapshot.paramMap.get(AppParams.Repository) || '',
+                    this.route.snapshot.paramMap.get(AppParams.Branch) || 'main',
+                    newKey
+                )
+            }
+        });        
+        // effect(() => {
+        //     const currentParams = this.params();
+        //     console.log('StructureDesignerComponent: params changed', {currentParams, owner: this.owner, repository: this.repository, branch: this.branch, key: this.key});
+        //     if (currentParams) {
+        //         this.refreshData(currentParams);
+        //     }
+        //     // } else {
+        //     //     this.clearParams();
+        //     // }
+        // });
+    }      
 
     getLevel = (node: StructureTreeNode) => node.level;
 
@@ -97,9 +132,41 @@ export class StructureDesignerComponent
         return sortedNodes;
     }        
 
-    async refreshRootNodes() {
-        // console.log('refreshRootNodes: ', {owner: this.owner, repository: this.repository, branch: this.branch});
+    async refreshData(
+        newOwner: string,
+        newRepository: string,
+        newBranch: string,
+        newKey: string
+    ) {
+        // console.log('refreshData: ', {newOwner, newRepository, newBranch, newKey});
 
+        if (this.owner == newOwner
+            && this.repository == newRepository
+            && this.branch == newBranch
+        ) {
+            if (this.key != newKey) {
+                this.key = newKey;
+                // console.log('refreshData: key changed, expanding node by key', {newKey});
+                this.expandNodeByKey(this.dataSource());
+            }
+
+            //console.log('refreshData: no changes detected, skipping refresh');
+            return
+        }
+
+        this.dataSource.set([]);
+
+        this.owner = newOwner;
+        this.repository = newRepository;
+        this.branch = newBranch;
+        this.key = newKey;
+
+        this.repositoryService.setOwnerAndRepositoryAndBranch(
+            this.owner,
+            this.repository,
+            this.branch
+        );            
+                
         this.isDataLoading.set(true);
         
         this.api.getStructureTreeRootNodes(
@@ -156,6 +223,7 @@ export class StructureDesignerComponent
                 // animate opening state now that structural nodes exist in memory
                 tree.expand(node);
 
+                // console.log('onNodeToggle: expandNodeByKey', {node, key: this.key});
                 this.expandNodeByKey(node.children);
             },
             error: (err) => {
@@ -166,38 +234,35 @@ export class StructureDesignerComponent
         });
     }    
 
-    private currentOwner?: string;
-    private currentRepository?: string;
-    private currentBranch?: string;
-
-    override async refreshData() {
-        // console.log('refreshData: ', {owner: this.owner, repository: this.repository, branch: this.branch});
-        if (
-            this.owner !== this.currentOwner 
-            || this.repository !== this.currentRepository 
-            || this.branch !== this.currentBranch
-        ) {
-            this.currentOwner = this.owner;
-            this.currentRepository = this.repository;
-            this.currentBranch = this.branch;
-            
-            this.refreshRootNodes();
-
-            this.repositoryService.setOwnerAndRepositoryAndBranch(
-                this.owner,
-                this.repository,
-                this.branch
-            );
-        }
-    }
-
     private expandNodeByKey(nodes: StructureTreeNode[]) {
+        // console.log('expandNodeByKey: ', {nodes, key: this.key});
+
         const treeInstance = this.tree();
         if (treeInstance && this.key) {
             const matchNode = this.findNodeInArray(nodes, this.key);
             if (matchNode) {
+                const isTargetNode = matchNode.key === this.key;
+
+                // console.log('expandNodeByKey: matchNode', {matchNode, key: this.key});
                 if (this.hasChild(0, matchNode)) {
-                    this.onNodeToggle(treeInstance, matchNode);
+                    // console.log('expandNodeByKey: has child', {matchNode, key: this.key});
+                    if (!treeInstance.isExpanded(matchNode)){
+                        // console.log('expandNodeByKey: matchNode is expandable, toggling', {matchNode, key: this.key});
+                        this.onNodeToggle(treeInstance, matchNode);
+
+                        // If this was the target node, scroll to it after toggle finishes rendering
+                        if (isTargetNode) {
+                            this.scrollToNodeElement(matchNode);
+                        }                        
+                    } else {
+                        if (matchNode.children && matchNode.children.length > 0) {
+                            // console.log('expandNodeByKey: matchNode has children', {matchNode, key: this.key});
+                            this.expandNodeByKey(matchNode.children);
+                        }
+                    }
+                } else if (isTargetNode) {
+                    // If it has no children but matches the key, scroll to it directly
+                    this.scrollToNodeElement(matchNode);
                 }
             }
         }
@@ -205,5 +270,23 @@ export class StructureDesignerComponent
 
     private findNodeInArray(nodes: StructureTreeNode[], key: string): StructureTreeNode | undefined {
         return nodes.find(n => key.startsWith(n.key));
+    } 
+   
+    @ViewChildren('nodeElement', { read: ElementRef }) nodeElements!: QueryList<ElementRef>;
+
+    private scrollToNodeElement(node: StructureTreeNode) {
+        setTimeout(() => {
+            // Find element by a unique attribute like data-node-key or id
+            const targetElement = this.nodeElements.find(
+                (el) => el.nativeElement.getAttribute('data-node-key') === node.key // or node.id
+            );
+
+            if (targetElement) {
+                targetElement.nativeElement.scrollIntoView({
+                    behavior: 'smooth',
+                    block: 'center'
+                });
+            }
+        }, 150); // Small timeout allows MatTree to finish rendering animation loops
     }    
 }

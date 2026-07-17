@@ -15,6 +15,7 @@
                         <mat-icon class="text-gray-500 scale-90 -mr-1">arrow_drop_down</mat-icon>
                     </button>
                     <mat-menu #versionRepositories="matMenu" class="mt-1">
+                        <!-- repositories -->
                         @for (group of repositories; track group.category; let isFirst = $first) {
                             <!-- Section Divider & Header Label -->
                             @if (!isFirst) {
@@ -32,6 +33,13 @@
                                 </a>                            
                             }
                         }
+                        <!-- settings -->
+                        <mat-divider class="my-1"></mat-divider>                            
+                        <a mat-menu-item 
+                            routerLink="/{{routes.settings}}" 
+                            class="text-gray-700 hover:bg-slate-50">
+                            <span>Settings</span>
+                        </a>
                     </mat-menu>                    
                     <!-- <mat-menu #versionRepositories="matMenu">
                         @for (item of repositories; track item.url){
@@ -72,6 +80,13 @@
                         routerLinkActive="bg-blue-600 text-white font-semibold"
                         class="hover:text-slate-400 transition-colors duration-200 px-2 py-1 block">
                         Guides
+                    </a>
+                </li>
+                <li>
+                    <a routerLink="/{{routes.models}}"
+                        routerLinkActive="bg-blue-600 text-white font-semibold"
+                        class="hover:text-slate-400 transition-colors duration-200 px-2 py-1 block">
+                        Models
                     </a>
                 </li>
                 <!-- Login/Logout Link -->

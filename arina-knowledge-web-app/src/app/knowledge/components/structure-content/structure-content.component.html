@@ -1,0 +1,9 @@
+<app-progress [loading]="isDataLoading()"></app-progress>
+
+<div class="ml-4">
+    @if (source() | markdown | async; as htmlContent) {
+        <div class="prose max-w-5xl p-4 mx-4" [innerHTML]="htmlContent | safeHtml">
+        </div>
+        <hr class="my-4 border-t border-gray-300">
+    }
+</div>

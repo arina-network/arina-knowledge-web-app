@@ -20,7 +20,7 @@ export class AppMarkdownPipe implements PipeTransform {
     protected cdr = inject(ChangeDetectorRef);   
         
     transform(value: string | null | undefined): Observable<string> {
-        const knowledge = this.routes.knowledge;
+        // const knowledge = this.routes.knowledge;
         const owner = this.route.snapshot.paramMap.get(AppParams.Owner);
         const repository = this.route.snapshot.paramMap.get(AppParams.Repository);
         const branch = this.route.snapshot.paramMap.get(AppParams.Branch) ?? 'main';
@@ -38,11 +38,11 @@ export class AppMarkdownPipe implements PipeTransform {
                     let finalHref = href;
 
                     if (href.startsWith('/')) { // process only local links
-                        finalHref = `${knowledge}/${owner}/${repository}/${branch}${href}`
+                        finalHref = `#/knowledge/${owner}/${repository}/${branch}${href}`
+                        // finalHref = `${knowledge}/${owner}/${repository}/${branch}${href}`
                     }
 
                     const titleAttr = title ? ` title="${title}"` : '';
-                    // console.log('completed: ', {finalHref})
                     return `<a href="${finalHref}"${titleAttr}>${text}</a>`;
                 }
             },
