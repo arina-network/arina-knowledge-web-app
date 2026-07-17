@@ -1,8 +1,7 @@
 import { ApplicationConfig, provideBrowserGlobalErrorListeners } from '@angular/core';
-import { provideRouter, RouteReuseStrategy, withComponentInputBinding, withEnabledBlockingInitialNavigation, withHashLocation } from '@angular/router';
+import { provideRouter, withComponentInputBinding, withEnabledBlockingInitialNavigation, withHashLocation } from '@angular/router';
 
 import { routes } from './app.routes';
-// import { CustomRouteReuseStrategy } from './custom-route-reuse.strategy';
 
 export const appConfig: ApplicationConfig = {
   providers: [
@@ -12,6 +11,5 @@ export const appConfig: ApplicationConfig = {
         withComponentInputBinding()
         // withEnabledBlockingInitialNavigation()
     )
-    // { provide: RouteReuseStrategy, useClass: CustomRouteReuseStrategy } 
   ]
 };

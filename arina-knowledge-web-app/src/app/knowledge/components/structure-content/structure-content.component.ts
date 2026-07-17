@@ -33,16 +33,6 @@ export class StructureContentComponent {
     branch = input<string>();
     key = input<string>();    
     
-    // @Input() owner?: string;
-    // @Input() repository?: string;
-    // @Input() branch?: string;
-    // @Input() key?: string;
-
-    // protected owner?: string;
-    // protected repository?: string;
-    // protected branch?: string;
-    // protected key?: string;
-
     public source = signal<string | undefined>(undefined);
 
     ngOnInit() {
@@ -50,19 +40,10 @@ export class StructureContentComponent {
     }
     
     async refreshData(
-        // newOwner: string,
-        // newRepository: string,
-        // newBranch: string,
-        // newKey: string
     ) {
-        console.log('StructureContentComponent.refreshData()', {owner: this.owner(), repository: this.repository(), branch: this.branch(), key: this.key()});
+        // console.log('StructureContentComponent.refreshData()', {owner: this.owner(), repository: this.repository(), branch: this.branch(), key: this.key()});
 
         this.isDataLoading.set(true);
-
-        // this.owner = newOwner;
-        // this.repository = newRepository;
-        // this.branch = newBranch;
-        // this.key = newKey;
 
         this.api.getStructureRaw(
             this.owner(), 
@@ -78,25 +59,17 @@ export class StructureContentComponent {
                     this.clearData()
                     this.isDataLoading.set(false);
 
-                    // this.notificationService.showError('GitHub returns no data.');
-
                     return;
                 }
 
                 // content
                 if (data.content) {
-                    this.isDataLoading.set(false);
-
                     this.setSource(data)
-
-                    // this.rawUrl = data.download_url;
-                    // this.githubUrl = `${this.routes.github}/${this.owner}/${this.repository}/${this.routes.githubBlob}/${this.branch}/${this.key}`;
+                    this.isDataLoading.set(false);
                 } else {
                     this.clearData()
                     this.isDataLoading.set(false);
                 }
-
-                // this.cdr.detectChanges(); 
             },
             error: (err) => {
                 this.clearData()
@@ -108,11 +81,7 @@ export class StructureContentComponent {
     }
 
     protected clearData() {
-        // this.githubUrl = undefined;
-
-        // this.title = undefined;
         this.source.set(undefined);
-        // this.rawUrl = undefined;
     }
     
     protected setSource(data: any) {

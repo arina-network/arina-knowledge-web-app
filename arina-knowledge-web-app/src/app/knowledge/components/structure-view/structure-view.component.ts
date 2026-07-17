@@ -38,7 +38,7 @@ import { StructureContentComponent } from '../structure-content/structure-conten
 })
 export class StructureViewComponent {
     // extends BaseDataComponent {
-    protected cdr = inject(ChangeDetectorRef);   
+    // protected cdr = inject(ChangeDetectorRef);   
 
     protected route = inject(ActivatedRoute);
     protected router = inject(Router);
@@ -80,7 +80,8 @@ export class StructureViewComponent {
     title: string | undefined;
     githubUrl: string | undefined;    
     rawUrl: string | undefined;
-    source: string | undefined;
+    // source: string | undefined;
+    public source = signal<string | undefined>(undefined);
 
     contentLinks: StructureLink[] = [];  
     contentReadme: any | undefined;
@@ -182,8 +183,7 @@ export class StructureViewComponent {
                                 this.isDataLoading.set(false);
 
                                 this.setReadme(readmeData);
-                                this.source = undefined;
-                                // this.setSource(readmeData)
+                                this.source.set(undefined);
                                 
                                 this.rawUrl = undefined;
                                 // this.githubUrl = undefined;
@@ -192,7 +192,7 @@ export class StructureViewComponent {
                                 this.isDataLoading.set(false);
 
                                 this.title = this.key;
-                                this.source = undefined;
+                                this.source.set(undefined);
                                 this.rawUrl = undefined;
                                 this.githubUrl = undefined;
                                 this.contentReadme = undefined;
@@ -207,7 +207,7 @@ export class StructureViewComponent {
                     });                   
                 }
 
-                this.cdr.detectChanges(); 
+                // this.cdr.detectChanges(); 
             },
             error: (err) => {
                 this.clearData()
@@ -224,7 +224,7 @@ export class StructureViewComponent {
         const bytes = Uint8Array.from(binaryString, m => m.charCodeAt(0));
 
         this.title = this.key;
-        this.source = new TextDecoder('utf-8').decode(bytes);
+        this.source.set(new TextDecoder('utf-8').decode(bytes));
     }
 
     protected setReadme(data: any) {
@@ -240,7 +240,7 @@ export class StructureViewComponent {
         this.githubUrl = undefined;
 
         this.title = undefined;
-        this.source = undefined;
+        this.source.set(undefined);
         this.rawUrl = undefined;
         
         this.contentReadme = undefined;

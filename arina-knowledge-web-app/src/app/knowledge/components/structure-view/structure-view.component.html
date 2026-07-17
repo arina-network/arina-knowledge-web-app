@@ -67,15 +67,15 @@
 }     
 
 
-@if (source){
+@if (source()){
     <div class="ml-4">
         @if (currentView() === 'action_view') {
-            @if (source | markdown | async; as htmlContent) {
+            @if (source() | markdown | async; as htmlContent) {
                 <div class="prose max-w-5xl p-4 mx-4" [innerHTML]="htmlContent | safeHtml">
                 </div>
             }
         } @else if (currentView() === 'action_source') {
-            <pre class="bg-gray-100 p-4 rounded-md overflow-x-auto"><code>{{ source }}</code></pre>
+            <pre class="bg-gray-100 p-4 rounded-md overflow-x-auto"><code>{{ source() }}</code></pre>
         }
     </div>
 } @else if (contentReadme || contentLinks?.length > 0)  {
@@ -110,7 +110,6 @@
     } @else if (currentListView() === 'action_content') {
         @if (contentLinks?.length > 0) {
             <div class="p-4 ml-4">
-                <!-- <h1 class="text-2xl font-bold mb-4">Content</h1> -->
                 @for (item of contentLinks; track item.url) {
                     @if (item.name !== 'README.md') {
                         <app-structure-content [owner]="item.owner" [repository]="item.repository" [branch]="item.branch" [key]="item.key"></app-structure-content>
@@ -123,12 +122,5 @@
                 <p class="text-lg font-medium">No content found.</p>
             </div>
         }
-
-            <!-- <div class="flex flex-col items-center justify-center py-20 text-slate-400">
-                <mat-icon fontSet="material-symbols-outlined" class="text-6xl mb-4 h-16 w-16">construction</mat-icon>
-                <p class="text-lg font-medium">
-                    IN DEVELOPMENT: Content view is under construction. Please check back later.
-                </p>
-            </div> -->
     }  
 }

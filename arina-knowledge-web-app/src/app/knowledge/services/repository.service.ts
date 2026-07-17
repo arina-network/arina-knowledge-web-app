@@ -79,8 +79,8 @@ export class RepositoryService {
         return [
             this.privateRepositories(),
             this.publicRepositories(),
-            this.arinaRepositories(),
-            this.currentRepositories()
+            this.currentRepositories(),
+            this.arinaRepositories()
         ]    
     }
 
@@ -116,15 +116,8 @@ export class RepositoryService {
             && r.repositoryName?.toLowerCase() === repositoryName?.toLowerCase()
         );
 
-        const currentRepository = this.currentRepositories().repositories.find(r => 
-            r.ownerName?.toLowerCase() === ownerName?.toLowerCase() 
-            && r.repositoryName?.toLowerCase() === repositoryName?.toLowerCase()
-        );
-
         if (arinaRepository) {
             this.setSelectedRepository(arinaRepository);
-        } else if (currentRepository) {
-            this.setSelectedRepository(currentRepository);
         } else {
             const publicRepository = this.publicRepositories().repositories.find(r => 
                 r.ownerName?.toLowerCase() === ownerName?.toLowerCase() 
@@ -142,33 +135,29 @@ export class RepositoryService {
                 if (privateRepository) {
                     this.setSelectedRepository(privateRepository);
                 } else {
-                    const newRepository = {
-                        key: crypto.randomUUID(),
-                        url: `https://github.com/${ownerName}/${repositoryName}`,
-                        name: `${ownerName} -> ${repositoryName}`,
-                        ownerName: ownerName ?? 'unknown',
-                        repositoryName: repositoryName ?? 'unknown',
-                        isPublic: true                
+                    const currentRepository = this.currentRepositories().repositories.find(r => 
+                        r.ownerName?.toLowerCase() === ownerName?.toLowerCase() 
+                        && r.repositoryName?.toLowerCase() === repositoryName?.toLowerCase()
+                    );
+                    if (currentRepository) {
+                        this.setSelectedRepository(currentRepository);
+                    } else {
+                        const newRepository = {
+                            key: crypto.randomUUID(),
+                            url: `https://github.com/${ownerName}/${repositoryName}`,
+                            name: `${ownerName} -> ${repositoryName}`,
+                            ownerName: ownerName ?? 'unknown',
+                            repositoryName: repositoryName ?? 'unknown',
+                            isPublic: true                
+                        }
+
+                        this.currentRepositories.update(current => ({
+                            ...current,
+                            repositories: [...current.repositories, newRepository]
+                        }));                    
+
+                        this.setSelectedRepository(newRepository);
                     }
-
-                    this.currentRepositories.update(current => ({
-                        ...current,
-                        repositories: [...current.repositories, newRepository]
-                    }));                    
-                    // if (this.authorizationService.isAuthorized())
-                    // {
-                    //     this.privateRepositories.update(current => ({
-                    //         ...current,
-                    //         repositories: [...current.repositories, newRepository]
-                    //     }));
-                    // } else {
-                    //     this.publicRepositories.update(current => ({
-                    //         ...current,
-                    //         repositories: [...current.repositories, newRepository]
-                    //     }));
-                    // }
-
-                    this.setSelectedRepository(newRepository);
                 } 
             }
         }

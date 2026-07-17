@@ -1,6 +1,6 @@
 import { Component, effect, inject, signal, viewChild } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
-import { ActivatedRoute, NavigationEnd, Params, Router, RouterLink, RouterLinkActive } from '@angular/router'; 
+import { ActivatedRoute, NavigationEnd, Router, RouterLink, RouterLinkActive } from '@angular/router'; 
 
 import { MatDividerModule } from '@angular/material/divider';
 import { MatIconModule } from '@angular/material/icon';
@@ -13,10 +13,8 @@ import { MatTree, MatTreeModule } from '@angular/material/tree';
 import { AppRoutes } from '@/app/core/constants/app-routes';
 
 import { NotificationService } from '@/app/core/services/notification.service';
-// import { BaseDataComponent } from '@/app/core/components/base-data/base-data.component';
 import { ProgressComponent } from '@/app/core/components/progress/progress.component';
 
-import { Structure } from '@/app/knowledge/models/structure';
 import { StructureDetailsComponent } from '../structure-details/structure-details.component';
 import { StructureTreeNode } from '../structure-tree/structure-tree-node';
 
@@ -42,10 +40,8 @@ import { AppParams } from '@/app/core/constants/app-params';
     templateUrl: './structure-designer.component.html'
 })
 export class StructureDesignerComponent {
-    // extends BaseDataComponent {
 
     protected route = inject(ActivatedRoute);
-    // protected params = toSignal(this.route.params);    
 
     private router = inject(Router);
     private events = toSignal(this.router.events);
@@ -58,16 +54,6 @@ export class StructureDesignerComponent {
 
     dataSource = signal<StructureTreeNode[]>([]);
     readonly tree = viewChild<MatTree<StructureTreeNode>>('tree');
-
-    // currentRoute: Structure[] = [];
-    // nodesToExpand: Structure[] = [];
-    // get currentStructure(): Structure | null {
-    //     if (!(this.currentRoute?.length > 0)) {
-    //         return null;
-    //     }
-
-    //     return this.currentRoute[this.currentRoute.length - 1];
-    // }
 
     protected owner?: string;
     protected repository?: string;
@@ -90,20 +76,12 @@ export class StructureDesignerComponent {
                     '';
 
                 this.refreshData(
-                    this.route.snapshot.paramMap.get('owner') || '',
-                    this.route.snapshot.paramMap.get('repository') || '',
-                    this.route.snapshot.paramMap.get('branch') || 'main',
+                    this.route.snapshot.paramMap.get(AppParams.Owner) || '',
+                    this.route.snapshot.paramMap.get(AppParams.Repository) || '',
+                    this.route.snapshot.paramMap.get(AppParams.Branch) || 'main',
                     newKey
-                    // segments[1]?.path,
-                    // segments[2]?.path,
-                    // segments[3]?.path ?? 'main',
-                    // segments[4]?.path
                 )
-                // this.refreshData(currentParams);
             }
-            // } else {
-            //     this.clearParams();
-            // }
         });        
         // effect(() => {
         //     const currentParams = this.params();
@@ -160,15 +138,6 @@ export class StructureDesignerComponent {
         newKey: string
     ) {
         // console.log('refreshData: ', {newOwner, newRepository, newBranch, newKey});
-
-    // async refreshData(params: Params) {
-    //     // console.log('refreshData: ', {params, owner: this.owner, repository: this.repository, branch: this.branch, key: this.key});
-    //     const newOwner = params[AppParams.Owner];
-    //     const newRepository = params[AppParams.Repository];
-    //     const newBranch = params[AppParams.Branch]?.length > 0 ? params[AppParams.Branch] : 'main';
-    //     const newKey = params[AppParams.Key];
-
-        // console.log('new params: ', {newOwner, newRepository, newBranch, newKey});
 
         if (this.owner == newOwner
             && this.repository == newRepository
