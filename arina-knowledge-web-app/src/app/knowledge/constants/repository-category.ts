@@ -1,5 +1,6 @@
 export enum RepositoryCategory {
     ArinaNetwork = 'arina-network',
     Private = 'private',
-    Public = 'public'
+    Public = 'public',
+    Current = 'current'
 }

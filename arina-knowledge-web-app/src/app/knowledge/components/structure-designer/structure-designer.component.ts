@@ -1,5 +1,6 @@
-import { Component, inject, signal, viewChild } from '@angular/core';
-import { RouterLink, RouterLinkActive } from '@angular/router'; 
+import { Component, effect, inject, signal, viewChild } from '@angular/core';
+import { toSignal } from '@angular/core/rxjs-interop';
+import { ActivatedRoute, Params, RouterLink, RouterLinkActive } from '@angular/router'; 
 
 import { MatDividerModule } from '@angular/material/divider';
 import { MatIconModule } from '@angular/material/icon';
@@ -12,7 +13,7 @@ import { MatTree, MatTreeModule } from '@angular/material/tree';
 import { AppRoutes } from '@/app/core/constants/app-routes';
 
 import { NotificationService } from '@/app/core/services/notification.service';
-import { BaseDataComponent } from '@/app/core/components/base-data/base-data.component';
+// import { BaseDataComponent } from '@/app/core/components/base-data/base-data.component';
 import { ProgressComponent } from '@/app/core/components/progress/progress.component';
 
 import { Structure } from '@/app/knowledge/models/structure';
@@ -21,6 +22,7 @@ import { StructureTreeNode } from '../structure-tree/structure-tree-node';
 
 import { StructureApiService } from '../../api-services/structure-api.service';
 import { RepositoryService } from '../../services/repository.service';
+import { AppParams } from '@/app/core/constants/app-params';
 
 @Component({
     selector: 'app-structure-designer',
@@ -39,8 +41,9 @@ import { RepositoryService } from '../../services/repository.service';
     ],
     templateUrl: './structure-designer.component.html'
 })
-export class StructureDesignerComponent
-    extends BaseDataComponent {
+export class StructureDesignerComponent {
+    // extends BaseDataComponent {
+    protected route = inject(ActivatedRoute);
 
     protected notificationService = inject(NotificationService);        
     protected repositoryService = inject(RepositoryService);
@@ -60,6 +63,28 @@ export class StructureDesignerComponent
 
     //     return this.currentRoute[this.currentRoute.length - 1];
     // }
+
+    protected owner?: string;
+    protected repository?: string;
+    protected branch?: string;
+    protected key?: string;
+
+    protected params = toSignal(this.route.params);    
+
+    public isDataLoading = signal<boolean>(false);
+
+    constructor() {
+        effect(() => {
+            const currentParams = this.params();
+            // console.log('StructureDesignerComponent: params changed', {currentParams, owner: this.owner, repository: this.repository, branch: this.branch, key: this.key});
+            if (currentParams) {
+                this.refreshData(currentParams);
+            }
+            // } else {
+            //     this.clearParams();
+            // }
+        });
+    }      
 
     getLevel = (node: StructureTreeNode) => node.level;
 
@@ -97,9 +122,38 @@ export class StructureDesignerComponent
         return sortedNodes;
     }        
 
-    async refreshRootNodes() {
-        // console.log('refreshRootNodes: ', {owner: this.owner, repository: this.repository, branch: this.branch});
+    async refreshData(params: Params) {
+        // console.log('refreshData: ', {params, owner: this.owner, repository: this.repository, branch: this.branch, key: this.key});
+        const newOwner = params[AppParams.Owner];
+        const newRepository = params[AppParams.Repository];
+        const newBranch = params[AppParams.Branch] ?? 'main';
+        const newKey = params[AppParams.Key];
 
+        // console.log('new params: ', {newOwner, newRepository, newBranch, newKey});
+
+        if (this.owner == newOwner
+            && this.repository == newRepository
+            && this.branch == newBranch
+        ) {
+            if (this.key != newKey) {
+                this.key = newKey;
+                this.expandNodeByKey(this.dataSource());
+            }
+
+            return
+        }
+
+        this.owner = newOwner;
+        this.repository = newRepository;
+        this.branch = newBranch;
+        this.key = newKey;
+
+        this.repositoryService.setOwnerAndRepositoryAndBranch(
+            this.owner,
+            this.repository,
+            this.branch
+        );            
+                
         this.isDataLoading.set(true);
         
         this.api.getStructureTreeRootNodes(
@@ -156,6 +210,7 @@ export class StructureDesignerComponent
                 // animate opening state now that structural nodes exist in memory
                 tree.expand(node);
 
+                // console.log('onNodeToggle: expandNodeByKey', {node, key: this.key});
                 this.expandNodeByKey(node.children);
             },
             error: (err) => {
@@ -166,36 +221,14 @@ export class StructureDesignerComponent
         });
     }    
 
-    private currentOwner?: string;
-    private currentRepository?: string;
-    private currentBranch?: string;
-
-    override async refreshData() {
-        // console.log('refreshData: ', {owner: this.owner, repository: this.repository, branch: this.branch});
-        if (
-            this.owner !== this.currentOwner 
-            || this.repository !== this.currentRepository 
-            || this.branch !== this.currentBranch
-        ) {
-            this.currentOwner = this.owner;
-            this.currentRepository = this.repository;
-            this.currentBranch = this.branch;
-            
-            this.refreshRootNodes();
-
-            this.repositoryService.setOwnerAndRepositoryAndBranch(
-                this.owner,
-                this.repository,
-                this.branch
-            );
-        }
-    }
-
     private expandNodeByKey(nodes: StructureTreeNode[]) {
+        // console.log('expandNodeByKey: ', {nodes, key: this.key});
+
         const treeInstance = this.tree();
         if (treeInstance && this.key) {
             const matchNode = this.findNodeInArray(nodes, this.key);
             if (matchNode) {
+                // console.log('expandNodeByKey: matchNode', {matchNode, key: this.key});
                 if (this.hasChild(0, matchNode)) {
                     this.onNodeToggle(treeInstance, matchNode);
                 }

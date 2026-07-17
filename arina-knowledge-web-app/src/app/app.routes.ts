@@ -8,64 +8,61 @@ import { SettingsComponent } from './website/components/settings/settings.compon
 import { StructureDesignerComponent } from './knowledge/components/structure-designer/structure-designer.component';
 
 export const routes: Routes = [
-    { path: '', component: HomeComponent },
+    { path: '', component: HomeComponent, pathMatch: 'full' },
+
     { path: 'login', component: LoginComponent },
     { path: 'logout', component: LogoutComponent },
     { path: 'settings', component: SettingsComponent },
 
+    { path: 'knowledge', component: StructureDesignerComponent , pathMatch: 'full' },
     {
-    path: 'knowledge',
-    children: [
-        {
-            // This matcher handles all scenarios: 
-            // 1. /knowledge
-            // 2. /knowledge/arina-network/arina-knowledge
-            // 3. /knowledge/arina-network/arina-knowledge/main
-            // 4. /knowledge/arina-network/arina-knowledge/main/README.md
-            matcher: (urlSegments) => {
-                // Scenario 1: /knowledge (No extra segments)
-                if (urlSegments.length === 0) {
-                    return { consumed: urlSegments };
-                }
+        matcher: (urlSegments) => {
+            // Instantly exit if the root word isn't 'knowledge'
+            if (urlSegments.length === 0 || urlSegments[0].path !== 'knowledge') {
+                return null;
+            }
 
-                // Scenario 2: /knowledge/:owner/:repository (Exactly 2 segments)
-                if (urlSegments.length === 2) {
-                    return {
-                        consumed: urlSegments,
-                        posParams: {
-                        owner: urlSegments[0],
-                        repository: urlSegments[1]
-                        }
-                    };
-                }
+            // Scenario 1: /knowledge (1 segment)
+            // Matches: /knowledge
+            if (urlSegments.length === 1) {
+                return { 
+                    consumed: urlSegments 
+                };
+            }
 
-                // Scenarios 3 & 4: Has at least 3 segments (owner, repo, branch)
-                if (urlSegments.length >= 3) {
-                    const owner = urlSegments[0];
-                    const repository = urlSegments[1];
-                    const branch = urlSegments[2];
-                    
-                    // Re-assemble remaining segments safely, even with dots (.) or slashes (/)
-                    const trailingSegments = urlSegments.slice(3);
-                    const keyString = trailingSegments.map(s => s.path).join('/');
+            // Scenario 2: /knowledge/:owner/:repository (Exactly 3 segments)
+            // Matches: /knowledge/arina-network/arina-knowledge
+            if (urlSegments.length === 3) {
+                return {
+                    consumed: urlSegments,
+                    posParams: {
+                        owner: urlSegments[1],      // 'arina-network'
+                        repository: urlSegments[2]  // 'arina-knowledge'
+                    }
+                };
+            }
 
-                    return {
-                        consumed: urlSegments,
-                        posParams: {
-                        owner,
-                        repository,
-                        branch,
-                        // Inject the manual parameter key mapping
-                        key: new UrlSegment(keyString, {}) 
-                        }
-                    };
-                }
+            // Scenario 3 & 4: /knowledge/:owner/:repository/:branch/... (4+ segments)
+            // Matches: /knowledge/arina-network/arina-knowledge/main/models
+            if (urlSegments.length >= 4) {
+                const trailingSegments = urlSegments.slice(4);
+                const keyString = trailingSegments.map(s => s.path).join('/');
 
-                return null; // Fallback if it doesn't fit rules
-            },
-            component: StructureDesignerComponent
-        }
-    ]
+                return {
+                    consumed: urlSegments,
+                    posParams: {
+                        owner: urlSegments[1],
+                        repository: urlSegments[2],
+                        branch: urlSegments[3],
+                        key: new UrlSegment(keyString, {})
+                    }
+                };
+            }
+
+            // Returns null so it doesn't cause a silent router engine crash
+            return null;
+        },
+        component: StructureDesignerComponent
     }    
 ];
 
