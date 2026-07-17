@@ -79,14 +79,14 @@ export class StructureViewComponent {
         });        
     }  
    
-    title: string | undefined;
-    githubUrl: string | undefined;    
-    rawUrl: string | undefined;
+    // title: string | undefined;
+    public githubUrl = signal<string | undefined>(undefined);
+    public rawUrl = signal<string | undefined>(undefined);
     // source: string | undefined;
     public source = signal<string | undefined>(undefined);
 
-    contentLinks: StructureLink[] = [];  
-    contentReadme: any | undefined;
+    public contentLinks = signal<StructureLink[]>([]);
+    public contentReadme = signal<any | undefined>(undefined);
 
     // structure view
     currentView = signal<'action_view' | 'action_source'>('action_view');
@@ -139,8 +139,8 @@ export class StructureViewComponent {
 
                     this.setSource(data)
 
-                    this.rawUrl = data.download_url;
-                    this.githubUrl = `${this.routes.github}/${this.owner}/${this.repository}/${this.routes.githubBlob}/${this.branch}/${this.key}`;
+                    this.rawUrl.set(data.download_url);
+                    this.githubUrl.set(`${this.routes.github}/${this.owner}/${this.repository}/${this.routes.githubBlob}/${this.branch}/${this.key}`);
                 } else {
                     let readme: any = undefined;
                     data.map(item => {
@@ -157,7 +157,7 @@ export class StructureViewComponent {
                             readme = item;
                         }
 
-                        this.contentLinks.push({
+                        const newLink = {
                             name: item.name,
                             url: itemUrl,
                             isFolder: item.type === 'dir',
@@ -166,7 +166,19 @@ export class StructureViewComponent {
                             repository: this.repository,
                             branch: this.branch,
                             key: item.path
-                        })                                        
+                        }
+                        this.contentLinks.update(current => [...current, newLink]);  
+
+                        // this.contentLinks.push({
+                        //     name: item.name,
+                        //     url: itemUrl,
+                        //     isFolder: item.type === 'dir',
+
+                        //     owner: this.owner,
+                        //     repository: this.repository,
+                        //     branch: this.branch,
+                        //     key: item.path
+                        // })                                        
                     })
 
                     if (!readme) {
@@ -187,17 +199,17 @@ export class StructureViewComponent {
                                 this.setReadme(readmeData);
                                 this.source.set(undefined);
                                 
-                                this.rawUrl = undefined;
+                                this.rawUrl.set(undefined);
                                 // this.githubUrl = undefined;
                                 // this.contentLinks = [];
                             } else {
                                 this.isDataLoading.set(false);
 
-                                this.title = this.key;
+                                // this.title = this.key;
                                 this.source.set(undefined);
-                                this.rawUrl = undefined;
-                                this.githubUrl = undefined;
-                                this.contentReadme = undefined;
+                                this.rawUrl.set(undefined);
+                                this.githubUrl.set(undefined);
+                                this.contentReadme.set(undefined);
                             }
                         },
                         error: (err) => {
@@ -225,7 +237,7 @@ export class StructureViewComponent {
         const binaryString = atob(cleanBase64);
         const bytes = Uint8Array.from(binaryString, m => m.charCodeAt(0));
 
-        this.title = this.key;
+        // this.title = this.key;
         this.source.set(new TextDecoder('utf-8').decode(bytes));
     }
 
@@ -234,19 +246,19 @@ export class StructureViewComponent {
         const binaryString = atob(cleanBase64);
         const bytes = Uint8Array.from(binaryString, m => m.charCodeAt(0));
 
-        this.title = this.key;
-        this.contentReadme = new TextDecoder('utf-8').decode(bytes);
+        // this.title = this.key;
+        this.contentReadme.set(new TextDecoder('utf-8').decode(bytes));
     }
 
     protected clearData() {
-        this.githubUrl = undefined;
+        this.githubUrl.set(undefined);
 
-        this.title = undefined;
+        // this.title = undefined;
         this.source.set(undefined);
-        this.rawUrl = undefined;
+        this.rawUrl.set(undefined);
         
-        this.contentReadme = undefined;
-        this.contentLinks = [];
+        this.contentReadme.set(undefined);
+        this.contentLinks.set([]);
     }
 
     isEmpty() {
