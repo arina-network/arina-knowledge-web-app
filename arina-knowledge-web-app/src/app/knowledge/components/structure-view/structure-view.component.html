@@ -1,6 +1,10 @@
 <app-progress [loading]="isDataLoading()"></app-progress>
 <!-- <app-messages [messages]="messages"></app-messages> -->
 
+@if (isEmpty()) {
+    <app-structure-home></app-structure-home>
+} 
+
 <!-- breadcrumb -->
 @if (isShowBreadcrumb) { 
     <nav class="flex items-center justify-between w-full p-2 rounded-md">

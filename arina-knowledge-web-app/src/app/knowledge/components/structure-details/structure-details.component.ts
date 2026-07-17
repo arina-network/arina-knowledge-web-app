@@ -19,6 +19,7 @@ import { Router, ActivatedRoute, NavigationEnd } from '@angular/router';
 import { StructureHomeComponent } from '../structure-home/structure-home.component';
 import { StructureViewComponent } from '../structure-view/structure-view.component';
 import { toSignal } from '@angular/core/rxjs-interop';
+import { AppParams } from '@/app/core/constants/app-params';
 
 @Component({
     selector: 'app-structure-details',
@@ -49,12 +50,12 @@ export class StructureDetailsComponent {
                 
                 const newKey = segments.length >= 5 ? 
                     segments.slice(4).map(s => s.path).join('/') :
-                    '';
+                    undefined;
 
                 this.refreshData(
-                    this.route.snapshot.paramMap.get('owner') || '',
-                    this.route.snapshot.paramMap.get('repository') || '',
-                    this.route.snapshot.paramMap.get('branch') || 'main',
+                    this.route.snapshot.paramMap.get(AppParams.Owner) || '',
+                    this.route.snapshot.paramMap.get(AppParams.Repository) || '',
+                    this.route.snapshot.paramMap.get(AppParams.Branch) || 'main',
                     newKey
                 )
             }
@@ -65,7 +66,7 @@ export class StructureDetailsComponent {
         newOwner: string,
         newRepository: string,
         newBranch: string,
-        newKey: string        
+        newKey?: string        
     ) {
         this.owner = newOwner;
         this.repository = newRepository;

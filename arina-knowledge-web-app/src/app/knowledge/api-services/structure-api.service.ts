@@ -5,15 +5,12 @@ import { Observable, of } from 'rxjs';
 import { AppRoutes } from '@/app/core/constants/app-routes';
 import { AuthorizationService } from '@/app/core/services/authorization.service';
 
-// import { RepositoryService } from '../services/repository.service';
-
 @Injectable({
   providedIn: 'root'
 })
 export class StructureApiService {
     private http = inject(HttpClient);
     private authorizationService = inject(AuthorizationService);
-    // private repositoryService = inject(RepositoryService);
     private routes = inject(AppRoutes)
 
     private getHeaders(throwError: boolean = false): HttpHeaders {
@@ -103,30 +100,8 @@ export class StructureApiService {
         const url = key ? 
             `${this.routes.githubApiRepositories}/${ownerName}/${repositoryName}/${this.routes.githubApiContents}/${key}?ref=${branchName}` : 
             `${this.routes.githubApiRepositories}/${ownerName}/${repositoryName}/${this.routes.githubApiContents}/?ref=${branchName}`;
-        // console.log(url)
 
         const headers =  this.getHeaders()
         return this.http.get(url, { headers });
-
-        // if (key) {
-        //     return this.http.get(`${this.routes.githubApiRepositories}/${ownerName}/${repositoryName}/${this.routes.githubApiContents}/${key}/?ref=${branchName}`, { headers });
-        // } else {
-        //     return this.http.get(`${this.routes.githubApiRepositories}/${ownerName}/${repositoryName}/${this.routes.githubApiContents}/?ref=${branchName}`, { headers });
-        // }
     }
-
-
-
-    // getRoute(key: any): any {
-    //     return [];
-    // }
-
-    // getStructure(key: any): any {
-    //     return {
-    //         key,
-    //         name: 'TEST NAME for ' + key,
-    //         source: 'TEST SOURCE for ' + key,
-    //         isFolder: false
-    //     }        
-    // }
 }

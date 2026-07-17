@@ -11,14 +11,15 @@ import { AppRoutes } from '@/app/core/constants/app-routes';
 import { Breadcrumb } from '@/app/core/models/breadcrumb';
 import { AppMarkdownPipe } from '@/app/core/pipes/app-marked.pipe';
 import { AppSafeHtmlPipe } from '@/app/core/pipes/app-safe-html.pipe';
-// import { BaseDataComponent } from '@/app/core/components/base-data/base-data.component';
 import { ProgressComponent } from '@/app/core/components/progress/progress.component';
+import { AppParams } from '@/app/core/constants/app-params';
 import { NotificationService } from '@/app/core/services/notification.service';
 
 
 import { StructureApiService } from '../../api-services/structure-api.service';
 import { StructureLink } from '../../models/structure-link';
 import { StructureContentComponent } from '../structure-content/structure-content.component';
+import { StructureHomeComponent } from '../structure-home/structure-home.component';
 
 @Component({
     selector: 'app-structure-view',
@@ -32,13 +33,12 @@ import { StructureContentComponent } from '../structure-content/structure-conten
         ProgressComponent,
         AppMarkdownPipe,
         AppSafeHtmlPipe,
-        StructureContentComponent
+        StructureContentComponent,
+        StructureHomeComponent
     ],
     templateUrl: './structure-view.component.html'
 })
 export class StructureViewComponent {
-    // extends BaseDataComponent {
-    // protected cdr = inject(ChangeDetectorRef);   
 
     protected route = inject(ActivatedRoute);
     protected router = inject(Router);
@@ -59,18 +59,20 @@ export class StructureViewComponent {
     constructor() {
         effect(() => {
             const currentEvent = this.events();
+            // console.log('Router event detected: ', currentEvent);
             if (currentEvent instanceof NavigationEnd) {
+                // console.log('NavigationEnd event detected. Refreshing data...', {route: this.route.url});
                 const urlTree = this.router.parseUrl(this.router.url);
                 const segments = urlTree.root.children['primary']?.segments || [];
 
                 const newKey = segments.length >= 5 ? 
                     segments.slice(4).map(s => s.path).join('/') :
-                    '';
+                    undefined;
 
                 this.refreshData(
-                    this.route.snapshot.paramMap.get('owner') || '',
-                    this.route.snapshot.paramMap.get('repository') || '',
-                    this.route.snapshot.paramMap.get('branch') || 'main',
+                    this.route.snapshot.paramMap.get(AppParams.Owner) || '',
+                    this.route.snapshot.paramMap.get(AppParams.Repository) || '',
+                    this.route.snapshot.paramMap.get(AppParams.Branch) || 'main',
                     newKey
                 )
             }
@@ -104,7 +106,7 @@ export class StructureViewComponent {
         newOwner: string,
         newRepository: string,
         newBranch: string,
-        newKey: string
+        newKey?: string
     ) {
         this.isDataLoading.set(true);
 
@@ -247,15 +249,20 @@ export class StructureViewComponent {
         this.contentLinks = [];
     }
 
+    isEmpty() {
+        return !this.owner || !this.repository;
+    }
+
     get isShowBreadcrumb() : boolean {
-        return !!this.key;
+        return !this.isEmpty();
+        // return !!this.key;
     }
 
     get breadcrumbs() : Breadcrumb[] {
         const result: Breadcrumb[] = [];
 
-        // empty route
-        if (!(this.key?.length ?? 0 > 0)) {
+        // empty repository
+        if (!(this.repository?.length ?? 0 > 0)) {
             return result;
         }
 
@@ -263,6 +270,11 @@ export class StructureViewComponent {
             name: this.repository!,
             url: `/${this.routes.knowledge}/${this.owner}/${this.repository}/${this.branch}`
         });
+
+        // empty key
+        if (!(this.key?.length ?? 0 > 0)) {
+            return result;
+        }
 
         const route = this.key?.split('/').filter(x => x?.length > 0) ?? [];
         for (let i = 0; i < route.length; i++) {

@@ -7,7 +7,11 @@
             
             <!-- leaf nodes -->
             <mat-tree-node *matTreeNodeDef="let node" matTreeNodePadding
-                routerLink="/{{routes.knowledge}}/{{owner}}/{{repository}}/{{branch}}/{{node.key}}" routerLinkActive="bg-blue-100 text-blue-700 rounded-[5px]" [routerLinkActiveOptions]="{ exact: true }">
+                routerLink="/{{routes.knowledge}}/{{owner}}/{{repository}}/{{branch}}/{{node.key}}"
+                routerLinkActive="bg-blue-100 text-blue-700 rounded-[5px]"
+                [routerLinkActiveOptions]="{ exact: true }"
+                #nodeElement [attr.data-node-key]="node.key"
+                >
                 <button mat-icon-button disabled class="w-6"></button>
                 <mat-icon class="mr-2" fontSet="material-symbols-outlined">
                     {{node.getIconName()}}
@@ -18,7 +22,11 @@
             <!-- expandable branch nodes -->
                 <!-- routerLink="/{{routes.knowledge}}/{{owner}}/{{repository}}/{{branch}}/{{node.key}}" [routerLinkActive]='["node-active"]'> -->
             <mat-tree-node *matTreeNodeDef="let node; when: hasChild" matTreeNodePadding
-                routerLink="/{{routes.knowledge}}/{{owner}}/{{repository}}/{{branch}}/{{node.key}}" routerLinkActive="bg-blue-100 text-blue-700 rounded-[5px]" [routerLinkActiveOptions]="{ exact: true }">
+                routerLink="/{{routes.knowledge}}/{{owner}}/{{repository}}/{{branch}}/{{node.key}}"
+                routerLinkActive="bg-blue-100 text-blue-700 rounded-[5px]"
+                [routerLinkActiveOptions]="{ exact: true }"
+                #nodeElement [attr.data-node-key]="node.key"
+                >
                 <!-- Handle dynamic lazy loading on user toggle action -->
                 <button mat-icon-button 
                         (click)="onNodeToggle(tree, node)" 
@@ -39,7 +47,7 @@
     </mat-sidenav>
     <mat-sidenav-content class="h-full p-2 overflow-y-auto">
         <div class="h-full w-full">
-            <app-structure-details></app-structure-details>
+            <app-structure-view></app-structure-view>
         </div>
     </mat-sidenav-content>
 </mat-sidenav-container>

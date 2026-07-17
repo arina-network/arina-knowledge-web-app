@@ -1,4 +1,4 @@
-import { Component, effect, inject, signal, viewChild } from '@angular/core';
+import { Component, effect, ElementRef, inject, QueryList, signal, viewChild, ViewChildren } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, NavigationEnd, Router, RouterLink, RouterLinkActive } from '@angular/router'; 
 
@@ -15,8 +15,9 @@ import { AppRoutes } from '@/app/core/constants/app-routes';
 import { NotificationService } from '@/app/core/services/notification.service';
 import { ProgressComponent } from '@/app/core/components/progress/progress.component';
 
-import { StructureDetailsComponent } from '../structure-details/structure-details.component';
+// import { StructureDetailsComponent } from '../structure-details/structure-details.component';
 import { StructureTreeNode } from '../structure-tree/structure-tree-node';
+import { StructureViewComponent } from '../structure-view/structure-view.component';
 
 import { StructureApiService } from '../../api-services/structure-api.service';
 import { RepositoryService } from '../../services/repository.service';
@@ -35,7 +36,7 @@ import { AppParams } from '@/app/core/constants/app-params';
         MatTooltipModule,
         MatTreeModule,
         ProgressComponent,
-        StructureDetailsComponent
+        StructureViewComponent
     ],
     templateUrl: './structure-designer.component.html'
 })
@@ -240,12 +241,28 @@ export class StructureDesignerComponent {
         if (treeInstance && this.key) {
             const matchNode = this.findNodeInArray(nodes, this.key);
             if (matchNode) {
+                const isTargetNode = matchNode.key === this.key;
+
                 // console.log('expandNodeByKey: matchNode', {matchNode, key: this.key});
                 if (this.hasChild(0, matchNode)) {
+                    // console.log('expandNodeByKey: has child', {matchNode, key: this.key});
                     if (!treeInstance.isExpanded(matchNode)){
                         // console.log('expandNodeByKey: matchNode is expandable, toggling', {matchNode, key: this.key});
                         this.onNodeToggle(treeInstance, matchNode);
+
+                        // If this was the target node, scroll to it after toggle finishes rendering
+                        if (isTargetNode) {
+                            this.scrollToNodeElement(matchNode);
+                        }                        
+                    } else {
+                        if (matchNode.children && matchNode.children.length > 0) {
+                            // console.log('expandNodeByKey: matchNode has children', {matchNode, key: this.key});
+                            this.expandNodeByKey(matchNode.children);
+                        }
                     }
+                } else if (isTargetNode) {
+                    // If it has no children but matches the key, scroll to it directly
+                    this.scrollToNodeElement(matchNode);
                 }
             }
         }
@@ -253,5 +270,23 @@ export class StructureDesignerComponent {
 
     private findNodeInArray(nodes: StructureTreeNode[], key: string): StructureTreeNode | undefined {
         return nodes.find(n => key.startsWith(n.key));
+    } 
+   
+    @ViewChildren('nodeElement', { read: ElementRef }) nodeElements!: QueryList<ElementRef>;
+
+    private scrollToNodeElement(node: StructureTreeNode) {
+        setTimeout(() => {
+            // Find element by a unique attribute like data-node-key or id
+            const targetElement = this.nodeElements.find(
+                (el) => el.nativeElement.getAttribute('data-node-key') === node.key // or node.id
+            );
+
+            if (targetElement) {
+                targetElement.nativeElement.scrollIntoView({
+                    behavior: 'smooth',
+                    block: 'center'
+                });
+            }
+        }, 150); // Small timeout allows MatTree to finish rendering animation loops
     }    
 }
