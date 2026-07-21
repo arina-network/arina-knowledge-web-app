@@ -65,9 +65,19 @@
                     </a>
                 </li>
             } @else {
-                <button (click)="exportToPdf()">
+                <button 
+                    matButton="outlined"
+                    color="primary" 
+                    (click)="exportToPdf()"
+                    class="!text-gray-700"
+                >
+                    <mat-icon class="mr-1" fontSet="material-symbols-outlined">picture_as_pdf</mat-icon>
+                    <span>Export to PDF</span>
+                </button>                
+                <!-- <button matButton (click)="exportToPdf()">
+                    <mat-icon class="!text-lg !h-7 !w-7" fontSet="material-symbols-outlined">picture_as_pdf</mat-icon>
                     Export to PDF
-                </button>
+                </button> -->
             }
         </ul>            
     </nav>

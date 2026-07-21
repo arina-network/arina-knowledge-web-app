@@ -27,6 +27,10 @@
             "styles": [
                 "src/material-theme.scss", 
                 "src/styles.css"
+            ],
+            "externalDependencies": [
+                "canvg",
+                "html2canvas"
             ]
           },
           "configurations": {

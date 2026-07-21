@@ -3,9 +3,11 @@ import { toSignal } from '@angular/core/rxjs-interop';
 import { AsyncPipe } from '@angular/common';
 import { ActivatedRoute, NavigationEnd, Router, RouterLink } from '@angular/router';
 
+import { MatButtonModule } from '@angular/material/button';
+import { MatButtonToggleModule } from '@angular/material/button-toggle';
+import { MatDialog } from '@angular/material/dialog';
 import { MatDividerModule } from '@angular/material/divider';
 import { MatIconModule } from '@angular/material/icon';
-import { MatButtonToggleModule } from '@angular/material/button-toggle';
 
 import { AppRoutes } from '@/app/core/constants/app-routes';
 import { Breadcrumb } from '@/app/core/models/breadcrumb';
@@ -21,6 +23,7 @@ import { StructureExportService } from '../../api-services/structure-export.serv
 import { StructureLink } from '../../models/structure-link';
 import { StructureContentComponent } from '../structure-content/structure-content.component';
 import { StructureHomeComponent } from '../structure-home/structure-home.component';
+import { ProgressExportComponent } from '@/app/core/components/progress-export/progress-export.component';
 
 @Component({
     selector: 'app-structure-view',
@@ -29,6 +32,7 @@ import { StructureHomeComponent } from '../structure-home/structure-home.compone
         AsyncPipe,
         RouterLink,
         MatDividerModule,
+        MatButtonModule,
         MatIconModule,
         MatButtonToggleModule,
         ProgressComponent,
@@ -50,6 +54,8 @@ export class StructureViewComponent {
     protected api = inject(StructureApiService);
     protected exportService = inject(StructureExportService);
     protected routes = inject(AppRoutes);
+
+    protected dialog = inject(MatDialog);
 
     protected owner?: string;
     protected repository?: string;
@@ -302,6 +308,21 @@ export class StructureViewComponent {
     }    
 
     async exportToPdf() {
-        await this.exportService.exportToPdf(this.owner, this.repository, this.branch, this.key);
+        const dialogRef = this.dialog.open(ProgressExportComponent, {
+            disableClose: true,
+            data: { currentFile: 'Initializing connection...' }
+        });
+
+        try {
+            await this.exportService.exportToPdf(this.owner, this.repository, this.branch, this.key);
+
+        } catch (error) {
+            dialogRef.close();
+
+            const message = error instanceof Error ? error.message : String(error);
+            this.notificationService.showError('Error exporting to PDF: ' + message);
+        } finally {
+            dialogRef.close();
+        }
     }
 }

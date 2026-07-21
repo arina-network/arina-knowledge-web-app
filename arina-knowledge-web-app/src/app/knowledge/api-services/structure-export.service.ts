@@ -12,6 +12,11 @@ import { StructureApiService } from './structure-api.service';
 export class StructureExportService {
     protected api = inject(StructureApiService);
 
+    constructor() {
+        // attach html2canvas globally so jsPDF's fallback resolution logic can find it
+        (window as any).html2canvas = html2canvas;
+    }    
+
     async exportToPdf(
         ownerName: string | undefined,
         repositoryName: string | undefined,
