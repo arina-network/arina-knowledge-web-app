@@ -1,4 +1,4 @@
-import { ChangeDetectorRef, Component, effect, inject, signal } from '@angular/core';
+import { Component, effect, inject, signal } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { AsyncPipe } from '@angular/common';
 import { ActivatedRoute, NavigationEnd, Router, RouterLink } from '@angular/router';
@@ -17,6 +17,7 @@ import { NotificationService } from '@/app/core/services/notification.service';
 
 
 import { StructureApiService } from '../../api-services/structure-api.service';
+import { StructureExportService } from '../../api-services/structure-export.service';
 import { StructureLink } from '../../models/structure-link';
 import { StructureContentComponent } from '../structure-content/structure-content.component';
 import { StructureHomeComponent } from '../structure-home/structure-home.component';
@@ -47,6 +48,7 @@ export class StructureViewComponent {
     protected notificationService = inject(NotificationService);        
    
     protected api = inject(StructureApiService);
+    protected exportService = inject(StructureExportService);
     protected routes = inject(AppRoutes);
 
     protected owner?: string;
@@ -298,4 +300,8 @@ export class StructureViewComponent {
 
         return result;
     }    
+
+    async exportToPdf() {
+        await this.exportService.exportToPdf(this.owner, this.repository, this.branch, this.key);
+    }
 }

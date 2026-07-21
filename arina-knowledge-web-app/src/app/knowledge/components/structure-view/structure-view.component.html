@@ -64,6 +64,10 @@
                         <span class="hover:underline">Open in GitHub</span>
                     </a>
                 </li>
+            } @else {
+                <button (click)="exportToPdf()">
+                    Export to PDF
+                </button>
             }
         </ul>            
     </nav>
