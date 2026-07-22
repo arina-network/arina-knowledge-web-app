@@ -6,7 +6,7 @@ import { AppSafeHtmlPipe } from '@/app/core/pipes/app-safe-html.pipe';
 import { ProgressComponent } from '@/app/core/components/progress/progress.component';
 import { NotificationService } from '@/app/core/services/notification.service';
 
-import { StructureApiService } from '../../api-services/structure-api.service';
+import { StructureApiService } from '../../services/structure-api.service';
 
 @Component({
     selector: 'app-structure-content',

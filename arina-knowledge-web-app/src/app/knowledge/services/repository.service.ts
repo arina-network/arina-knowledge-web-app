@@ -11,7 +11,7 @@ import { Branch } from '../models/branch';
 import { Repository } from '../models/repository';
 import { RepositoryGroup } from '../models/repository-group';
 
-import { StructureApiService } from '../api-services/structure-api.service';
+import { StructureApiService } from './structure-api.service';
 
 @Injectable({
     providedIn: 'root'
@@ -28,14 +28,15 @@ export class RepositoryService {
     public publicRepositories = signal<RepositoryGroup>(this.loadRepositoriesFromLocalStorage(RepositoryCategory.Public));
 
     public branches = signal<Branch[] | null>(null);
-    constructor() {
-        effect(() => {
-            this.saveRepositoriesToLocalStorage(RepositoryCategory.Public, this.publicRepositories());
-        });
-        effect(() => {
-            this.saveRepositoriesToLocalStorage(RepositoryCategory.Private, this.privateRepositories());
-        });
-    }    
+    
+    // constructor() {
+    //     effect(() => {
+    //         this.saveRepositoriesToLocalStorage(RepositoryCategory.Public, this.publicRepositories());
+    //     });
+    //     effect(() => {
+    //         this.saveRepositoriesToLocalStorage(RepositoryCategory.Private, this.privateRepositories());
+    //     });
+    // }    
 
     private selectedRepository = signal<Repository | null>(null);
     private selectedBranch = signal<Branch | null>(null);
@@ -209,9 +210,6 @@ export class RepositoryService {
     }
 
     private settingsCode = 'repositories';
-    // protected get settingsCode(): string {
-    //     return 'repositories';
-    // }
 
     private getRepositoriesStorageCode(category: RepositoryCategory): string {
         if (category === RepositoryCategory.Private && this.authorizationService.isAuthorized())
@@ -235,6 +233,14 @@ export class RepositoryService {
         }
 
         localStorage.setItem(this.getRepositoriesStorageCode(category), JSON.stringify(group));
+    }
+
+    public saveRepositories(category: RepositoryCategory) {
+        if (category === RepositoryCategory.Private) {
+            this.saveRepositoriesToLocalStorage(category, this.privateRepositories());
+        } else if (category === RepositoryCategory.Public) {
+            this.saveRepositoriesToLocalStorage(category, this.publicRepositories());
+        }
     }
 
     private loadRepositoriesFromLocalStorage(category: RepositoryCategory): RepositoryGroup {

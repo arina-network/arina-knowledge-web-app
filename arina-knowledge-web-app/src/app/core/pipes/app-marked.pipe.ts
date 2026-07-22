@@ -7,7 +7,7 @@ import { Marked } from 'marked';
 import { AppParams } from '../constants/app-params';
 import { AppRoutes } from '../constants/app-routes';
 
-import { StructureApiService } from '@/app/knowledge/api-services/structure-api.service';
+import { StructureApiService } from '@/app/knowledge/services/structure-api.service';
 
 @Pipe({
     name: 'markdown',

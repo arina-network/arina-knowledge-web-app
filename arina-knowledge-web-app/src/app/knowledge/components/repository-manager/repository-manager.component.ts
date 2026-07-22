@@ -66,12 +66,16 @@ export class RepositoryManagerComponent {
             this.repositoryService.privateRepositories.update(current => ({
                 ...current,
                 repositories: [...current.repositories, newRepository]
-            }));    
+            }));
+
+            this.repositoryService.saveRepositories(RepositoryCategory.Private);    
         } else if (this.repositoryCategory === RepositoryCategory.Public) {
             this.repositoryService.publicRepositories.update(current => ({
                 ...current,
                 repositories: [...current.repositories, newRepository]
             }));    
+
+            this.repositoryService.saveRepositories(RepositoryCategory.Public);    
         }
         
         this.newRepoName = '';
@@ -85,11 +89,15 @@ export class RepositoryManagerComponent {
                 ...current,
                 repositories: current.repositories.filter(item => item.key !== key)
             }));       
+
+            this.repositoryService.saveRepositories(RepositoryCategory.Private);    
         } else if (this.repositoryCategory === RepositoryCategory.Public) {
-        this.repositoryService.publicRepositories.update(current => ({
-            ...current,
-            repositories: current.repositories.filter(item => item.key !== key)
-        }));       
+            this.repositoryService.publicRepositories.update(current => ({
+                ...current,
+                repositories: current.repositories.filter(item => item.key !== key)
+            }));
+                   
+            this.repositoryService.saveRepositories(RepositoryCategory.Public);    
         }
     }
 }

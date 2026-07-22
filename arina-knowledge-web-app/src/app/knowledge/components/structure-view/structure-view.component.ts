@@ -18,8 +18,8 @@ import { AppParams } from '@/app/core/constants/app-params';
 import { NotificationService } from '@/app/core/services/notification.service';
 
 
-import { StructureApiService } from '../../api-services/structure-api.service';
-import { StructureExportService } from '../../api-services/structure-export.service';
+import { StructureApiService } from '../../services/structure-api.service';
+import { StructureExportService } from '../../services/structure-export.service';
 import { StructureLink } from '../../models/structure-link';
 import { StructureContentComponent } from '../structure-content/structure-content.component';
 import { StructureHomeComponent } from '../structure-home/structure-home.component';
