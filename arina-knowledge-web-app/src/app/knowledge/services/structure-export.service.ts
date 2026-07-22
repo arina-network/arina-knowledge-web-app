@@ -12,12 +12,432 @@ import { StructureApiService } from './structure-api.service';
 export class StructureExportService {
     protected api = inject(StructureApiService);
 
+
+// Track state positions uniformly across global document rendering iterations
+    private currentY = 40;
+    private totalPages = 1;
+    private pageHeight = 842; // Standard A4 points metric constraints max height
+    private bottomMargin = 45;
+    private leftMargin = 40;
+    private contentWidth = 515; // 595 (A4 Width) - 80 (Margins)
+
+    private ownerName: string | undefined;
+    private repositoryName: string | undefined;
+    private branchName: string | undefined;    
+
+    async exportToPdf(
+        ownerName: string | undefined,
+        repositoryName: string | undefined,
+        branchName: string | undefined,
+        key: string | undefined        
+    ): Promise<void> {
+        this.ownerName = ownerName;
+        this.repositoryName = repositoryName;
+        this.branchName = branchName;
+
+        // Initialize jsPDF directly using points layout configurations
+        const doc = new jsPDF({
+            orientation: 'p',
+            unit: 'pt',
+            format: 'a4'
+        });
+
+        // Reset state variables before every export run execution block
+        this.currentY = 40;
+        this.totalPages = 1;
+
+        const exportedStr = new Date().toLocaleString();
+        const pathStr = `${'/' + key + ', ' || ''}${repositoryName}, ${branchName}`;
+
+        // 1. Draw Metadata Cover Headers Manually
+        this.renderMetaHeader(
+            doc, 
+            ownerName, 
+            repositoryName, 
+            branchName, 
+            key,
+            exportedStr
+        );
+
+        // 2. Fetch and recursively build the programmatic document tree contents
+        await this.processFolderData(ownerName, repositoryName, branchName, key, doc);
+
+        // 3. Stamp Page numbers across all page fragments retroactively
+        this.injectPageNumbers(
+            doc,
+            pathStr,
+            exportedStr
+        );
+
+        // 4. Clean file download execution
+        doc.save(`${ownerName}__${repositoryName}__${branchName}__${key?.replace(/\//g, '__') || 'root'}.pdf`);
+    }
+
+    private renderMetaHeader(
+        doc: jsPDF,
+        owner: string | undefined,
+        repo: string | undefined,
+        branch: string | undefined,
+        key: string | undefined,
+        exportedStr: string
+    ): void {
+        doc.setFont('Helvetica', 'bold');
+        doc.setFontSize(22);
+        doc.setTextColor(15, 23, 42); // slate-900
+        doc.text(`/${key || 'root'}`, this.leftMargin, this.currentY);
+        this.currentY += 24;
+
+        doc.setFont('Helvetica', 'normal');
+        doc.setFontSize(10);
+        doc.setTextColor(100, 116, 139); // slate-500
+        doc.text(`owner: ${owner || ''}, repository: ${repo || ''}`, this.leftMargin, this.currentY);
+        this.currentY += 14;
+        doc.text(`branch: ${branch || ''}, exported: ${exportedStr}`, this.leftMargin, this.currentY);
+        this.currentY += 16;
+
+        // Visual divider rule lines 
+        doc.setDrawColor(226, 232, 240); // slate-200
+        doc.setLineWidth(1);
+        doc.line(this.leftMargin, this.currentY, this.leftMargin + this.contentWidth, this.currentY);
+        this.currentY += 30;
+    }
+
+    private async processFolderData(owner: string | undefined, repo: string | undefined, branch: string | undefined, key: string | undefined, doc: jsPDF): Promise<void> {
+        try {
+            const data = await firstValueFrom(this.api.getStructureRaw(owner, repo, branch, key));
+            if (data.content) return;
+
+            for (const item of data) {
+                if (item.type === 'dir') {
+                    // Check height limits before stamping subfolder names
+                    this.ensureSpace(doc, 40);
+                    
+                    doc.setFont('Helvetica', 'bold');
+                    doc.setFontSize(16);
+                    doc.setTextColor(30, 41, 59); // slate-800
+                    doc.text(`/${item.path}`, this.leftMargin, this.currentY);
+                    this.currentY += 25;
+
+                    await this.processFolderData(owner, repo, branch, item.path, doc);
+                } else if (item.type === 'file' && item.download_url) {
+                    await this.processFileData(owner, repo, branch, item.path, item.name, doc);
+                }
+            }
+        } catch (error) {
+            console.error(`Error reading pathway: ${key}`, error);
+        }
+    }
+
+    private async processFileData(owner: string | undefined, repo: string | undefined, branch: string | undefined, key: string | undefined, name: string | undefined, doc: jsPDF): Promise<void> {
+        try {
+            const data = await firstValueFrom(this.api.getStructureRaw(owner, repo, branch, key));
+            if (!data.content) return;
+
+            const cleanBase64 = data.content.replace(/\s/g, '');
+            const binaryString = atob(cleanBase64);
+            const bytes = Uint8Array.from(binaryString, m => m.charCodeAt(0));
+            const rawText = new TextDecoder('utf-8').decode(bytes);
+
+            this.ensureSpace(doc, 30);
+            
+            // File metadata label block
+            // doc.setFont('Helvetica', 'bold');
+            // doc.setFontSize(12);
+            // doc.setTextColor(71, 85, 105); // slate-600
+            // doc.text(`File: ${name || ''}`, this.leftMargin, this.currentY);
+            // this.currentY += 15;
+
+            if (name?.endsWith('.md')) {
+                this.parseAndRenderMarkdown(doc, rawText);
+            } else {
+                // Code block fallback layouts
+                this.renderCodeBlockFallback(doc, rawText);
+            }
+            this.currentY += 20; // Structural buffer gap between files
+        } catch (error) {
+            console.error(`Failed parsing file: ${name}`, error);
+        }
+    }
+
+    /**
+     * Custom line parser engine loop to translate Markdown elements safely without HTML canvas wrappers
+     */
+    private parseAndRenderMarkdown(doc: jsPDF, text: string): void {
+        const lines = text.split(/\r?\n/);
+        
+        for (let line of lines) {
+            let cleanLine = line.trim();
+            if (!cleanLine && line !== '') continue; // Skip redundant space gaps
+
+            // --- 1. PARSE MARKDOWN HEADINGS ---
+            if (cleanLine.startsWith('#')) {
+                const match = cleanLine.match(/^(#{1,6})\s+(.*)$/);
+                if (match) {
+                    this.currentY += 10;
+
+                    const level = match[1].length;
+                    const headingText = match[2];
+                    
+                    const fontSize = level === 1 ? 20 : level === 2 ? 16 : level === 3 ? 14 : 12;
+                    this.ensureSpace(doc, fontSize + 15);
+
+                    doc.setFont('Helvetica', 'bold');
+                    doc.setFontSize(fontSize);
+                    doc.setTextColor(15, 23, 42);
+                    doc.text(headingText, this.leftMargin, this.currentY);
+                    this.currentY += fontSize + 10;
+                    continue;
+                }
+            }
+
+            // --- 2. PARSE UNORDERED LIST BULLETS ---
+            if (cleanLine.startsWith('- ') || cleanLine.startsWith('* ')) {
+                const listText = cleanLine.substring(2);
+                this.ensureSpace(doc, 18);
+
+                // Draw uniform vector bullet tokens explicitly
+                doc.setFont('Helvetica', 'bold');
+                doc.setFontSize(11);
+                doc.setTextColor(100, 116, 139);
+                doc.text('•', this.leftMargin + 10, this.currentY + 1);
+
+                // Break text if line length overflows page width
+                doc.setFont('Helvetica', 'normal');
+                doc.setTextColor(51, 65, 85);
+                this.renderTokenText(doc, listText, this.leftMargin + 22, this.contentWidth - 22, 11);
+                continue;
+            }
+
+            // --- 3. PARSE ORDERED LIST NUMBERS ---
+            if (/^\d+\.\s+/.test(cleanLine)) {
+                const match = cleanLine.match(/^(\d+\.)\s+(.*)$/);
+                if (match) {
+                    const numToken = match[1];
+                    const listText = match[2];
+                    this.ensureSpace(doc, 18);
+
+                    doc.setFont('Helvetica', 'bold');
+                    doc.setFontSize(11);
+                    doc.setTextColor(100, 116, 139);
+                    doc.text(numToken, this.leftMargin + 10, this.currentY);
+
+                    doc.setFont('Helvetica', 'normal');
+                    doc.setTextColor(51, 65, 85);
+                    this.renderTokenText(doc, listText, this.leftMargin + 26, this.contentWidth - 26, 11);
+                    continue;
+                }
+            }
+
+            // --- 4. PARSE STANDARD BODY PARAGRAPHS ---
+            if (cleanLine.length > 0) {
+                this.ensureSpace(doc, 16);
+                doc.setFont('Helvetica', 'normal');
+                doc.setFontSize(11);
+                doc.setTextColor(51, 65, 85);
+                this.renderTokenText(doc, cleanLine, this.leftMargin, this.contentWidth, 11);
+            } else {
+                this.currentY += 6; // Standard paragraph spacing buffer
+            }
+        }
+    }
+
+    /**
+     * Dedicated horizontal inline regex token engine to extract **bold** markers dynamically
+     */
+    // private renderTokenText(doc: jsPDF, text: string, startX: number, maxWidth: number, fontSize: number): void {
+    //     // Enforce font properties to accurately calculate string lengths
+    //     doc.setFontSize(fontSize);
+        
+    //     // Split long input line blocks natively to maintain horizontal margins
+    //     const wrappedLines: string[] = doc.splitTextToSize(text, maxWidth);
+
+    //     for (const line of wrappedLines) {
+    //         this.ensureSpace(doc, 16);
+    //         let currentX = startX;
+
+    //         // Split on markdown bold indicators (`**`)
+    //         const parts = line.split(/(\*\*.*?\*\*)/g);
+
+    //         for (const part of parts) {
+    //             if (part.startsWith('**') && part.endsWith('**')) {
+    //                 const cleanBoldText = part.slice(2, -2);
+    //                 doc.setFont('Helvetica', 'bold');
+    //                 doc.text(cleanBoldText, currentX, this.currentY);
+                    
+    //                 currentX += doc.getTextWidth(cleanBoldText); // Shift cursor to prevent collisions
+    //             } else {
+    //                 doc.setFont('Helvetica', 'normal');
+    //                 doc.text(part, currentX, this.currentY);currentX += doc.getTextWidth(part);
+    //             }
+    //         }
+            
+    //         this.currentY += 15; // Row line height step height spacing
+    //     }
+    // }
+    private renderTokenText(doc: jsPDF, text: string, startX: number, maxWidth: number, fontSize: number): void {
+        doc.setFontSize(fontSize);
+        
+        // 1. Clean out raw markdown links from the string length wrapper to wrap rows cleanly
+        // e.g., transforms "[Google](url)" into "Google" just to calculate safe page line wrap metrics
+        const plainTextForWrapping = text.replace(/\[([^\]]+)\]\([^)]+\)/g, '$1').replace(/\*\*([^*]+)\*\*/g, '$1');
+        const wrappedLines: string[] = doc.splitTextToSize(plainTextForWrapping, maxWidth);
+
+        // Map line chunks back to original formatting parts using a sequential reader
+        let currentRawTextIndex = 0;
+        
+        // For standard processing without complex pointer mapping, we tokenize the original string lines directly
+        // and let jsPDF handle wrapped elements safely via coordinate cursors:
+        const originalWrappedLines: string[] = doc.splitTextToSize(text, maxWidth);
+
+        for (const line of originalWrappedLines) {
+            this.ensureSpace(doc, 16);
+            let currentX = startX;
+
+            // Regex splits line into: [normal text], [**bold**], or [ [text](url) ]
+            const parts = line.split(/(\*\*.*?\*\*|\[.*?\]\(.*?\))/g);
+
+            for (const part of parts) {
+                if (!part) {
+                    continue;
+                }
+
+                // // --- CASE A: BOLD TEXT HANDLING ---
+                // if (part.startsWith('**') && part.endsWith('**')) {
+                //     const cleanBoldText = part.slice(2, -2);
+                //     doc.setFont('Helvetica', 'bold');
+                //     doc.setTextColor(15, 23, 42); // slate-900
+                //     doc.text(cleanBoldText, currentX, this.currentY);
+                //     currentX += doc.getTextWidth(cleanBoldText);
+                // } 
+                // else if (part.startsWith('__') && part.endsWith('__')) {
+                //     const cleanItalicText = part.slice(2, -2);
+                //     doc.setFont('Helvetica', 'italic');
+                //     doc.setTextColor(15, 23, 42); // slate-900
+                //     doc.text(cleanItalicText, currentX, this.currentY);
+                //     currentX += doc.getTextWidth(cleanItalicText);
+                // } 
+                // // --- CASE B: MARKDOWN LINK HANDLING ---
+
+                // --- CASE 1: BOLD TEXT HANDLING (**bold**) ---
+                if (part.startsWith('**') && part.endsWith('**')) {
+                    const cleanBoldText = part.slice(2, -2);
+                    doc.setFont('Helvetica', 'bold');
+                    doc.setTextColor(15, 23, 42); // slate-900
+                    doc.text(cleanBoldText, currentX, this.currentY);
+                    currentX += doc.getTextWidth(cleanBoldText);
+                } 
+                // --- CASE 2: STRIKEOUT TEXT HANDLING (~~strikeout~~) ---
+                else if (part.startsWith('~~') && part.endsWith('~~')) {
+                    const cleanStrikeText = part.slice(2, -2);
+                    doc.setFont('Helvetica', 'normal');
+                    doc.setTextColor(148, 163, 184); // slate-400 (muted gray for deleted text)
+                    doc.text(cleanStrikeText, currentX, this.currentY);
+
+                    // Draw a strikeout line right through the middle of the text height baseline
+                    const textWidth = doc.getTextWidth(cleanStrikeText);
+                    doc.setDrawColor(148, 163, 184);
+                    doc.setLineWidth(0.8);
+                    // y coordinate is shifted up by 3.5 points to hit the exact middle of the letters
+                    doc.line(currentX, this.currentY - 3.5, currentX + textWidth, this.currentY - 3.5);
+
+                    currentX += textWidth;
+                }
+                // --- CASE 3: ITALIC TEXT HANDLING (*italic* or _italic_) ---
+                else if ((part.startsWith('*') && part.endsWith('*')) || (part.startsWith('_') && part.endsWith('_'))) {
+                    const cleanItalicText = part.slice(1, -1);
+                    doc.setFont('Helvetica', 'italic');
+                    doc.setTextColor(51, 65, 85); // slate-700
+                    doc.text(cleanItalicText, currentX, this.currentY);
+                    currentX += doc.getTextWidth(cleanItalicText);
+                }
+                // --- CASE 4: MARKDOWN LINK HANDLING ([text](url)) ---
+                else if (part.startsWith('[') && part.includes('](')) {
+                    const match = part.match(/\[(.*?)\]\((.*?)\)/);
+                    if (match) {
+                        const linkText = match[1];
+                        let linkUrl = match[2];
+
+                        if (linkUrl.startsWith('/')) { // process only local links
+                            linkUrl = `https://arina.network/#/knowledge/${this.ownerName}/${this.repositoryName}/${this.branchName}${linkUrl}`
+                        }                        
+
+                        // Style as clear, modern interactive clickable blueprint link text
+                        doc.setFont('Helvetica', 'bold'); // Make link stand out
+                        doc.setTextColor(37, 99, 235);   // Tailwind Blue-600
+
+                        // Render text onto the canvas sheet layout view
+                        doc.text(linkText, currentX, this.currentY);
+
+                        // Draw a fine underline vector beneath the link text to make it readable
+                        const textWidth = doc.getTextWidth(linkText);
+                        doc.setDrawColor(37, 99, 235);
+                        doc.setLineWidth(0.5);
+                        doc.line(currentX, this.currentY + 1.5, currentX + textWidth, this.currentY + 1.5);
+
+                        // Embed an active clickable link rect area mapping layer over the vector text coordinates
+                        doc.link(currentX, this.currentY - 9, textWidth, 12, { url: linkUrl });
+
+                        currentX += textWidth; // Shift processing pointer rightward
+                    }
+                } 
+                // --- CASE C: STANDARD PLAIN TEXT ---
+                else {
+                    doc.setFont('Helvetica', 'normal');
+                    doc.setTextColor(51, 65, 85); // slate-700
+                    doc.text(part, currentX, this.currentY);
+                    currentX += doc.getTextWidth(part);
+                }
+            }
+            this.currentY += 15; // Shift row baseline downward for next text block iteration
+        }
+    }    
+
+    private renderCodeBlockFallback(doc: jsPDF, text: string): void {
+        doc.setFont('Courier', 'normal');
+        doc.setFontSize(9.5);
+        doc.setTextColor(30, 41, 59);
+        const lines = doc.splitTextToSize(text, this.contentWidth - 15);
+        for (const line of lines) {
+            this.ensureSpace(doc, 14);// Draw a subtle code box background outline panel manually
+            doc.setFillColor(248, 250, 252);
+            doc.rect(this.leftMargin, this.currentY - 10, this.contentWidth, 14, 'F');
+            doc.text(line, this.leftMargin + 8, this.currentY);
+            this.currentY += 14;
+        }
+    }
+    
+    /*** Automated page break manager. Extends document chunks cleanly when text exceeds height bounds.*/
+    private ensureSpace(doc: jsPDF, requiredSpace: number): void {
+        if (this.currentY + requiredSpace > this.pageHeight - this.bottomMargin) {
+            doc.addPage();this.totalPages++;this.currentY = 45; // Safe top layout boundary margin padding start
+        }
+    }
+    
+    private injectPageNumbers(
+        doc: jsPDF,
+        pathStr: string,
+        exportedStr: string
+    ): void {
+        const total = (doc as any).internal.getNumberOfPages();
+        for (let i = 1; i <= total; i++) {
+            doc.setPage(i);
+            doc.setFont('Helvetica', 'normal');
+            doc.setFontSize(9);
+            doc.setTextColor(148, 163, 184); // slate-400
+            
+            // Format standard page footer tracking strings
+            const footerText = `${pathStr}, exported ${exportedStr}, page ${i} of ${total}`;
+            const textWidth = doc.getTextWidth(footerText);
+            doc.text(footerText, (595 / 2) - (textWidth / 2), 815);
+        }
+    }
+
     constructor() {
         // attach html2canvas globally so jsPDF's fallback resolution logic can find it
         (window as any).html2canvas = html2canvas;
     }    
 
-    async exportToPdf(
+    async v1_exportToPdf(
         ownerName: string | undefined,
         repositoryName: string | undefined,
         branchName: string | undefined,
@@ -267,7 +687,7 @@ export class StructureExportService {
         htmlContainer.appendChild(metaHeader);
 
         // process the folder structure recursively and append content to the container
-        await this.processFolder(
+        await this.v1_processFolder(
             ownerName, 
             repositoryName, 
             branchName, 
@@ -307,7 +727,7 @@ export class StructureExportService {
         });
     }
 
-    private async processFolder(
+    private async v1_processFolder(
         ownerName: string | undefined,
         repositoryName: string | undefined,
         branchName: string | undefined,
@@ -336,7 +756,7 @@ export class StructureExportService {
                     container.appendChild(subfolderHeader);
 
                     // Deep crawl nested subdirectory path
-                    await this.processFolder(
+                    await this.v1_processFolder(
                         ownerName,
                         repositoryName,
                         branchName,
@@ -344,7 +764,7 @@ export class StructureExportService {
                         container
                     );
                 } else if (item.type === 'file' && item.download_url) {
-                    await this.processFile(
+                    await this.v1_processFile(
                         ownerName,
                         repositoryName,
                         branchName,
@@ -359,7 +779,7 @@ export class StructureExportService {
         }
     }
 
-    private async processFile(
+    private async v1_processFile(
         ownerName: string | undefined,
         repositoryName: string | undefined,
         branchName: string | undefined,
