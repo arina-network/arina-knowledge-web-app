@@ -19,26 +19,26 @@ import { MatTreeModule } from '@angular/material/tree';
 // import { StructureTreeNode } from './structure-tree-node';
 // import { StructureTreeDataSource } from './structure-tree-data-source';
 
-import { BaseDataComponent } from '@/app/core/components/base-data/base-data.component';
+// import { BaseDataComponent } from '@/app/core/components/base-data/base-data.component';
 import { ProgressComponent } from '@/app/core/components/progress/progress.component';
 
 
 @Component({
     selector: 'app-structure-tree',
     standalone: true,
-    imports: [
-        // NgClass,
-        // DragDropModule,
-        // MatIconModule,
-        // MatProgressBarModule,
-        // MatTooltipModule,
-        // MatTreeModule,
-        ProgressComponent
-    ],
+    // imports: [
+    //     // NgClass,
+    //     // DragDropModule,
+    //     // MatIconModule,
+    //     // MatProgressBarModule,
+    //     // MatTooltipModule,
+    //     // MatTreeModule,
+    //     ProgressComponent
+    // ],
     templateUrl: './structure-tree.component.html'
 })
-export class StructureTreeComponent
-    extends BaseDataComponent {
+export class StructureTreeComponent {
+    // extends BaseDataComponent {
 
     // protected get code(): string {
     //     return this.constructor?.name;

@@ -19,7 +19,7 @@ import { ProgressComponent } from '@/app/core/components/progress/progress.compo
 import { StructureTreeNode } from '../structure-tree/structure-tree-node';
 import { StructureViewComponent } from '../structure-view/structure-view.component';
 
-import { StructureApiService } from '../../api-services/structure-api.service';
+import { StructureApiService } from '../../services/structure-api.service';
 import { RepositoryService } from '../../services/repository.service';
 import { AppParams } from '@/app/core/constants/app-params';
 

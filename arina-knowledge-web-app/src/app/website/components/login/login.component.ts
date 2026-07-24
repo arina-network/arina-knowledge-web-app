@@ -11,7 +11,7 @@ import { AppRoutes } from '@/app/core/constants/app-routes';
 import { AuthorizationService } from '@/app/core/services/authorization.service';
 import { NotificationService } from '@/app/core/services/notification.service';
 
-import { StructureApiService } from '@/app/knowledge/api-services/structure-api.service';
+import { StructureApiService } from '@/app/knowledge/services/structure-api.service';
 
 @Component({
   templateUrl: './login.component.html',

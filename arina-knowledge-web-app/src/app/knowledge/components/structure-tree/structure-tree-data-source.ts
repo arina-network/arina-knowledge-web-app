@@ -3,7 +3,7 @@ import { FlatTreeControl } from "@angular/cdk/tree";
 import { BehaviorSubject, merge, Observable } from "rxjs";
 import { map } from "rxjs/operators";
 
-import { StructureApiService } from  "@/app/knowledge/api-services/structure-api.service";
+import { StructureApiService } from  "@/app/knowledge/services/structure-api.service";
 
 import { StructureTreeNode } from "./structure-tree-node";
 
