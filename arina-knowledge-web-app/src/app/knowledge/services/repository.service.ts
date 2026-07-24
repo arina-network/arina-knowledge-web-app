@@ -235,7 +235,7 @@ export class RepositoryService {
     }
 
     private loadRepositoriesFromLocalStorage(category: RepositoryCategory): RepositoryGroup {
-        console.log('loadRepositoriesFromLocalStorage: ', {category, isAuthorized: this.authorizationService.isAuthorized(), userInfo: this.authorizationService.getUserInfo() });
+        // console.log('loadRepositoriesFromLocalStorage: ', {category, isAuthorized: this.authorizationService.isAuthorized(), userInfo: this.authorizationService.getUserInfo() });
 
         let result = new RepositoryGroup();
         result.category = category;
@@ -249,9 +249,9 @@ export class RepositoryService {
         }
 
         const storageCode = this.getRepositoriesStorageCode(category);
-        console.log('loadRepositoriesFromLocalStorage: ', {category, storageCode });
+        // console.log('loadRepositoriesFromLocalStorage: ', {category, storageCode });
         const data = localStorage.getItem(storageCode);
-        console.log('loadRepositoriesFromLocalStorage: ', {category, data });
+        // console.log('loadRepositoriesFromLocalStorage: ', {category, data });
         if (data) {
             try {
                 result = JSON.parse(data);
