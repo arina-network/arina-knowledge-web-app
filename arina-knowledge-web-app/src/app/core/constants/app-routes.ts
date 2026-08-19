@@ -29,6 +29,12 @@ export class AppRoutes {
     public readonly settings = '/settings';
     public readonly knowledge = '/knowledge';
 
+    // knowledge backend
+
+    public readonly backendGitHubLogin = 'https://info.arina.network/api/githublogin';
+    public readonly backendGitHubLogout = 'https://info.arina.network/api/githublogout';
+    public readonly backendGitHubToken = 'https://info.arina.network/api/githubtoken';
+
     // arina knowledge
     public readonly arina = `${this.knowledge}/arina-network/arina-knowledge`
     public readonly articles = `${this.knowledge}/arina-network/arina-knowledge/main/articles`

@@ -1,7 +1,8 @@
-import { Component, inject } from '@angular/core';
+import { Component, DOCUMENT, inject } from '@angular/core';
 import { Router } from '@angular/router';
 
 import { MatButtonModule } from '@angular/material/button';
+import { MatCardModule } from '@angular/material/card';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
@@ -16,16 +17,18 @@ import { StructureApiService } from '@/app/knowledge/services/structure-api.serv
 @Component({
   templateUrl: './login.component.html',
   imports: [
-    MatListModule,
-    MatFormFieldModule,
-    MatInputModule,
     MatButtonModule,
-    MatIconModule
+    MatCardModule,
+    MatFormFieldModule,
+    MatIconModule,
+    MatInputModule,
+    MatListModule
   ]  
 })
 
 export class LoginComponent {
     protected router = inject(Router);
+    protected document = inject(DOCUMENT);
 
     protected notificationService = inject(NotificationService);        
     protected authorizationService = inject(AuthorizationService);
@@ -48,6 +51,11 @@ export class LoginComponent {
         });
     }
 
+    redirectToGitHubLogin() {
+        const domain = this.document.location.origin; 
+
+        window.location.href = `${this.routes.backendGitHubLogin}?returnUrl=${encodeURIComponent(domain + '/#' + this.routes.knowledge)}`;
+    }    
     // protected repos: any[] = [];
 
     // protected loadRepos() {
