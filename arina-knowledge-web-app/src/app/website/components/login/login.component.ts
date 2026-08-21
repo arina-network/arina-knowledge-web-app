@@ -54,7 +54,8 @@ export class LoginComponent {
     redirectToGitHubLogin() {
         const domain = this.document.location.origin; 
 
-        window.location.href = `${this.routes.backendGitHubLogin}?returnUrl=${encodeURIComponent(domain + '/#' + this.routes.knowledge)}`;
+        this.authorizationService.loginToGitHub(domain);
+        // window.location.href = `${this.routes.backendGitHubLogin}?returnUrl=${encodeURIComponent(domain + '/#' + this.routes.knowledge)}`;
     }    
     // protected repos: any[] = [];
 

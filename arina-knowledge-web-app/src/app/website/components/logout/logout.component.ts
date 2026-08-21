@@ -21,6 +21,7 @@ export class LogoutComponent {
     constructor() {
         this.repositoryService.clear();
         this.authorizationService.logout();
+        
         this.router.navigate([this.routes.knowledge]);
     }
 }

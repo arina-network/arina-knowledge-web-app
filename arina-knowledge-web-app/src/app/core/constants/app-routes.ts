@@ -23,10 +23,12 @@ export class AppRoutes {
 
     // knowledge app
     public readonly home = '/';
+    public readonly team = '/team';
 
     public readonly login = '/login';
     public readonly logout = '/logout';
     public readonly settings = '/settings';
+    
     public readonly knowledge = '/knowledge';
 
     // knowledge backend
