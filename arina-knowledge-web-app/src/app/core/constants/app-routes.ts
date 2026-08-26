@@ -23,11 +23,24 @@ export class AppRoutes {
 
     // knowledge app
     public readonly home = '/';
+    public readonly team = '/team';
 
     public readonly login = '/login';
     public readonly logout = '/logout';
     public readonly settings = '/settings';
+    
     public readonly knowledge = '/knowledge';
+
+    // knowledge backend
+
+    public readonly backendGitHubLogin = 'https://info.arina.network/api/githublogin';
+    public readonly backendGitHubLogout = 'https://info.arina.network/api/githublogout';
+    public readonly backendGitHubToken = 'https://info.arina.network/api/githubtoken';
+
+    // local DEV
+    // public readonly backendGitHubLogin = 'https://localhost:44323/api/githublogin';
+    // public readonly backendGitHubLogout = 'https://localhost:44323/api/githublogout';
+    // public readonly backendGitHubToken = 'https://localhost:44323/api/githubtoken';
 
     // arina knowledge
     public readonly arina = `${this.knowledge}/arina-network/arina-knowledge`

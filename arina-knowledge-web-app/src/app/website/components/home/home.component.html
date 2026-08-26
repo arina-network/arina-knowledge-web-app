@@ -1,18 +1,7 @@
 <div class="w-full h-screen flex flex-col items-center gap-6 overflow-y-auto pb-6">
     <h1 class="text-2xl font-semibold mt-8">Welcome to Arina Network!</h1>
-    @if (!authorizationService.isAuthorized()) {
-        <div class="prose max-w-5xl mx-4">
-            <span class="mx-2">Please login to access your private knowledge repositories:</span>
-            <a routerLink="{{routes.login}}" 
-                class="text-gray-800 text-xl font-bold tracking-wider hover:text-indigo-400 transition-colors duration-200">
-                login
-            </a>
-            <div class="mx-2">Access to public knowledge repositories is free, though restricted by GitHub's rate limits for unauthenticated requests.</div>
-        </div>
-    }
-    
-    <h1 class="text-2xl font-semibold">Public Repositories</h1>
 
+    <h2 class="text-xl font-semibold">public Knowledge repositories</h2>
     <div class="prose max-w-5xl mx-4">
         <div>
             <span class="mr-2">Semantic Models for business logic, software architecture and information infrastructure:</span>
@@ -20,10 +9,22 @@
                 class="text-gray-800 text-xl font-bold tracking-wider hover:text-indigo-400 transition-colors duration-200">
                 Arina Knowledge
             </a>
+            <div class="mx-2 mt-4"><i>Access to public knowledge repositories is free, though restricted by GitHub's rate limits for unauthenticated requests.</i></div>
         </div>
     </div>
 
-    <h1 class="text-2xl font-semibold">Knowledge Fragmentation</h1>
+    @if (!authorizationService.isAuthorized()) {
+        <h2 class="text-xl font-semibold">private Knowledge repositories</h2>
+        <div class="prose max-w-5xl mx-4">
+            <span class="mx-2">Please login to access your private knowledge repositories:</span>
+            <a routerLink="{{routes.login}}" 
+                class="text-gray-800 text-xl font-bold tracking-wider hover:text-indigo-400 transition-colors duration-200">
+                login
+            </a>
+        </div>
+    }
+    
+    <h2 class="text-xl font-semibold">Knowledge Fragmentation</h2>
     <div class="prose max-w-5xl mx-4">
         <p>
             Modern software development suffers from a fundamental problem: knowledge fragmentation.
@@ -51,7 +52,7 @@
         </ul>
     </div>
 
-    <h1 class="text-2xl font-semibold">Knowledge as Code</h1>
+    <h2 class="text-xl font-semibold">Knowledge as Code</h2>
     <div class="prose max-w-5xl mx-4">
         <p>
             Knowledge is not text. Knowledge is code. Not metaphorically — structurally:
