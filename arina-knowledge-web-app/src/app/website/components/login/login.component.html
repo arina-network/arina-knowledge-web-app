@@ -105,7 +105,19 @@
         </div> -->
     </div>
 } @else {
-    <div class="h-full w-full flex flex-col items-center justify-center gap-6">
-        <button (click)="authorizationService.logout()">Log Out</button>
+    <div class="h-full flex flex-col items-center justify-start mt-4 gap-4 overflow-y-auto">
+        <mat-card class="w-full max-w-[800px] md:col-span-3 p-6 shadow-lg rounded-2xl bg-white border border-slate-200">
+            <h2 class="text-xl font-semibold text-slate-800 mb-2 flex items-center gap-2">
+                <mat-icon class="text-indigo-600">logout</mat-icon>
+                Log Out
+            </h2>
+            <p class="prose text-gray-600">Do you really want to log out?</p>
+            <button matButton="filled" color="primary" class="max-w-[200px] mt-2" (click)="authorizationService.logout()">
+                Log Out
+            </button>            
+        </mat-card>
     </div>
+    <!-- <div class="h-full w-full flex flex-col items-center justify-center gap-6">
+        <button (click)="authorizationService.logout()">Log Out</button>
+    </div> -->
 }

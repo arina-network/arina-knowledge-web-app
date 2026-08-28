@@ -15,32 +15,53 @@
 
     <app-repository-manager [repositoryCategory]="repositoryCategory.Public"></app-repository-manager>
     
-    <h2 class="text-lg font-semibold my-4">GitHub User</h2>
+    <!-- <h2 class="text-lg font-semibold my-4">GitHub User</h2> -->
     @if (authorizationService.isAuthorized()) {
-        <div class="prose text-xl mb-4">
-            <ul>
-                <li>
-                    name: {{ authorizationService.getUserInfo().name }}
-                </li>
-                <li>
-                    login: {{ authorizationService.getUserInfo().login }}
-                </li>
-                <li>
-                    id: {{ authorizationService.getUserInfo().id }}
-                </li>
-                <li>
-                    email: {{ authorizationService.getUserInfo().email }}
-                </li>
-            </ul>
-        </div>
+        <mat-card class="w-full max-w-[800px] md:col-span-3 p-6 shadow-lg rounded-2xl bg-white border border-slate-200">
+            <h2 class="text-xl font-semibold text-slate-800 mb-2 flex items-center gap-2">
+                <mat-icon fontSet="material-symbols-outlined">person</mat-icon>
+                GitHub User
+            </h2>
+            <div class="prose text-xl mb-4">
+                <ul>
+                    <li>
+                        name: {{ authorizationService.getUserInfo().name }}
+                    </li>
+                    <li>
+                        login: {{ authorizationService.getUserInfo().login }}
+                    </li>
+                    <li>
+                        id: {{ authorizationService.getUserInfo().id }}
+                    </li>
+                    <li>
+                        email: {{ authorizationService.getUserInfo().email }}
+                    </li>
+                </ul>
+            </div>
+        </mat-card>
+
     } @else {
-        <div class="prose">
+        <mat-card class="w-full max-w-[800px] md:col-span-3 p-6 shadow-lg rounded-2xl bg-white border border-slate-200">
+            <h2 class="text-xl font-semibold text-slate-800 mb-2 flex items-center gap-2">
+                <mat-icon class="text-indigo-600">pets</mat-icon>
+                GitHub Authorization
+            </h2>
+            <div class="prose max-w-5xl mx-4">
+                <span class="mx-2">Please login to use GitHub without limitations::</span>
+                <a routerLink="{{routes.login}}" 
+                    class="text-gray-800 text-xl font-bold tracking-wider hover:text-indigo-400 transition-colors duration-200">
+                    login
+                </a>
+            </div>            
+        </mat-card>
+
+        <!-- <div class="prose">
             <span class="mx-2">Please login to use GitHub without limitations:</span>
             <a routerLink="{{routes.login}}" 
                 class="text-gray-800 text-xl font-bold tracking-wider hover:text-indigo-400 transition-colors duration-200">
                 login
             </a>
-        </div>        
+        </div>         -->
     }
 </div>
 

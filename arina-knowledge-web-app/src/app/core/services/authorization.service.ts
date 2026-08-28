@@ -23,6 +23,7 @@ export class AuthorizationService {
     private userAuthorization = signal<AppAuthorization>(AppAuthorization.NoAuthorization);
     private userToken = signal<string | null>(null);
     private userInfo = signal<UserInfo | null>(null);
+    public repositories = signal<any[]>([]);
 
     getToken(): string | null {
         return this.userToken();
@@ -48,6 +49,10 @@ export class AuthorizationService {
 
     setUserInfo(userInfo: UserInfo): void {
         this.userInfo.set(userInfo);
+    }
+
+    getRepositories(): any[] {
+        return this.repositories();
     }
 
     loginToGitHub(domain: string): void {
@@ -121,7 +126,39 @@ export class AuthorizationService {
             })
         );
     }
-    
+
+    async githubInstallation(installationId: string | unknown): Promise<void> {
+        // 1. First, check if the URL contains an installation_id query parameter.
+        // GitHub appends this automatically when bouncing the user back to your Setup URL.
+        // const installationId = this.route.snapshot.queryParamMap.get('installation_id');
+        
+        if (installationId) {
+            // Optional: You can send this ID to your backend to save it instantly,
+            // or let your webhook/status check handle it.
+            console.log('User returned from GitHub with Installation ID:', installationId);
+        }
+
+        // 2. Fetch the repositories from your .NET backend
+        try {
+            const repos = await firstValueFrom(
+                this.http.get<any[]>(
+                    this.routes.backendGitHubInstallation, 
+                    { 
+                        withCredentials: true 
+                    }
+                )
+            );
+            this.repositories.set(repos);
+        } catch (error: any) {
+            if (error.status === 400 && error.error?.error === 'InstallationRequired') {
+                // if the backend says no repos are linked, redirect them to select private repos
+                window.location.href = this.routes.backendGitHubAppInstallation;
+            } else {
+                console.error('An error occurred loading repositories:', error);
+            }
+        }
+    }
+
     githubLogout(): Observable<any> {
         return this.http.post(
             this.routes.backendGitHubLogout, 

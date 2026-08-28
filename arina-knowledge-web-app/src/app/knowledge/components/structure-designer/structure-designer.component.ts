@@ -9,19 +9,17 @@ import { MatSidenavModule } from '@angular/material/sidenav';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatTree, MatTreeModule } from '@angular/material/tree'; 
 
-
-import { AppRoutes } from '@/app/core/constants/app-routes';
-
-import { NotificationService } from '@/app/core/services/notification.service';
 import { ProgressComponent } from '@/app/core/components/progress/progress.component';
+import { AppParams } from '@/app/core/constants/app-params';
+import { AppRoutes } from '@/app/core/constants/app-routes';
+import { NotificationService } from '@/app/core/services/notification.service';
+import { AuthorizationService } from '@/app/core/services/authorization.service';
 
-// import { StructureDetailsComponent } from '../structure-details/structure-details.component';
 import { StructureTreeNode } from '../structure-tree/structure-tree-node';
 import { StructureViewComponent } from '../structure-view/structure-view.component';
 
 import { StructureApiService } from '../../services/structure-api.service';
 import { RepositoryService } from '../../services/repository.service';
-import { AppParams } from '@/app/core/constants/app-params';
 
 @Component({
     selector: 'app-structure-designer',
@@ -48,6 +46,7 @@ export class StructureDesignerComponent {
     private events = toSignal(this.router.events);
 
     protected notificationService = inject(NotificationService);        
+    protected authorizationService = inject(AuthorizationService);
     protected repositoryService = inject(RepositoryService);
     protected routes = inject(AppRoutes);
 
@@ -153,6 +152,9 @@ export class StructureDesignerComponent {
             //console.log('refreshData: no changes detected, skipping refresh');
             return
         }
+
+        const installationId = this.route.snapshot.queryParamMap.get('installation_id');
+        this.authorizationService.githubInstallation(installationId);
 
         this.dataSource.set([]);
 

@@ -1,5 +1,7 @@
 import { Component, inject } from '@angular/core';
 import { RouterLink } from '@angular/router';
+import { MatCardModule } from '@angular/material/card';
+import { MatIconModule } from '@angular/material/icon';
 
 import { AppRoutes } from '@/app/core/constants/app-routes';
 import { AuthorizationService } from '@/app/core/services/authorization.service';
@@ -10,8 +12,10 @@ import { RepositoryManagerComponent } from '@/app/knowledge/components/repositor
 @Component({
   selector: 'app-settings',
   imports: [
-    RouterLink,
-    RepositoryManagerComponent
+      MatCardModule,
+      MatIconModule,
+      RouterLink,
+      RepositoryManagerComponent
   ],
   templateUrl: './settings.component.html'
 })
