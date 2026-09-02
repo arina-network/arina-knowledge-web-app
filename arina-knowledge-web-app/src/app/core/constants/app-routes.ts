@@ -33,20 +33,20 @@ export class AppRoutes {
 
     // knowledge backend
 
-    // public readonly backendGitHubLogin = 'https://info.arina.network/api/githublogin';
-    // public readonly backendGitHubLogout = 'https://info.arina.network/api/githublogout';
-    // public readonly backendGitHubToken = 'https://info.arina.network/api/githubtoken';
-    // public readonly backendGitHubInstallation = 'https://info.arina.network/api/githubinstallation';
-    // public readonly backendGitHubCompleteInstallation = 'https://info.arina.network/api/githubcompleteinstallation';
-    // public readonly backendGitHubAppInstallation = 'https://github.com/apps/arina-network/installations/new';
+    public readonly backendGitHubLogin = 'https://info.arina.network/api/githublogin';
+    public readonly backendGitHubLogout = 'https://info.arina.network/api/githublogout';
+    public readonly backendGitHubToken = 'https://info.arina.network/api/githubtoken';
+    public readonly backendGitHubInstallation = 'https://info.arina.network/api/githubinstallation';
+    public readonly backendGitHubCompleteInstallation = 'https://info.arina.network/api/githubcompleteinstallation';
+    public readonly backendGitHubAppInstallation = 'https://github.com/apps/arina-network/installations/new';
 
     // local DEV
-    public readonly backendGitHubLogin = 'https://localhost:44323/api/githublogin';
-    public readonly backendGitHubLogout = 'https://localhost:44323/api/githublogout';
-    public readonly backendGitHubToken = 'https://localhost:44323/api/githubtoken';
-    public readonly backendGitHubInstallation = 'https://localhost:44323/api/githubinstallation';
-    public readonly backendGitHubCompleteInstallation = 'https://localhost:44323/api/githubcompleteinstallation';
-    public readonly backendGitHubAppInstallation = 'https://github.com/apps/dev-arina-network/installations/new';
+    // public readonly backendGitHubLogin = 'https://localhost:44323/api/githublogin';
+    // public readonly backendGitHubLogout = 'https://localhost:44323/api/githublogout';
+    // public readonly backendGitHubToken = 'https://localhost:44323/api/githubtoken';
+    // public readonly backendGitHubInstallation = 'https://localhost:44323/api/githubinstallation';
+    // public readonly backendGitHubCompleteInstallation = 'https://localhost:44323/api/githubcompleteinstallation';
+    // public readonly backendGitHubAppInstallation = 'https://github.com/apps/dev-arina-network/installations/new';
 
     // arina knowledge
     public readonly arina = `${this.knowledge}/arina-network/arina-knowledge`

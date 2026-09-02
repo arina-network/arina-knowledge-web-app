@@ -23,4 +23,9 @@ export class SettingsComponent {
     protected readonly repositoryCategory = RepositoryCategory;   
     protected authorizationService = inject(AuthorizationService);
     protected routes = inject(AppRoutes)
+
+    redirectToGitHubAppInstallation() {
+        window.location.href = this.routes.backendGitHubAppInstallation;
+    }
+        
 }
