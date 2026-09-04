@@ -1,4 +1,4 @@
-import { Component, effect, ElementRef, inject, QueryList, signal, viewChild, ViewChildren } from '@angular/core';
+import { Component, effect, ElementRef, HostListener, inject, QueryList, signal, viewChild, ViewChildren } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, NavigationEnd, Router, RouterLink, RouterLinkActive } from '@angular/router'; 
 
@@ -36,7 +36,8 @@ import { RepositoryService } from '../../services/repository.service';
         ProgressComponent,
         StructureViewComponent
     ],
-    templateUrl: './structure-designer.component.html'
+    templateUrl: './structure-designer.component.html',
+    styleUrls: ['./structure-designer.component.css']
 })
 export class StructureDesignerComponent {
 
@@ -59,6 +60,10 @@ export class StructureDesignerComponent {
     protected repository?: string;
     protected branch?: string;
     protected key?: string;
+
+    protected sidenavWidth = Number(localStorage.getItem('designer_sidenav_width')) || 250;
+    // protected sidenavWidth = 250;
+    protected isResizing = false;
 
     public isDataLoading = signal<boolean>(false);
 
@@ -290,5 +295,37 @@ export class StructureDesignerComponent {
                 });
             }
         }, 150); // Small timeout allows MatTree to finish rendering animation loops
+    }
+    
+    startResize(event: MouseEvent) {
+        event.preventDefault();
+        this.isResizing = true;
+    }
+
+    // Listens to global mouse movements while dragging
+    @HostListener('window:mousemove', ['$event'])
+    onMouseMove(event: MouseEvent) {
+        if (!this.isResizing) {
+            return;
+        }
+
+        // Minimum 150px and maximum 500px bounds constraint
+        const newWidth = event.clientX; 
+        if (newWidth >= 150 && newWidth <= 500) {
+            this.sidenavWidth = newWidth;
+        }
+    }
+
+    // Stops resizing when user releases mouse click
+    // @HostListener('window:mouseup')
+    // onMouseUp() {
+    //     this.isResizing = false;
+    // }    
+    @HostListener('window:mouseup')
+    onMouseUp() {
+        if (this.isResizing) {
+            localStorage.setItem('designer_sidenav_width', this.sidenavWidth.toString());
+            this.isResizing = false;
+        }
     }    
 }
