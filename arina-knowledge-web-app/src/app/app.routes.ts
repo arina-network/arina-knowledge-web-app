@@ -6,6 +6,7 @@ import { LogoutComponent } from './website/components/logout/logout.component';
 import { TeamComponent } from './website/components/team/team.component';
 import { SettingsComponent } from './website/components/settings/settings.component';
 
+import { GithubSetupComponent } from './knowledge/components/github-setup/github-setup.component';
 import { StructureDesignerComponent } from './knowledge/components/structure-designer/structure-designer.component';
 
 export const routes: Routes = [
@@ -15,6 +16,8 @@ export const routes: Routes = [
     { path: 'login', component: LoginComponent },
     { path: 'logout', component: LogoutComponent },
     { path: 'settings', component: SettingsComponent },
+
+    { path: 'github-setup', component: GithubSetupComponent },
 
     { path: 'knowledge', component: StructureDesignerComponent , pathMatch: 'full' },
     {

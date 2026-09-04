@@ -1,0 +1,30 @@
+/* Force the mat-sidenav wrapper template layout to act as a Flexbox row
+mat-sidenav.mat-sidenav {
+  display: flex !important;
+  flex-direction: row !important;
+  overflow: hidden !important; 
+}
+
+/* Allow your tree content to fill up all available room except the handle space * /
+.sidenav-content {
+  flex: 1 1 auto;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+/* The Draggable Handle styling setup * /
+.resize-handle {
+  width: 6px;
+  cursor: col-resize;
+  background-color: transparent;
+  transition: background-color 0.2s ease;
+  z-index: 10;
+  align-self: stretch; /* Stretch the handle top-to-bottom * /
+}
+
+/* Make it visible on hover and active hold states * /
+.resize-handle:hover,
+.resize-handle:active {
+  background-color: #3b82f6; /* Matching your blue theme color * /
+} 
+*/

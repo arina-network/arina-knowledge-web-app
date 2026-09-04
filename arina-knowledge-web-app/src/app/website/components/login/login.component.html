@@ -20,10 +20,6 @@
             <button matButton="filled" color="primary" class="max-w-[200px] mt-2" (click)="redirectToGitHubLogin()">
                 Login with GitHub
             </button>            
-            <!-- <a href="{{routes.backendGitHubLogin}}" 
-                class="text-gray-800 text-xl font-bold tracking-wider hover:text-indigo-400 transition-colors duration-200">
-                Login with GitHub
-            </a> -->
         </mat-card>
 
         <mat-card class="w-full max-w-[800px] md:col-span-3 mb-8 p-6 shadow-lg rounded-2xl bg-white border border-slate-200">
@@ -68,44 +64,24 @@
                 </a>
             </div>            
         </mat-card>
-
-        <!-- <h1 class="prose text-2xl font-semibold">Access Your Repositories Safely</h1>
-        <div>
-            <mat-form-field class="w-[590px]" appearance="outline">
-                <mat-label>GitHub PAT</mat-label>
-                <input matInput #tokenInput type="password" autocomplete="off" placeholder="Paste GitHub PAT here..." />
-            </mat-form-field>
-            <button matButton="filled" color="primary" class="ml-3" (click)="login(tokenInput.value)">
-                Login
-            </button>
-        </div>
- -->
-        <!-- <h1 class="text-2xl font-semibold">How to create an access token in GitHub</h1>
-        <div class="prose">
-            <ol>
-                <li>
-                    Go to your GitHub Settings -> Developer Settings.
-                </li>
-                <li>
-                    Generate a <strong>Personal Access Token (classic)</strong> with <strong>owner</strong> and <strong>repositories</strong> scope.
-                    Permissions:
-                    <ul>
-                        <li>Contents: Read-only</li>
-                        <li>Issues: Read-only</li>
-                    </ul>
-                </li>
-            </ol>
-        </div>
-
-        <div class="action-link-container">
-            <a mat-button color="primary" href="https://github.com/settings/personal-access-tokens" target="_blank">
-                <mat-icon>open_in_new</mat-icon>
-                Generate Token
-            </a>
-        </div> -->
     </div>
 } @else {
-    <div class="h-full w-full flex flex-col items-center justify-center gap-6">
-        <button (click)="authorizationService.logout()">Log Out</button>
-    </div>
+    <div class="h-full flex items-center justify-center p-2.5">
+        <img style="width: 100px;" src="arina_loading_progress.svg" id="app-login-progress">    
+        <div style="margin-top: 20px;">
+            <h1 id="app-loading-placeholder">Intitalizing GitHub Application...</h1>
+        </div>    
+    </div>    
+    <!-- <div class="h-full flex flex-col items-center justify-start mt-4 gap-4 overflow-y-auto">
+        <mat-card class="w-full max-w-[800px] md:col-span-3 p-6 shadow-lg rounded-2xl bg-white border border-slate-200">
+            <h2 class="text-xl font-semibold text-slate-800 mb-2 flex items-center gap-2">
+                <mat-icon class="text-indigo-600">logout</mat-icon>
+                Log Out
+            </h2>
+            <p class="prose text-gray-600">Do you really want to log out?</p>
+            <button matButton="filled" color="primary" class="max-w-[200px] mt-2" (click)="authorizationService.logout()">
+                Log Out
+            </button>            
+        </mat-card>
+    </div> -->
 }
