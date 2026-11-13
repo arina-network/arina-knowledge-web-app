@@ -34,7 +34,7 @@
                 @if (canValidate()) {
                     <button mat-button type="button" (click)="validate()"
                             [attr.aria-expanded]="validationResults() !== undefined"
-                            aria-controls="markdown-validation-panel">
+                            aria-controls="structure-validation-panel">
                         <mat-icon fontSet="material-symbols-outlined">fact_check</mat-icon>
                         Validate
                     </button>
@@ -108,36 +108,47 @@
             }
         </div>
         @if (validationResults() !== undefined) {
-            <aside id="markdown-validation-panel" aria-labelledby="markdown-validation-title"
+            <aside id="structure-validation-panel" aria-labelledby="structure-validation-title"
                    class="w-full shrink-0 rounded-md border border-slate-200 bg-slate-50 p-4 lg:sticky lg:top-4 lg:w-80">
                 <div class="mb-3 flex items-center justify-between gap-2">
-                    <h2 id="markdown-validation-title" class="text-lg font-semibold">Validation</h2>
+                    <h2 id="structure-validation-title" class="text-lg font-semibold">Validation</h2>
                     <button mat-icon-button type="button" (click)="closeValidation()" aria-label="Close validation">
                         <mat-icon>close</mat-icon>
                     </button>
                 </div>
                 <div aria-live="polite">
+                    <p class="mb-3 flex flex-wrap gap-x-3 gap-y-1 text-sm text-slate-600" aria-label="Validation totals">
+                        <span>{{ validationTotals().errors }} errors</span>
+                        <span>{{ validationTotals().warnings }} warnings</span>
+                        <span>{{ validationTotals().suggestions }} suggestions</span>
+                    </p>
                     @if (validationIssues().length === 0) {
                         <p class="text-sm text-slate-700">All validation rules passed.</p>
                     } @else {
-                        <p class="mb-3 text-sm text-slate-600">{{ validationIssues().length }} issue(s) found</p>
                         <div class="flex flex-col gap-3">
-                            @for (result of validationIssues(); track $index) {
+                            @for (validation of validationIssues(); track $index) {
                                 <div class="rounded-md border p-3 text-sm"
-                                     [class.bg-red-100]="result.status === 'error'"
-                                     [class.border-red-300]="result.status === 'error'"
-                                     [class.text-red-900]="result.status === 'error'"
-                                     [class.bg-yellow-100]="result.status === 'warning'"
-                                     [class.border-yellow-300]="result.status === 'warning'"
-                                     [class.text-yellow-900]="result.status === 'warning'"
-                                     [class.bg-blue-100]="result.status === 'suggestion'"
-                                     [class.border-blue-300]="result.status === 'suggestion'"
-                                     [class.text-blue-900]="result.status === 'suggestion'">
-                                    <div class="mb-1 flex items-center justify-between gap-2">
-                                        <span class="font-semibold capitalize">{{ result.status }}</span>
-                                        <span>Row {{ result.row }}</span>
+                                     [class.bg-red-100]="validation.result === validationResult.Error"
+                                     [class.border-red-300]="validation.result === validationResult.Error"
+                                     [class.text-red-900]="validation.result === validationResult.Error"
+                                     [class.bg-yellow-100]="validation.result === validationResult.Warning"
+                                     [class.border-yellow-300]="validation.result === validationResult.Warning"
+                                     [class.text-yellow-900]="validation.result === validationResult.Warning"
+                                     [class.bg-blue-100]="validation.result === validationResult.Suggestion"
+                                     [class.border-blue-300]="validation.result === validationResult.Suggestion"
+                                     [class.text-blue-900]="validation.result === validationResult.Suggestion">
+                                    <div class="mb-2 flex items-start gap-2">
+                                        <mat-icon class="shrink-0" fontSet="material-symbols-outlined"
+                                                  [matTooltip]="validation.result" tabindex="0"
+                                                  [attr.aria-label]="validation.result" [attr.aria-hidden]="false">
+                                            {{ validationIcons[validation.result] }}
+                                        </mat-icon>
+                                        <h3 class="font-semibold">{{ validation.message }}</h3>
                                     </div>
-                                    <p>{{ result.message }}</p>
+                                    <p>Row {{ validation.row }}</p>
+                                    @if (validation.suggestion) {
+                                        <p class="mt-1">{{ validation.suggestion }}</p>
+                                    }
                                 </div>
                             }
                         </div>

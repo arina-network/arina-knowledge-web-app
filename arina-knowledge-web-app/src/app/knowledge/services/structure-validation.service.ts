@@ -1,18 +1,18 @@
 import { inject, Injectable, InjectionToken } from '@angular/core';
 
-import { MarkdownValidationContext, MarkdownValidationResult, MarkdownValidationRule } from '../models/markdown-validation';
-import { GENERAL_MARKDOWN_RULES } from '../validation/general-markdown-rules';
+import { StructureValidation, StructureValidationContext, StructureValidationRule } from '../models/structure-validation';
+import { STRUCTURE_RULES } from '../validation/structure-rules';
 
-export const MARKDOWN_VALIDATION_RULES = new InjectionToken<readonly MarkdownValidationRule[]>(
-    'Markdown validation rules',
-    { providedIn: 'root', factory: () => GENERAL_MARKDOWN_RULES }
+export const STRUCTURE_VALIDATION_RULES = new InjectionToken<readonly StructureValidationRule[]>(
+    'Structure validation rules',
+    { providedIn: 'root', factory: () => STRUCTURE_RULES }
 );
 
 @Injectable({ providedIn: 'root' })
-export class MarkdownValidationService {
-    private readonly rules = inject(MARKDOWN_VALIDATION_RULES);
+export class StructureValidationService {
+    private readonly rules = inject(STRUCTURE_VALIDATION_RULES);
 
-    validate(markdown: string): MarkdownValidationResult[] {
+    validate(markdown: string): StructureValidation[] {
         const source = markdown.replace(/^\uFEFF/, '').replace(/\r\n?/g, '\n');
         const lines = source.split('\n');
         const title = /^#[ \t]+(.*)$/.exec(lines[0])?.[1]
@@ -24,7 +24,7 @@ export class MarkdownValidationService {
             /^\p{Ll}[\p{Ll}\p{M}\p{N}'’-]*$/u.test(word)
         ) ? typeWords.join(' ') : undefined;
         const entityName = nameIndex < 0 ? undefined : words.slice(nameIndex).join(' ');
-        const context: MarkdownValidationContext = { source, lines, entityType, entityName };
+        const context: StructureValidationContext = { source, lines, entityType, entityName };
 
         return this.rules
             .filter(rule => !rule.entityTypes || (!!entityType && rule.entityTypes.includes(entityType)))

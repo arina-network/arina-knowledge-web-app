@@ -8,6 +8,7 @@ import { MatButtonToggleModule } from '@angular/material/button-toggle';
 import { MatDialog } from '@angular/material/dialog';
 import { MatDividerModule } from '@angular/material/divider';
 import { MatIconModule } from '@angular/material/icon';
+import { MatTooltipModule } from '@angular/material/tooltip';
 
 import { AppRoutes } from '@/app/core/constants/app-routes';
 import { Breadcrumb } from '@/app/core/models/breadcrumb';
@@ -20,8 +21,9 @@ import { NotificationService } from '@/app/core/services/notification.service';
 
 import { StructureApiService } from '../../services/structure-api.service';
 import { StructureExportService } from '../../services/structure-export.service';
-import { MarkdownValidationService } from '../../services/markdown-validation.service';
-import { MarkdownValidationResult } from '../../models/markdown-validation';
+import { StructureValidationService } from '../../services/structure-validation.service';
+import { StructureValidation } from '../../models/structure-validation';
+import { StructureValidationResult } from '../../constants/structure-validation-result';
 import { StructureLink } from '../../models/structure-link';
 import { StructureContentComponent } from '../structure-content/structure-content.component';
 import { StructureHomeComponent } from '../structure-home/structure-home.component';
@@ -36,6 +38,7 @@ import { ProgressExportComponent } from '@/app/core/components/progress-export/p
         MatDividerModule,
         MatButtonModule,
         MatIconModule,
+        MatTooltipModule,
         MatButtonToggleModule,
         ProgressComponent,
         AppMarkdownPipe,
@@ -55,7 +58,7 @@ export class StructureViewComponent {
    
     protected api = inject(StructureApiService);
     protected exportService = inject(StructureExportService);
-    private readonly validationService = inject(MarkdownValidationService);
+    private readonly validationService = inject(StructureValidationService);
     protected routes = inject(AppRoutes);
 
     protected dialog = inject(MatDialog);
@@ -99,10 +102,28 @@ export class StructureViewComponent {
     public canValidate = computed(() =>
         this.source() !== undefined && /\.md$/i.test(this.key ?? '') && !this.isDataLoading()
     );
-    public validationResults = signal<MarkdownValidationResult[] | undefined>(undefined);
+    protected readonly validationResult = StructureValidationResult;
+    protected readonly validationIcons: Record<StructureValidationResult, string> = {
+        [StructureValidationResult.Ok]: 'check_circle',
+        [StructureValidationResult.Error]: 'error',
+        [StructureValidationResult.Warning]: 'warning',
+        [StructureValidationResult.Suggestion]: 'lightbulb'
+    };
+    public validationResults = signal<StructureValidation[] | undefined>(undefined);
     public validationIssues = computed(() =>
-        this.validationResults()?.filter(result => result.status !== 'ok') ?? []
+        this.validationResults()?.filter(validation => validation.result !== StructureValidationResult.Ok) ?? []
     );
+    public validationTotals = computed(() => {
+        const totals = { errors: 0, warnings: 0, suggestions: 0 };
+        for (const validation of this.validationIssues()) {
+            switch (validation.result) {
+                case StructureValidationResult.Error: totals.errors++; break;
+                case StructureValidationResult.Warning: totals.warnings++; break;
+                case StructureValidationResult.Suggestion: totals.suggestions++; break;
+            }
+        }
+        return totals;
+    });
 
     validate() {
         const source = this.source();

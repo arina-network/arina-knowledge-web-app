@@ -1,5 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { MatDialog } from '@angular/material/dialog';
+import { MatTooltip } from '@angular/material/tooltip';
+import { By } from '@angular/platform-browser';
 import { provideRouter } from '@angular/router';
 import { of, Subject } from 'rxjs';
 
@@ -55,6 +57,17 @@ describe('StructureViewComponent validation', () => {
         expect(panel.querySelector('.bg-red-100')?.textContent).toContain('Row 1');
         expect(panel.querySelector('.bg-yellow-100')?.textContent).toContain('Row 3');
         expect(panel.textContent).toContain('Description is not first');
+        const errorCard = panel.querySelector('.bg-red-100') as HTMLElement;
+        expect(errorCard.querySelector('h3')?.textContent).toBe('No Entity Type');
+        expect(errorCard.querySelector('mat-icon')?.textContent?.trim()).toBe('error');
+        expect(errorCard.textContent).toContain('Add a lowercase entity type after #.');
+        expect(panel.querySelector('.bg-yellow-100 mat-icon')?.textContent?.trim()).toBe('warning');
+        const tooltips = fixture.debugElement.queryAll(By.directive(MatTooltip))
+            .map(element => element.injector.get(MatTooltip).message);
+        expect(tooltips).toEqual(['error', 'warning']);
+        expect(component.validationTotals()).toEqual({ errors: 1, warnings: 1, suggestions: 0 });
+        expect(Array.from(panel.querySelectorAll('[aria-label="Validation totals"] span'))
+            .map(element => element.textContent)).toEqual(['1 errors', '1 warnings', '0 suggestions']);
         expect(panel.textContent).not.toContain('Entity title is valid');
         expect(fixture.nativeElement.querySelector('pre')?.textContent).toContain('# Customer');
     });
@@ -65,8 +78,13 @@ describe('StructureViewComponent validation', () => {
         fixture.detectChanges();
 
         const suggestion = fixture.nativeElement.querySelector('aside .bg-blue-100') as HTMLElement;
-        expect(suggestion.textContent).toContain('No description found, add it');
+        expect(suggestion.querySelector('h3')?.textContent).toBe('No description found');
+        expect(suggestion.querySelector('mat-icon')?.textContent?.trim()).toBe('lightbulb');
+        expect(suggestion.querySelector('mat-icon')?.getAttribute('aria-label')).toBe('suggestion');
+        expect(suggestion.querySelector('h3')?.textContent).not.toContain('Add a Descrition');
+        expect(suggestion.textContent).toContain('Add a Descrition');
         expect(suggestion.textContent).toContain('Row 2');
+        expect(component.validationTotals()).toEqual({ errors: 0, warnings: 0, suggestions: 1 });
         fixture.nativeElement.querySelector('button[aria-label="Close validation"]').click();
         fixture.detectChanges();
         expect(fixture.nativeElement.querySelector('aside')).toBeNull();
@@ -79,6 +97,10 @@ describe('StructureViewComponent validation', () => {
 
         expect(fixture.nativeElement.querySelector('aside')?.textContent).toContain('All validation rules passed.');
         expect(component.validationIssues()).toEqual([]);
+        expect(component.validationTotals()).toEqual({ errors: 0, warnings: 0, suggestions: 0 });
+        const totals = fixture.nativeElement.querySelector('[aria-label="Validation totals"]') as HTMLElement;
+        expect(Array.from(totals.querySelectorAll('span')).map(element => element.textContent))
+            .toEqual(['0 errors', '0 warnings', '0 suggestions']);
     });
 
     it('keeps validation available alongside rendered Markdown when switching views', async () => {
@@ -105,6 +127,7 @@ describe('StructureViewComponent validation', () => {
 
         expect(fixture.nativeElement.querySelector('aside')).toBeNull();
         expect(validateButton()).toBeUndefined();
+        expect(component.validationTotals()).toEqual({ errors: 0, warnings: 0, suggestions: 0 });
         pending.next([]);
         pending.complete();
         fixture.detectChanges();
@@ -123,5 +146,6 @@ describe('StructureViewComponent validation', () => {
 
         expect(fixture.nativeElement.querySelectorAll('aside .bg-red-100')).toHaveLength(2);
         expect(fixture.nativeElement.querySelectorAll('aside .bg-blue-100')).toHaveLength(1);
+        expect(component.validationTotals()).toEqual({ errors: 2, warnings: 0, suggestions: 1 });
     });
 });
