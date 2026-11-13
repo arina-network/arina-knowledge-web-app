@@ -1,4 +1,4 @@
-import { Component, effect, inject, signal } from '@angular/core';
+import { Component, computed, effect, inject, signal } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { AsyncPipe } from '@angular/common';
 import { ActivatedRoute, NavigationEnd, Router, RouterLink } from '@angular/router';
@@ -20,6 +20,8 @@ import { NotificationService } from '@/app/core/services/notification.service';
 
 import { StructureApiService } from '../../services/structure-api.service';
 import { StructureExportService } from '../../services/structure-export.service';
+import { MarkdownValidationService } from '../../services/markdown-validation.service';
+import { MarkdownValidationResult } from '../../models/markdown-validation';
 import { StructureLink } from '../../models/structure-link';
 import { StructureContentComponent } from '../structure-content/structure-content.component';
 import { StructureHomeComponent } from '../structure-home/structure-home.component';
@@ -53,6 +55,7 @@ export class StructureViewComponent {
    
     protected api = inject(StructureApiService);
     protected exportService = inject(StructureExportService);
+    private readonly validationService = inject(MarkdownValidationService);
     protected routes = inject(AppRoutes);
 
     protected dialog = inject(MatDialog);
@@ -93,6 +96,25 @@ export class StructureViewComponent {
     // source: string | undefined;
     public source = signal<string | undefined>(undefined);
 
+    public canValidate = computed(() =>
+        this.source() !== undefined && /\.md$/i.test(this.key ?? '') && !this.isDataLoading()
+    );
+    public validationResults = signal<MarkdownValidationResult[] | undefined>(undefined);
+    public validationIssues = computed(() =>
+        this.validationResults()?.filter(result => result.status !== 'ok') ?? []
+    );
+
+    validate() {
+        const source = this.source();
+        if (this.canValidate() && source !== undefined) {
+            this.validationResults.set(this.validationService.validate(source));
+        }
+    }
+
+    closeValidation() {
+        this.validationResults.set(undefined);
+    }
+
     public contentLinks = signal<StructureLink[]>([]);
     public contentReadme = signal<any | undefined>(undefined);
 
@@ -117,6 +139,7 @@ export class StructureViewComponent {
         newKey?: string
     ) {
         this.isDataLoading.set(true);
+        this.closeValidation();
 
         this.owner = newOwner;
         this.repository = newRepository;
@@ -142,7 +165,7 @@ export class StructureViewComponent {
                 }
 
                 // content
-                if (data.content) {
+                if (typeof data.content === 'string') {
                     this.isDataLoading.set(false);
 
                     this.setSource(data)
@@ -259,6 +282,7 @@ export class StructureViewComponent {
     }
 
     protected clearData() {
+        this.closeValidation();
         this.githubUrl.set(undefined);
 
         // this.title = undefined;

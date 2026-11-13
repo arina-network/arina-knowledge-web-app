@@ -7,7 +7,7 @@
 
 <!-- breadcrumb -->
 @if (isShowBreadcrumb) { 
-    <nav class="flex items-center justify-between w-full p-2 rounded-md">
+    <nav class="flex flex-wrap items-center justify-between gap-2 w-full p-2 rounded-md">
         <div class="flex flex-wrap items-center gap-1">
             @for (crumb of breadcrumbs; track crumb.url; let last = $last) {
                 <a [routerLink]="crumb.url" 
@@ -20,16 +20,26 @@
             }
         </div>
         @if(rawUrl()){
-            <mat-button-toggle-group [value]="currentView()" (change)="onViewChange($event.value)" aria-label="Structure View Switcher">
-                <mat-button-toggle value="action_view">
-                    <mat-icon fontSet="material-symbols-outlined">article</mat-icon>
-                    View
-                </mat-button-toggle>
-                <mat-button-toggle value="action_source">
-                    <mat-icon fontSet="material-symbols-outlined">edit_note</mat-icon>
-                    Source
-                </mat-button-toggle>
-            </mat-button-toggle-group>                
+            <div class="flex flex-wrap items-center gap-2">
+                <mat-button-toggle-group [value]="currentView()" (change)="onViewChange($event.value)" aria-label="Structure View Switcher">
+                    <mat-button-toggle value="action_view">
+                        <mat-icon fontSet="material-symbols-outlined">article</mat-icon>
+                        View
+                    </mat-button-toggle>
+                    <mat-button-toggle value="action_source">
+                        <mat-icon fontSet="material-symbols-outlined">edit_note</mat-icon>
+                        Source
+                    </mat-button-toggle>
+                </mat-button-toggle-group>
+                @if (canValidate()) {
+                    <button mat-button type="button" (click)="validate()"
+                            [attr.aria-expanded]="validationResults() !== undefined"
+                            aria-controls="markdown-validation-panel">
+                        <mat-icon fontSet="material-symbols-outlined">fact_check</mat-icon>
+                        Validate
+                    </button>
+                }
+            </div>
         } @else {
             <mat-button-toggle-group [value]="currentListView()" (change)="onListViewChange($event.value)" aria-label="List View Switcher">
                 <mat-button-toggle value="action_readme">
@@ -85,15 +95,55 @@
 }     
 
 
-@if (source()){
-    <div class="ml-4">
-        @if (currentView() === 'action_view') {
-            @if (source() | markdown | async; as htmlContent) {
-                <div class="prose max-w-5xl p-4 mx-4" [innerHTML]="htmlContent | safeHtml">
-                </div>
+@if (source() !== undefined){
+    <div class="ml-4 flex flex-col gap-4 lg:flex-row lg:items-start">
+        <div class="min-w-0 flex-1">
+            @if (currentView() === 'action_view') {
+                @if (source() | markdown | async; as htmlContent) {
+                    <div class="prose max-w-5xl p-4 mx-4" [innerHTML]="htmlContent | safeHtml">
+                    </div>
+                }
+            } @else if (currentView() === 'action_source') {
+                <pre class="bg-gray-100 p-4 rounded-md overflow-x-auto"><code>{{ source() }}</code></pre>
             }
-        } @else if (currentView() === 'action_source') {
-            <pre class="bg-gray-100 p-4 rounded-md overflow-x-auto"><code>{{ source() }}</code></pre>
+        </div>
+        @if (validationResults() !== undefined) {
+            <aside id="markdown-validation-panel" aria-labelledby="markdown-validation-title"
+                   class="w-full shrink-0 rounded-md border border-slate-200 bg-slate-50 p-4 lg:sticky lg:top-4 lg:w-80">
+                <div class="mb-3 flex items-center justify-between gap-2">
+                    <h2 id="markdown-validation-title" class="text-lg font-semibold">Validation</h2>
+                    <button mat-icon-button type="button" (click)="closeValidation()" aria-label="Close validation">
+                        <mat-icon>close</mat-icon>
+                    </button>
+                </div>
+                <div aria-live="polite">
+                    @if (validationIssues().length === 0) {
+                        <p class="text-sm text-slate-700">All validation rules passed.</p>
+                    } @else {
+                        <p class="mb-3 text-sm text-slate-600">{{ validationIssues().length }} issue(s) found</p>
+                        <div class="flex flex-col gap-3">
+                            @for (result of validationIssues(); track $index) {
+                                <div class="rounded-md border p-3 text-sm"
+                                     [class.bg-red-100]="result.status === 'error'"
+                                     [class.border-red-300]="result.status === 'error'"
+                                     [class.text-red-900]="result.status === 'error'"
+                                     [class.bg-yellow-100]="result.status === 'warning'"
+                                     [class.border-yellow-300]="result.status === 'warning'"
+                                     [class.text-yellow-900]="result.status === 'warning'"
+                                     [class.bg-blue-100]="result.status === 'suggestion'"
+                                     [class.border-blue-300]="result.status === 'suggestion'"
+                                     [class.text-blue-900]="result.status === 'suggestion'">
+                                    <div class="mb-1 flex items-center justify-between gap-2">
+                                        <span class="font-semibold capitalize">{{ result.status }}</span>
+                                        <span>Row {{ result.row }}</span>
+                                    </div>
+                                    <p>{{ result.message }}</p>
+                                </div>
+                            }
+                        </div>
+                    }
+                </div>
+            </aside>
         }
     </div>
 } @else if (contentReadme() || contentLinks().length > 0)  {
