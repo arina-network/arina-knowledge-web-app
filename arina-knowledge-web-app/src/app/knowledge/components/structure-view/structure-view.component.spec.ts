@@ -57,6 +57,10 @@ describe('StructureViewComponent validation', () => {
     it('validates on click and renders colored issues with source rows beside the source', async () => {
         await loadFile('# Customer\nIntro\n## description\nText');
         expect(fixture.nativeElement.querySelector('aside')).toBeNull();
+        const validate = validateButton()!;
+        expect(validate.nextElementSibling?.textContent).toContain('Open in GitHub');
+        const viewport = fixture.nativeElement.querySelector('pre').closest('.overflow-auto');
+        expect(validate.closest('nav')?.parentElement).toBe(viewport.parentElement);
 
         await clickValidate();
 
@@ -66,7 +70,7 @@ describe('StructureViewComponent validation', () => {
         expect(panel.querySelector('.bg-yellow-100')?.textContent).toContain('Row 3');
         expect(panel.textContent).toContain('Description is not first');
         const errorCard = panel.querySelector('.bg-red-100') as HTMLElement;
-        expect(errorCard.querySelector('h3')?.textContent).toBe('No Entity Type');
+        expect(errorCard.querySelector('.font-semibold')?.textContent).toBe('No Entity Type');
         expect(errorCard.querySelector('mat-icon')?.textContent?.trim()).toBe('error');
         expect(errorCard.textContent).toContain('Add a lowercase entity type after #.');
         expect(panel.querySelector('.bg-yellow-100 mat-icon')?.textContent?.trim()).toBe('warning');
@@ -85,10 +89,10 @@ describe('StructureViewComponent validation', () => {
         await clickValidate();
 
         const suggestion = fixture.nativeElement.querySelector('aside .bg-blue-100') as HTMLElement;
-        expect(suggestion.querySelector('h3')?.textContent).toBe('No description found');
+        expect(suggestion.querySelector('.font-semibold')?.textContent).toBe('No description found');
         expect(suggestion.querySelector('mat-icon')?.textContent?.trim()).toBe('lightbulb');
         expect(suggestion.querySelector('mat-icon')?.getAttribute('aria-label')).toBe('suggestion');
-        expect(suggestion.querySelector('h3')?.textContent).not.toContain('Add a Descrition');
+        expect(suggestion.querySelector('.font-semibold')?.textContent).not.toContain('Add a Descrition');
         expect(suggestion.textContent).toContain('Add a Descrition');
         expect(suggestion.textContent).toContain('Row 2');
         expect(component.validationTotals()).toEqual({ errors: 0, warnings: 0, suggestions: 1 });
@@ -121,6 +125,67 @@ describe('StructureViewComponent validation', () => {
         }).toBe('model Customer');
         expect(fixture.nativeElement.querySelector('aside')?.textContent).toContain('All validation rules passed.');
         expect(validateButton()).toBeDefined();
+    });
+
+    it('selects the issue row in Source and highlights the full paragraph after switching to View', async () => {
+        const markdown = '# model Customer\r\n\r\n## description\r\n[Good](https://example.com) [Bad](http://example.com)';
+        await loadFile(markdown);
+        await clickValidate();
+
+        const sourceRow = fixture.nativeElement.querySelector('[data-source-row="4"]') as HTMLElement;
+        const viewport = sourceRow.closest<HTMLElement>('.overflow-auto')!;
+        vi.spyOn(viewport, 'getBoundingClientRect').mockReturnValue(new DOMRect(0, 0, 600, 300));
+        const rowBounds = vi.spyOn(sourceRow, 'getBoundingClientRect').mockReturnValue(new DOMRect(0, 274, 600, 24));
+        const scroll = vi.fn();
+        sourceRow.scrollIntoView = scroll;
+        const issue = fixture.nativeElement.querySelector('aside button.bg-red-100') as HTMLButtonElement;
+        issue.click();
+        fixture.detectChanges();
+
+        expect(issue.getAttribute('aria-pressed')).toBe('true');
+        expect(sourceRow.classList.contains('bg-amber-50')).toBe(true);
+        expect(scroll).not.toHaveBeenCalled();
+
+        rowBounds.mockReturnValue(new DOMRect(0, 350, 600, 24));
+        issue.click();
+        fixture.detectChanges();
+        expect(sourceRow.classList.contains('scroll-mb-18')).toBe(true);
+        expect(scroll).toHaveBeenCalledWith({ block: 'nearest', inline: 'nearest' });
+        expect(fixture.nativeElement.querySelector('pre code')?.textContent).toBe(markdown.replace(/\r\n/g, '\n'));
+
+        component.onViewChange('action_view');
+        await expect.poll(() => {
+            fixture.detectChanges();
+            return fixture.nativeElement.querySelector('.prose p.bg-amber-50')?.textContent;
+        }).toBe('Good Bad');
+
+        component.closeValidation();
+        fixture.detectChanges();
+        expect(fixture.nativeElement.querySelector('.prose .bg-amber-50')).toBeNull();
+    });
+
+    it('highlights just the affected table row for a link inside a table', async () => {
+        await loadFile('# model Customer\n## description\n| Name | Link |\n| --- | --- |\n| Example | [Bad](http://example.com) |');
+        component.onViewChange('action_view');
+        await clickValidate();
+
+        fixture.nativeElement.querySelector('aside button.bg-red-100').click();
+        await expect.poll(() => {
+            fixture.detectChanges();
+            return fixture.nativeElement.querySelector('.prose tr.bg-amber-50 td')?.textContent;
+        }).toBe('Example');
+    });
+
+    it('highlights a rendered heading when the validation result refers to a section', async () => {
+        await loadFile('# model Customer\n\nIntro\n\n## description\nText');
+        component.onViewChange('action_view');
+        await clickValidate();
+
+        fixture.nativeElement.querySelector('aside button.bg-yellow-100').click();
+        await expect.poll(() => {
+            fixture.detectChanges();
+            return fixture.nativeElement.querySelector('.prose h2.bg-amber-50')?.textContent;
+        }).toBe('description');
     });
 
     it('clears results as navigation starts and hides Validate while loading or browsing a folder', async () => {

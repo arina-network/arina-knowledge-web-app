@@ -1,13 +1,7 @@
 <app-progress [loading]="isDataLoading()"></app-progress>
-<!-- <app-messages [messages]="messages"></app-messages> -->
 
-@if (isEmpty()) {
-    <app-structure-home></app-structure-home>
-} 
-
-<!-- breadcrumb -->
-@if (isShowBreadcrumb) { 
-    <nav class="flex flex-wrap items-center justify-between gap-2 w-full p-2 rounded-md">
+@if (isShowBreadcrumb) {
+    <nav class="flex w-full shrink-0 flex-wrap items-center justify-between gap-2 p-2">
         <div class="flex flex-wrap items-center gap-1">
             @for (crumb of breadcrumbs; track crumb.url; let last = $last) {
                 <a [routerLink]="crumb.url" 
@@ -19,30 +13,19 @@
                 }
             }
         </div>
-        @if(rawUrl()){
-            <div class="flex flex-wrap items-center gap-2">
-                <mat-button-toggle-group [value]="currentView()" (change)="onViewChange($event.value)" aria-label="Structure View Switcher">
-                    <mat-button-toggle value="action_view">
-                        <mat-icon fontSet="material-symbols-outlined">article</mat-icon>
-                        View
-                    </mat-button-toggle>
-                    <mat-button-toggle value="action_source">
-                        <mat-icon fontSet="material-symbols-outlined">edit_note</mat-icon>
-                        Source
-                    </mat-button-toggle>
-                </mat-button-toggle-group>
-                @if (canValidate()) {
-                    <button mat-button type="button" (click)="validate()"
-                            [disabled]="isValidating()"
-                            [attr.aria-expanded]="validationResults() !== undefined"
-                            aria-controls="structure-validation-panel">
-                        <mat-icon fontSet="material-symbols-outlined">fact_check</mat-icon>
-                        {{ isValidating() ? 'Validating…' : 'Validate' }}
-                    </button>
-                }
-            </div>
+        @if (rawUrl()) {
+            <mat-button-toggle-group class="mx-auto" [value]="currentView()" (change)="onViewChange($event.value)" aria-label="Structure View Switcher">
+                <mat-button-toggle value="action_view">
+                    <mat-icon fontSet="material-symbols-outlined">article</mat-icon>
+                    View
+                </mat-button-toggle>
+                <mat-button-toggle value="action_source">
+                    <mat-icon fontSet="material-symbols-outlined">edit_note</mat-icon>
+                    Source
+                </mat-button-toggle>
+            </mat-button-toggle-group>
         } @else if (!isNotFound()) {
-            <mat-button-toggle-group [value]="currentListView()" (change)="onListViewChange($event.value)" aria-label="List View Switcher">
+            <mat-button-toggle-group class="mx-auto" [value]="currentListView()" (change)="onListViewChange($event.value)" aria-label="List View Switcher">
                 <mat-button-toggle value="action_readme">
                     <mat-icon fontSet="material-symbols-outlined">article</mat-icon>
                     README
@@ -58,47 +41,37 @@
             </mat-button-toggle-group>                
         }
         @if (!isNotFound()) {
-        <ul class="flex items-center space-x-6 text-base">
-            <!-- @if(rawUrl){
-                <li>
-                    <a mat-button href="{{rawUrl}}" target="_blank"
-                        class="ml-auto inline-flex items-center gap-1 font-medium">
-                        <mat-icon class="!text-lg !h-7 !w-7" fontSet="material-symbols-outlined">text_snippet</mat-icon>
-                        <span class="hover:underline">Raw</span>
-                    </a>            
-                </li>
-            } -->
-            @if (githubUrl()) {
-                <li>
-                    <a mat-button href="{{githubUrl()}}" target="_blank"
-                        class="ml-auto inline-flex items-center gap-1 font-medium">
+            <div class="ml-auto flex flex-wrap items-center justify-end gap-2">
+                @if (canValidate()) {
+                    <button mat-button type="button" (click)="validate()"
+                            [disabled]="isValidating()"
+                            [attr.aria-expanded]="validationResults() !== undefined"
+                            aria-controls="structure-validation-panel">
+                        <mat-icon fontSet="material-symbols-outlined">fact_check</mat-icon>
+                        {{ isValidating() ? 'Validating…' : 'Validate' }}
+                    </button>
+                }
+                @if (githubUrl(); as url) {
+                    <a mat-button [href]="url" target="_blank" class="inline-flex items-center gap-1 font-medium">
                         <mat-icon class="!text-lg !h-7 !w-7" fontSet="material-symbols-outlined">api</mat-icon>
                         <span class="hover:underline">Open in GitHub</span>
                     </a>
-                </li>
-            } @else {
-                <button 
-                    matButton="outlined"
-                    color="primary" 
-                    (click)="exportToPdf()"
-                    class="!text-gray-700"
-                >
-                    <mat-icon class="mr-1" fontSet="material-symbols-outlined">picture_as_pdf</mat-icon>
-                    <span>Export to PDF</span>
-                </button>                
-                <!-- <button matButton (click)="exportToPdf()">
-                    <mat-icon class="!text-lg !h-7 !w-7" fontSet="material-symbols-outlined">picture_as_pdf</mat-icon>
-                    Export to PDF
-                </button> -->
-            }
-        </ul>
+                } @else {
+                    <button matButton="outlined" color="primary" (click)="exportToPdf()" class="!text-gray-700">
+                        <mat-icon class="mr-1" fontSet="material-symbols-outlined">picture_as_pdf</mat-icon>
+                        <span>Export to PDF</span>
+                    </button>
+                }
+            </div>
         }
     </nav>
-    <mat-divider class="p-2"></mat-divider>            
-}     
+    <mat-divider class="shrink-0"></mat-divider>
+}
 
-
-@if (isNotFound()) {
+<div #contentViewport class="min-h-0 flex-1 overflow-auto pt-2">
+@if (isEmpty()) {
+    <app-structure-home></app-structure-home>
+} @else if (isNotFound()) {
     <section aria-labelledby="structure-not-found-title" class="mx-auto flex max-w-2xl flex-col items-center gap-4 px-6 py-20 text-center">
         <p class="text-6xl font-semibold text-slate-400">404</p>
         <h1 id="structure-not-found-title" class="text-2xl font-semibold text-slate-800">Structure not found</h1>
@@ -116,8 +89,8 @@
     <div class="ml-4 flex flex-col gap-4 lg:flex-row lg:items-start">
         <div class="min-w-0 flex-1">
             @if (currentView() === 'action_view') {
-                @if (source() | markdown | async; as htmlContent) {
-                    <div class="prose max-w-5xl p-4 mx-4" [innerHTML]="htmlContent | safeHtml">
+                @if (source() | markdown:true | async; as htmlContent) {
+                    <div #validationContent class="prose max-w-5xl p-4 mx-4" [innerHTML]="htmlContent | safeHtml">
                     </div>
                 }
             } @else if (currentView() === 'action_source') {
@@ -125,10 +98,11 @@
                     <div class="flex w-max min-w-full font-mono leading-6">
                         <div aria-hidden="true" class="sticky left-0 shrink-0 select-none border-r border-gray-300 bg-gray-100 px-3 py-4 text-right text-slate-500">
                             @for (row of sourceRows(); track $index) {
-                                <div>{{ $index + 1 }}</div>
+                                <div [class.bg-amber-50]="selectedSourceRow() === $index + 1">{{ $index + 1 }}</div>
                             }
                         </div>
-                        <pre class="m-0 p-4 leading-6"><code>{{ source() }}</code></pre>
+                        <pre #validationContent class="m-0 flex-1 p-4 leading-6"><code>@for (row of sourceRows(); track $index; let last = $last) {<span
+                            class="inline-block min-h-6 w-full align-top" [attr.data-source-row]="$index + 1">{{ row }}</span>{{ last ? '' : '\n' }}}</code></pre>
                     </div>
                 </div>
             }
@@ -155,7 +129,9 @@
                     } @else {
                         <div class="flex flex-col gap-3">
                             @for (validation of validationIssues(); track $index) {
-                                <div class="rounded-md border p-3 text-sm"
+                                <button type="button" class="cursor-pointer rounded-md border p-3 text-left text-sm hover:brightness-95"
+                                     (click)="goToValidationRow(validation)"
+                                     [attr.aria-pressed]="selectedValidation()?.result === validation"
                                      [class.bg-red-100]="validation.result === validationResult.Error"
                                      [class.border-red-300]="validation.result === validationResult.Error"
                                      [class.text-red-900]="validation.result === validationResult.Error"
@@ -165,22 +141,22 @@
                                      [class.bg-blue-100]="validation.result === validationResult.Suggestion"
                                      [class.border-blue-300]="validation.result === validationResult.Suggestion"
                                      [class.text-blue-900]="validation.result === validationResult.Suggestion">
-                                    <div class="mb-2 flex items-start gap-2">
+                                    <span class="mb-2 flex items-start gap-2">
                                         <mat-icon class="shrink-0" fontSet="material-symbols-outlined"
-                                                  [matTooltip]="validation.result" tabindex="0"
+                                                  [matTooltip]="validation.result"
                                                   [attr.aria-label]="validation.result" [attr.aria-hidden]="false">
                                             {{ validationIcons[validation.result] }}
                                         </mat-icon>
-                                        <h3 class="font-semibold">{{ validation.message }}</h3>
-                                    </div>
-                                    <p>Row {{ validation.row }}</p>
+                                        <span class="font-semibold">{{ validation.message }}</span>
+                                    </span>
+                                    <span class="block">Row {{ validation.row }}</span>
                                     @if (validation.url !== undefined) {
-                                        <p class="mt-1 break-all">{{ validation.url }}</p>
+                                        <span class="mt-1 block break-all">{{ validation.url }}</span>
                                     }
                                     @if (validation.suggestion) {
-                                        <p class="mt-1">{{ validation.suggestion }}</p>
+                                        <span class="mt-1 block">{{ validation.suggestion }}</span>
                                     }
-                                </div>
+                                </button>
                             }
                         </div>
                     }
@@ -234,3 +210,4 @@
         }
     }  
 }
+</div>

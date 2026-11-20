@@ -90,7 +90,7 @@ describe('Markdown link validation', () => {
         expect(validations.map(validation => validation.result))
             .toEqual([StructureValidationResult.Warning, StructureValidationResult.Error]);
         expect(validations[1]).toMatchObject({
-            message: 'Wrong local link', suggestion: 'There is no structure with url', row: 3, url: 'Other.md'
+            message: 'Wrong local link', suggestion: 'There is no structure with this url', row: 3, url: 'Other.md'
         });
     });
 
@@ -98,7 +98,7 @@ describe('Markdown link validation', () => {
         structureExists.mockReturnValue(of(false));
         expect(await validate('[Missing](/missing.md)')).toEqual([{
             ruleId: 'markdown-links', result: StructureValidationResult.Error, row: 3, url: '/missing.md',
-            message: 'Wrong local link', suggestion: 'There is no structure with url'
+            message: 'Wrong local link', suggestion: 'There is no structure with this url'
         }]);
     });
 

@@ -1,4 +1,6 @@
-import { Lexer, Token } from 'marked';
+import { Lexer, marked } from 'marked';
+
+import { markdownSourceRows } from '@/app/core/markdown/markdown-source-rows';
 
 import { StructureValidationResult } from '../constants/structure-validation-result';
 import { StructureValidation, StructureValidationContext, StructureValidationRule } from '../models/structure-validation';
@@ -9,45 +11,15 @@ interface MarkdownLink {
 }
 
 function markdownLinks(source: string): MarkdownLink[] {
+    const tokens = Lexer.lex(source);
+    const rows = markdownSourceRows(source, tokens);
     const links: MarkdownLink[] = [];
-    let cursor = 0;
-
-    const visit = (tokens: readonly Token[]) => {
-        for (const token of tokens) {
-            // Container tokens strip list/quote prefixes from their children. Fall back
-            // to the first source line when a child's raw text spans those prefixes.
-            const exact = source.indexOf(token.raw, cursor);
-            const start = exact >= 0 ? exact : source.indexOf(token.raw.split('\n')[0], cursor);
-            if (start >= 0) {
-                cursor = start;
-            }
-            if (token.type === 'link') {
-                links.push({ href: token.href, row: source.slice(0, cursor).split('\n').length });
-            } else if (token.type === 'list') {
-                visit(token.items);
-            } else if (token.type === 'table') {
-                for (const cell of [...token.header, ...token.rows.flat()]) {
-                    visit(cell.tokens);
-                }
-            } else if (token.type !== 'image' && 'tokens' in token && token.tokens) {
-                visit(token.tokens);
-            }
-            if (exact >= 0) {
-                cursor = Math.max(cursor, exact + token.raw.length);
-            } else if (start >= 0 && !('tokens' in token)) {
-                // Skip code blocks even when indentation changes their raw text.
-                const lineCount = token.raw.split('\n').length - 1;
-                let end = start;
-                for (let line = 0; line < lineCount; line++) {
-                    const newline = source.indexOf('\n', end);
-                    end = newline < 0 ? source.length : newline + 1;
-                }
-                cursor = Math.max(cursor, end, start + token.raw.split('\n')[0].length);
-            }
+    marked.walkTokens(tokens, token => {
+        const position = rows.get(token);
+        if (token.type === 'link' && position) {
+            links.push({ href: token.href, row: position.start });
         }
-    };
-
-    visit(Lexer.lex(source));
+    });
     return links;
 }
 

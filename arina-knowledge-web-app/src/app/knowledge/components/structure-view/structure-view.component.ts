@@ -1,4 +1,4 @@
-import { Component, computed, effect, inject, signal } from '@angular/core';
+import { afterRenderEffect, Component, computed, effect, ElementRef, inject, signal, viewChild } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { AsyncPipe } from '@angular/common';
 import { ActivatedRoute, NavigationEnd, Router, RouterLink } from '@angular/router';
@@ -32,6 +32,7 @@ import { ProgressExportComponent } from '@/app/core/components/progress-export/p
 @Component({
     selector: 'app-structure-view',
     standalone: true,
+    host: { class: 'flex h-full min-h-0 flex-col' },
     imports: [
         AsyncPipe,
         RouterLink,
@@ -92,7 +93,29 @@ export class StructureViewComponent {
                     newKey
                 )
             }
-        });        
+        });
+
+        afterRenderEffect(onCleanup => {
+            const selection = this.selectedValidation();
+            const content = this.validationContent()?.nativeElement;
+            if (!selection || !content) {
+                return;
+            }
+
+            const target = this.currentView() === 'action_source'
+                ? content.querySelector<HTMLElement>(`[data-source-row="${this.selectedSourceRow()}"]`)
+                : this.findRenderedRow(content, selection.result.row);
+            if (target) {
+                target.classList.add('bg-amber-50', 'scroll-mb-18');
+                onCleanup(() => target.classList.remove('bg-amber-50', 'scroll-mb-18'));
+
+                const viewport = this.contentViewport()?.nativeElement.getBoundingClientRect();
+                const bounds = target.getBoundingClientRect();
+                if (viewport && (bounds.top < viewport.top || bounds.bottom > viewport.bottom)) {
+                    target.scrollIntoView?.({ block: 'nearest', inline: 'nearest' });
+                }
+            }
+        });
     }  
    
     // title: string | undefined;
@@ -101,6 +124,45 @@ export class StructureViewComponent {
     // source: string | undefined;
     public source = signal<string | undefined>(undefined);
     protected readonly sourceRows = computed(() => (this.source() ?? '').split(/\r\n|\r|\n/));
+    private readonly contentViewport = viewChild<ElementRef<HTMLElement>>('contentViewport');
+    private readonly validationContent = viewChild<ElementRef<HTMLElement>>('validationContent');
+    protected readonly selectedValidation = signal<{ result: StructureValidation } | undefined>(undefined);
+    protected readonly selectedSourceRow = computed(() => {
+        const row = this.selectedValidation()?.result.row;
+        return row === undefined ? undefined : Math.min(row, this.sourceRows().length);
+    });
+
+    protected goToValidationRow(result: StructureValidation) {
+        // Clicking the same issue again should also bring it back into view.
+        this.selectedValidation.set({ result });
+    }
+
+    private findRenderedRow(content: HTMLElement, row: number): HTMLElement | undefined {
+        const blockSelector = '[data-markdown-row]:not(a)';
+        const linkRow = content.querySelector(`a[data-markdown-row="${row}"]`)
+            ?.closest<HTMLElement>(`tr, ${blockSelector}`);
+        if (linkRow) {
+            return linkRow;
+        }
+
+        let best: HTMLElement | undefined;
+        let bestDistance = Infinity;
+        let bestSize = Infinity;
+        for (const element of content.querySelectorAll<HTMLElement>(blockSelector)) {
+            const start = Number(element.dataset['markdownRow']);
+            const end = Number(element.dataset['markdownEndRow']);
+
+            // Blank or insertion rows may have no rendered element. Use the closest block.
+            const distance = Math.max(start - row, row - end, 0);
+            const size = end - start;
+            if (distance < bestDistance || (distance === bestDistance && size <= bestSize)) {
+                best = element;
+                bestDistance = distance;
+                bestSize = size;
+            }
+        }
+        return best;
+    }
 
     public canValidate = computed(() =>
         this.source() !== undefined && /\.md$/i.test(this.key ?? '') && !this.isDataLoading()
@@ -136,6 +198,7 @@ export class StructureViewComponent {
             return;
         }
         const run = ++this.validationRun;
+        this.selectedValidation.set(undefined);
         this.isValidating.set(true);
         this.validationResults.set([]);
         try {
@@ -160,6 +223,7 @@ export class StructureViewComponent {
 
     closeValidation() {
         this.validationRun++;
+        this.selectedValidation.set(undefined);
         this.isValidating.set(false);
         this.validationResults.set(undefined);
     }
