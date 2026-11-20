@@ -2,6 +2,7 @@ import { Lexer } from 'marked';
 
 import { StructureValidationResult } from '../constants/structure-validation-result';
 import { StructureValidation, StructureValidationRule } from '../models/structure-validation';
+import { structureLinkRule } from './structure-link-rule';
 
 const entityTitleRule: StructureValidationRule = {
     id: 'entity-title',
@@ -65,4 +66,4 @@ const descriptionRule: StructureValidationRule = {
     }
 };
 
-export const STRUCTURE_RULES: readonly StructureValidationRule[] = [entityTitleRule, descriptionRule];
+export const STRUCTURE_RULES: readonly StructureValidationRule[] = [entityTitleRule, descriptionRule, structureLinkRule];

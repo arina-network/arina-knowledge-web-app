@@ -1,7 +1,9 @@
 import { inject, Injectable, InjectionToken } from '@angular/core';
+import { firstValueFrom } from 'rxjs';
 
-import { StructureValidation, StructureValidationContext, StructureValidationRule } from '../models/structure-validation';
+import { StructureValidation, StructureValidationContext, StructureValidationRepository, StructureValidationRule } from '../models/structure-validation';
 import { STRUCTURE_RULES } from '../validation/structure-rules';
+import { StructureApiService } from './structure-api.service';
 
 export const STRUCTURE_VALIDATION_RULES = new InjectionToken<readonly StructureValidationRule[]>(
     'Structure validation rules',
@@ -11,8 +13,9 @@ export const STRUCTURE_VALIDATION_RULES = new InjectionToken<readonly StructureV
 @Injectable({ providedIn: 'root' })
 export class StructureValidationService {
     private readonly rules = inject(STRUCTURE_VALIDATION_RULES);
+    private readonly api = inject(StructureApiService);
 
-    validate(markdown: string): StructureValidation[] {
+    async validate(markdown: string, repository?: StructureValidationRepository): Promise<StructureValidation[]> {
         const source = markdown.replace(/^\uFEFF/, '').replace(/\r\n?/g, '\n');
         const lines = source.split('\n');
         const title = /^#[ \t]+(.*)$/.exec(lines[0])?.[1]
@@ -24,10 +27,24 @@ export class StructureValidationService {
             /^\p{Ll}[\p{Ll}\p{M}\p{N}'’-]*$/u.test(word)
         ) ? typeWords.join(' ') : undefined;
         const entityName = nameIndex < 0 ? undefined : words.slice(nameIndex).join(' ');
-        const context: StructureValidationContext = { source, lines, entityType, entityName };
+        const checks = new Map<string, Promise<boolean>>();
+        const context: StructureValidationContext = {
+            source, lines, entityType, entityName, repository,
+            structureExists: repository ? path => {
+                let check = checks.get(path);
+                if (!check) {
+                    check = firstValueFrom(this.api.structureExists(
+                        repository.owner, repository.repository, repository.branch, path
+                    ));
+                    checks.set(path, check);
+                }
+                return check;
+            } : undefined
+        };
 
-        return this.rules
+        const results = await Promise.all(this.rules
             .filter(rule => !rule.entityTypes || (!!entityType && rule.entityTypes.includes(entityType)))
-            .flatMap(rule => rule.validate(context));
+            .map(rule => rule.validate(context)));
+        return results.flat();
     }
 }

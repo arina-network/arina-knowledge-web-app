@@ -33,14 +33,15 @@
                 </mat-button-toggle-group>
                 @if (canValidate()) {
                     <button mat-button type="button" (click)="validate()"
+                            [disabled]="isValidating()"
                             [attr.aria-expanded]="validationResults() !== undefined"
                             aria-controls="structure-validation-panel">
                         <mat-icon fontSet="material-symbols-outlined">fact_check</mat-icon>
-                        Validate
+                        {{ isValidating() ? 'Validating…' : 'Validate' }}
                     </button>
                 }
             </div>
-        } @else {
+        } @else if (!isNotFound()) {
             <mat-button-toggle-group [value]="currentListView()" (change)="onListViewChange($event.value)" aria-label="List View Switcher">
                 <mat-button-toggle value="action_readme">
                     <mat-icon fontSet="material-symbols-outlined">article</mat-icon>
@@ -56,6 +57,7 @@
                 </mat-button-toggle>
             </mat-button-toggle-group>                
         }
+        @if (!isNotFound()) {
         <ul class="flex items-center space-x-6 text-base">
             <!-- @if(rawUrl){
                 <li>
@@ -89,13 +91,28 @@
                     Export to PDF
                 </button> -->
             }
-        </ul>            
+        </ul>
+        }
     </nav>
     <mat-divider class="p-2"></mat-divider>            
 }     
 
 
-@if (source() !== undefined){
+@if (isNotFound()) {
+    <section aria-labelledby="structure-not-found-title" class="mx-auto flex max-w-2xl flex-col items-center gap-4 px-6 py-20 text-center">
+        <p class="text-6xl font-semibold text-slate-400">404</p>
+        <h1 id="structure-not-found-title" class="text-2xl font-semibold text-slate-800">Structure not found</h1>
+        <p class="text-slate-600">
+            The path <code class="break-all font-mono">/{{ key }}</code> does not exist in
+            <span class="font-medium">{{ owner }}/{{ repository }}</span> on branch
+            <span class="font-medium">{{ branch }}</span>.
+        </p>
+        <a mat-flat-button [routerLink]="[routes.knowledge, owner, repository, branch]">
+            <mat-icon fontSet="material-symbols-outlined">folder_open</mat-icon>
+            Back to repository
+        </a>
+    </section>
+} @else if (source() !== undefined){
     <div class="ml-4 flex flex-col gap-4 lg:flex-row lg:items-start">
         <div class="min-w-0 flex-1">
             @if (currentView() === 'action_view') {
@@ -104,7 +121,16 @@
                     </div>
                 }
             } @else if (currentView() === 'action_source') {
-                <pre class="bg-gray-100 p-4 rounded-md overflow-x-auto"><code>{{ source() }}</code></pre>
+                <div class="overflow-x-auto rounded-md bg-gray-100" role="region" aria-label="Structure source" tabindex="0">
+                    <div class="flex w-max min-w-full font-mono leading-6">
+                        <div aria-hidden="true" class="sticky left-0 shrink-0 select-none border-r border-gray-300 bg-gray-100 px-3 py-4 text-right text-slate-500">
+                            @for (row of sourceRows(); track $index) {
+                                <div>{{ $index + 1 }}</div>
+                            }
+                        </div>
+                        <pre class="m-0 p-4 leading-6"><code>{{ source() }}</code></pre>
+                    </div>
+                </div>
             }
         </div>
         @if (validationResults() !== undefined) {
@@ -122,7 +148,9 @@
                         <span>{{ validationTotals().warnings }} warnings</span>
                         <span>{{ validationTotals().suggestions }} suggestions</span>
                     </p>
-                    @if (validationIssues().length === 0) {
+                    @if (isValidating()) {
+                        <p class="text-sm text-slate-700">Checking Markdown links…</p>
+                    } @else if (validationIssues().length === 0) {
                         <p class="text-sm text-slate-700">All validation rules passed.</p>
                     } @else {
                         <div class="flex flex-col gap-3">
@@ -146,6 +174,9 @@
                                         <h3 class="font-semibold">{{ validation.message }}</h3>
                                     </div>
                                     <p>Row {{ validation.row }}</p>
+                                    @if (validation.url !== undefined) {
+                                        <p class="mt-1 break-all">{{ validation.url }}</p>
+                                    }
                                     @if (validation.suggestion) {
                                         <p class="mt-1">{{ validation.suggestion }}</p>
                                     }

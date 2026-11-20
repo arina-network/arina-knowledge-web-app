@@ -69,6 +69,8 @@ export class StructureViewComponent {
     protected key?: string;
 
     public isDataLoading = signal<boolean>(false);
+    public isNotFound = signal(false);
+    private dataRequest = 0;
 
     constructor() {
         effect(() => {
@@ -98,6 +100,7 @@ export class StructureViewComponent {
     public rawUrl = signal<string | undefined>(undefined);
     // source: string | undefined;
     public source = signal<string | undefined>(undefined);
+    protected readonly sourceRows = computed(() => (this.source() ?? '').split(/\r\n|\r|\n/));
 
     public canValidate = computed(() =>
         this.source() !== undefined && /\.md$/i.test(this.key ?? '') && !this.isDataLoading()
@@ -110,6 +113,8 @@ export class StructureViewComponent {
         [StructureValidationResult.Suggestion]: 'lightbulb'
     };
     public validationResults = signal<StructureValidation[] | undefined>(undefined);
+    public isValidating = signal(false);
+    private validationRun = 0;
     public validationIssues = computed(() =>
         this.validationResults()?.filter(validation => validation.result !== StructureValidationResult.Ok) ?? []
     );
@@ -125,14 +130,37 @@ export class StructureViewComponent {
         return totals;
     });
 
-    validate() {
+    async validate() {
         const source = this.source();
-        if (this.canValidate() && source !== undefined) {
-            this.validationResults.set(this.validationService.validate(source));
+        if (!this.canValidate() || source === undefined || this.isValidating()) {
+            return;
+        }
+        const run = ++this.validationRun;
+        this.isValidating.set(true);
+        this.validationResults.set([]);
+        try {
+            const results = await this.validationService.validate(source, {
+                owner: this.owner!, repository: this.repository!, branch: this.branch ?? 'main', key: this.key!
+            });
+            if (run === this.validationRun) {
+                this.validationResults.set(results);
+            }
+        } catch (error) {
+            if (run === this.validationRun) {
+                this.validationResults.set(undefined);
+                const message = error instanceof Error ? error.message : String(error);
+                this.notificationService.showError('Error validating Markdown links: ' + message);
+            }
+        } finally {
+            if (run === this.validationRun) {
+                this.isValidating.set(false);
+            }
         }
     }
 
     closeValidation() {
+        this.validationRun++;
+        this.isValidating.set(false);
         this.validationResults.set(undefined);
     }
 
@@ -159,8 +187,9 @@ export class StructureViewComponent {
         newBranch: string,
         newKey?: string
     ) {
+        const request = ++this.dataRequest;
         this.isDataLoading.set(true);
-        this.closeValidation();
+        this.clearData();
 
         this.owner = newOwner;
         this.repository = newRepository;
@@ -174,6 +203,9 @@ export class StructureViewComponent {
             this.key
         ).subscribe({
             next: (data) => {
+                if (request !== this.dataRequest) {
+                    return;
+                }
                 this.clearData()
 
                 // no data
@@ -245,6 +277,9 @@ export class StructureViewComponent {
                         `${readme.path}`
                     ).subscribe({                        
                         next: (readmeData) => {
+                            if (request !== this.dataRequest) {
+                                return;
+                            }
                             if (readmeData?.content) {
                                 this.isDataLoading.set(false);
 
@@ -265,6 +300,14 @@ export class StructureViewComponent {
                             }
                         },
                         error: (err) => {
+                            if (request !== this.dataRequest) {
+                                return;
+                            }
+                            if (err.status === 404) {
+                                this.contentReadme.set(undefined);
+                                this.isDataLoading.set(false);
+                                return;
+                            }
                             this.clearData()
                             this.isDataLoading.set(false);
 
@@ -276,9 +319,16 @@ export class StructureViewComponent {
                 // this.cdr.detectChanges(); 
             },
             error: (err) => {
+                if (request !== this.dataRequest) {
+                    return;
+                }
                 this.clearData()
                 this.isDataLoading.set(false);
 
+                if (err.status === 404) {
+                    this.isNotFound.set(true);
+                    return;
+                }
                 this.notificationService.showError('Error fetching Raw Data from GitHub: ' + err.message);
             }
         });
@@ -303,6 +353,7 @@ export class StructureViewComponent {
     }
 
     protected clearData() {
+        this.isNotFound.set(false);
         this.closeValidation();
         this.githubUrl.set(undefined);
 

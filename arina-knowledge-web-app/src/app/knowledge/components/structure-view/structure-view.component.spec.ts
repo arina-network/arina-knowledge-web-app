@@ -1,9 +1,10 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { HttpErrorResponse } from '@angular/common/http';
 import { MatDialog } from '@angular/material/dialog';
 import { MatTooltip } from '@angular/material/tooltip';
 import { By } from '@angular/platform-browser';
 import { provideRouter } from '@angular/router';
-import { of, Subject } from 'rxjs';
+import { of, Subject, throwError } from 'rxjs';
 
 import { NotificationService } from '@/app/core/services/notification.service';
 import { StructureApiService } from '../../services/structure-api.service';
@@ -14,14 +15,16 @@ describe('StructureViewComponent validation', () => {
     let fixture: ComponentFixture<StructureViewComponent>;
     let component: StructureViewComponent;
     let getStructureRaw: ReturnType<typeof vi.fn>;
+    let structureExists: ReturnType<typeof vi.fn>;
 
     beforeEach(async () => {
         getStructureRaw = vi.fn();
+        structureExists = vi.fn().mockReturnValue(of(true));
         await TestBed.configureTestingModule({
             imports: [StructureViewComponent],
             providers: [
                 provideRouter([]),
-                { provide: StructureApiService, useValue: { getStructureRaw } },
+                { provide: StructureApiService, useValue: { getStructureRaw, structureExists } },
                 { provide: StructureExportService, useValue: {} },
                 { provide: NotificationService, useValue: { showError: vi.fn() } },
                 { provide: MatDialog, useValue: {} }
@@ -45,12 +48,17 @@ describe('StructureViewComponent validation', () => {
             .find(button => button.textContent?.includes('Validate'));
     }
 
+    async function clickValidate() {
+        validateButton()!.click();
+        await expect.poll(() => component.isValidating()).toBe(false);
+        fixture.detectChanges();
+    }
+
     it('validates on click and renders colored issues with source rows beside the source', async () => {
         await loadFile('# Customer\nIntro\n## description\nText');
         expect(fixture.nativeElement.querySelector('aside')).toBeNull();
 
-        validateButton()!.click();
-        fixture.detectChanges();
+        await clickValidate();
 
         const panel = fixture.nativeElement.querySelector('aside') as HTMLElement;
         expect(panel.textContent).toContain('No Entity Type');
@@ -74,8 +82,7 @@ describe('StructureViewComponent validation', () => {
 
     it('renders missing-description suggestions in blue and supports closing the panel', async () => {
         await loadFile('# model Customer');
-        validateButton()!.click();
-        fixture.detectChanges();
+        await clickValidate();
 
         const suggestion = fixture.nativeElement.querySelector('aside .bg-blue-100') as HTMLElement;
         expect(suggestion.querySelector('h3')?.textContent).toBe('No description found');
@@ -92,8 +99,7 @@ describe('StructureViewComponent validation', () => {
 
     it('shows a success message when all rules pass', async () => {
         await loadFile('# model Customer\n\n## description\nText');
-        validateButton()!.click();
-        fixture.detectChanges();
+        await clickValidate();
 
         expect(fixture.nativeElement.querySelector('aside')?.textContent).toContain('All validation rules passed.');
         expect(component.validationIssues()).toEqual([]);
@@ -105,7 +111,7 @@ describe('StructureViewComponent validation', () => {
 
     it('keeps validation available alongside rendered Markdown when switching views', async () => {
         await loadFile('# model Customer\n\n## description\nText');
-        validateButton()!.click();
+        await clickValidate();
         component.onViewChange('action_view');
         fixture.detectChanges();
 
@@ -119,7 +125,7 @@ describe('StructureViewComponent validation', () => {
 
     it('clears results as navigation starts and hides Validate while loading or browsing a folder', async () => {
         await loadFile('# model Customer');
-        component.validate();
+        await component.validate();
         const pending = new Subject<unknown>();
         getStructureRaw.mockReturnValue(pending);
         void component.refreshData('owner', 'repository', 'main', 'folder');
@@ -141,11 +147,143 @@ describe('StructureViewComponent validation', () => {
 
     it('can validate an empty Markdown file', async () => {
         await loadFile('', 'empty.MD');
-        validateButton()!.click();
-        fixture.detectChanges();
+        await clickValidate();
 
         expect(fixture.nativeElement.querySelectorAll('aside .bg-red-100')).toHaveLength(2);
         expect(fixture.nativeElement.querySelectorAll('aside .bg-blue-100')).toHaveLength(1);
         expect(component.validationTotals()).toEqual({ errors: 2, warnings: 0, suggestions: 1 });
+    });
+
+    it('shows progress while checking paths and then renders link errors', async () => {
+        await loadFile('# model Customer\n## description\n[Missing](/missing.md)');
+        const pending = new Subject<boolean>();
+        structureExists.mockReturnValue(pending);
+        const validation = component.validate();
+        fixture.detectChanges();
+
+        expect(fixture.nativeElement.querySelector('aside')?.textContent).toContain('Checking Markdown links');
+        expect(fixture.nativeElement.querySelector('aside')?.textContent).not.toContain('All validation rules passed.');
+        expect(fixture.nativeElement.querySelector('button[aria-controls="structure-validation-panel"]')?.disabled).toBe(true);
+        pending.next(false);
+        pending.complete();
+        await validation;
+        fixture.detectChanges();
+
+        expect(structureExists).toHaveBeenCalledWith('owner', 'repository', 'main', 'missing.md');
+        const error = fixture.nativeElement.querySelector('aside .bg-red-100') as HTMLElement;
+        expect(error.textContent).toContain('Wrong local link');
+        expect(error.textContent).toContain('/missing.md');
+        expect(error.textContent).toContain('Row 3');
+        expect(component.isValidating()).toBe(false);
+    });
+
+    it.each(['close', 'navigate'])('ignores late validation results after %s', async action => {
+        await loadFile('# model Customer\n## description\n[Missing](/missing.md)');
+        const pending = new Subject<boolean>();
+        structureExists.mockReturnValue(pending);
+        const validation = component.validate();
+
+        if (action === 'close') {
+            component.closeValidation();
+        } else {
+            await loadFile('# model Other\n## description\nText', 'other.md');
+        }
+        pending.next(false);
+        pending.complete();
+        await validation;
+        fixture.detectChanges();
+
+        expect(component.validationResults()).toBeUndefined();
+        expect(component.isValidating()).toBe(false);
+        expect(fixture.nativeElement.querySelector('aside')).toBeNull();
+    });
+
+    it('reports API failures without labeling an inaccessible path as missing', async () => {
+        await loadFile('# model Customer\n## description\n[File](/file.md)');
+        structureExists.mockReturnValue(throwError(() => new Error('Rate limit exceeded')));
+        await component.validate();
+
+        expect(TestBed.inject(NotificationService).showError)
+            .toHaveBeenCalledWith('Error validating Markdown links: Rate limit exceeded');
+        expect(component.validationResults()).toBeUndefined();
+        expect(component.isValidating()).toBe(false);
+    });
+
+    it.each(['missing.md', 'missing/folder'])('shows a 404 view for a missing repository path: %s', async key => {
+        await loadFile('# model Customer');
+        await component.validate();
+        getStructureRaw.mockReturnValue(throwError(() => new HttpErrorResponse({ status: 404 })));
+        await component.refreshData('owner', 'repository', 'main', key);
+        fixture.detectChanges();
+
+        const page = fixture.nativeElement.querySelector('section[aria-labelledby="structure-not-found-title"]') as HTMLElement;
+        expect(page.textContent).toContain('404');
+        expect(page.querySelector('h1')?.textContent).toBe('Structure not found');
+        expect(page.querySelector('code')?.textContent).toBe(`/${key}`);
+        expect(page.querySelector('a')?.getAttribute('href')).toBe('/knowledge/owner/repository/main');
+        expect(component.isDataLoading()).toBe(false);
+        expect(fixture.nativeElement.querySelector('pre')).toBeNull();
+        expect(fixture.nativeElement.querySelector('aside')).toBeNull();
+        expect(fixture.nativeElement.querySelector('mat-button-toggle-group')).toBeNull();
+        expect(fixture.nativeElement.textContent).not.toContain('Export to PDF');
+        expect(TestBed.inject(NotificationService).showError).not.toHaveBeenCalled();
+    });
+
+    it('clears the 404 view immediately when navigating to another path', async () => {
+        getStructureRaw.mockReturnValue(throwError(() => new HttpErrorResponse({ status: 404 })));
+        await component.refreshData('owner', 'repository', 'main', 'missing.md');
+        const pending = new Subject<unknown>();
+        getStructureRaw.mockReturnValue(pending);
+        void component.refreshData('owner', 'repository', 'main', 'existing.md');
+        fixture.detectChanges();
+
+        expect(component.isNotFound()).toBe(false);
+        expect(component.isDataLoading()).toBe(true);
+        expect(fixture.nativeElement.querySelector('#structure-not-found-title')).toBeNull();
+
+        pending.next({ content: btoa('# model Existing'), download_url: 'https://example.com/existing.md' });
+        pending.complete();
+        fixture.detectChanges();
+        expect(fixture.nativeElement.querySelector('pre')?.textContent).toBe('# model Existing');
+        expect(component.isDataLoading()).toBe(false);
+    });
+
+    it.each([0, 403, 500])('preserves notification handling for non-404 failures: %s', async status => {
+        getStructureRaw.mockReturnValue(throwError(() => new HttpErrorResponse({ status })));
+        await component.refreshData('owner', 'repository', 'main', 'file.md');
+        fixture.detectChanges();
+
+        expect(component.isNotFound()).toBe(false);
+        expect(component.isDataLoading()).toBe(false);
+        expect(fixture.nativeElement.querySelector('#structure-not-found-title')).toBeNull();
+        expect(TestBed.inject(NotificationService).showError).toHaveBeenCalled();
+    });
+
+    it('keeps an existing folder available when its README is missing', async () => {
+        getStructureRaw.mockReturnValueOnce(of([
+            { name: 'README.md', path: 'folder/README.md', type: 'file', url: 'https://api.github.com/repos/owner/repository/contents/folder/README.md?ref=main' },
+            { name: 'file.md', path: 'folder/file.md', type: 'file', url: 'https://api.github.com/repos/owner/repository/contents/folder/file.md?ref=main' }
+        ])).mockReturnValueOnce(throwError(() => new HttpErrorResponse({ status: 404 })));
+        await component.refreshData('owner', 'repository', 'main', 'folder');
+        component.onListViewChange('action_list');
+        fixture.detectChanges();
+
+        expect(component.isNotFound()).toBe(false);
+        expect(component.contentLinks()).toHaveLength(2);
+        expect(fixture.nativeElement.textContent).toContain('file.md');
+        expect(TestBed.inject(NotificationService).showError).not.toHaveBeenCalled();
+    });
+
+    it('ignores a late 404 from an earlier repository path', async () => {
+        const pending = new Subject<unknown>();
+        getStructureRaw.mockReturnValue(pending);
+        void component.refreshData('owner', 'repository', 'main', 'missing.md');
+        await loadFile('# model Existing', 'existing.md');
+        pending.error(new HttpErrorResponse({ status: 404 }));
+        fixture.detectChanges();
+
+        expect(component.isNotFound()).toBe(false);
+        expect(fixture.nativeElement.querySelector('pre')?.textContent).toBe('# model Existing');
+        expect(TestBed.inject(NotificationService).showError).not.toHaveBeenCalled();
     });
 });

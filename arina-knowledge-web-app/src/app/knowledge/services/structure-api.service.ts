@@ -1,6 +1,6 @@
 import { Injectable, inject } from '@angular/core';
-import { HttpClient, HttpHeaders } from '@angular/common/http';
-import { Observable, of } from 'rxjs';
+import { HttpClient, HttpErrorResponse, HttpHeaders } from '@angular/common/http';
+import { catchError, map, Observable, of, throwError } from 'rxjs';
 
 import { AppRoutes } from '@/app/core/constants/app-routes';
 import { AuthorizationService } from '@/app/core/services/authorization.service';
@@ -103,5 +103,16 @@ export class StructureApiService {
 
         const headers =  this.getHeaders()
         return this.http.get(url, { headers });
+    }
+
+    structureExists(owner: string, repository: string, branch: string, path: string): Observable<boolean> {
+        const encodedPath = path.split('/').map(segment => encodeURIComponent(segment)).join('/');
+        const url = `${this.routes.githubApiRepositories}/${encodeURIComponent(owner)}/${encodeURIComponent(repository)}`
+            + `/contents/${encodedPath}?ref=${encodeURIComponent(branch)}`;
+
+        return this.http.get(url, { headers: this.getHeaders() }).pipe(
+            map(() => true),
+            catchError((error: HttpErrorResponse) => error.status === 404 ? of(false) : throwError(() => error))
+        );
     }
 }
