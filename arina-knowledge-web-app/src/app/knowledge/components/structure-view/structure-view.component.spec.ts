@@ -54,6 +54,112 @@ describe('StructureViewComponent validation', () => {
         fixture.detectChanges();
     }
 
+    function folderItem(name: string, type = 'file') {
+        const path = `folder/${name}`;
+        return { name, path, type, url: `https://api.github.com/repos/owner/repository/contents/${path}?ref=main` };
+    }
+
+    it('validates the Markdown files shown in Content mode and jumps to the right file', async () => {
+        const first = folderItem('first.md');
+        const second = folderItem('second.MD');
+        const longName = 'Customer Account Details for International Billing and Payment Reconciliation';
+        const readme = folderItem('README.md');
+        const notes = folderItem('notes.txt');
+        getStructureRaw.mockImplementation((_owner, _repo, _ref, path) => {
+            if (path === 'folder') {
+                return of([first, second, readme, notes, folderItem('nested', 'dir')]);
+            }
+            const source = path === first.path ? `# ${longName}`
+                : path === second.path ? '# model Other\n## description\n[Missing](target.md)'
+                : 'Plain text';
+            return of({ content: btoa(source) });
+        });
+        structureExists.mockReturnValue(of(false));
+        await component.refreshData('owner', 'repository', 'main', 'folder');
+        fixture.detectChanges();
+        expect(validateButton()).toBeUndefined();
+        component.onListViewChange('action_list');
+        fixture.detectChanges();
+        expect(validateButton()).toBeUndefined();
+        component.onListViewChange('action_content');
+        fixture.detectChanges();
+
+        expect(validateButton()?.nextElementSibling?.textContent).toContain('Export to PDF');
+        expect(validateButton()?.nextElementSibling?.classList.contains('mat-mdc-button')).toBe(true);
+        expect(validateButton()?.disabled).toBe(false);
+        const rawRequests = getStructureRaw.mock.calls.length;
+        await clickValidate();
+
+        expect(getStructureRaw.mock.calls.length).toBe(rawRequests);
+        expect(structureExists).toHaveBeenCalledWith('owner', 'repository', 'main', 'folder/target.md');
+        expect(component.validationTotals()).toEqual({ errors: 2, warnings: 1, suggestions: 1 });
+        const panel = fixture.nativeElement.querySelector('aside') as HTMLElement;
+        expect(panel.textContent).toContain(first.path);
+        expect(panel.textContent).toContain(second.path);
+        expect(panel.textContent).not.toContain(readme.path);
+        expect(panel.textContent).not.toContain(notes.path);
+        const groups = panel.querySelectorAll('section');
+        expect(Array.from(groups, group => group.querySelector('h3')?.textContent)).toEqual([longName, 'Other']);
+        expect(Array.from(groups, group => group.querySelectorAll('button[aria-pressed]').length)).toEqual([2, 2]);
+        const heading = fixture.debugElement.query(By.css('aside h3 button.truncate'));
+        expect(heading.injector.get(MatTooltip).message).toBe(longName);
+
+        panel.querySelector<HTMLButtonElement>('button.bg-yellow-100')!.click();
+        await expect.poll(() => {
+            fixture.detectChanges();
+            return fixture.nativeElement.querySelector('app-structure-content .bg-amber-50')?.textContent;
+        }).toBe('Missing');
+
+        const structures = fixture.nativeElement.querySelectorAll('app-structure-content') as NodeListOf<HTMLElement>;
+        const scrollFirst = vi.fn();
+        const scrollSecond = vi.fn();
+        structures[0].scrollIntoView = scrollFirst;
+        structures[1].scrollIntoView = scrollSecond;
+        groups[1].querySelector<HTMLButtonElement>('h3 button')!.click();
+        fixture.detectChanges();
+        expect(scrollSecond).toHaveBeenCalledWith({ block: 'start', inline: 'nearest' });
+        expect(scrollFirst).not.toHaveBeenCalled();
+        expect(fixture.nativeElement.querySelector('app-structure-content .bg-amber-50')).toBeNull();
+
+        component.onListViewChange('action_readme');
+        fixture.detectChanges();
+        expect(fixture.nativeElement.querySelector('aside')).toBeNull();
+        expect(validateButton()).toBeUndefined();
+    });
+
+    it('waits for file loads and reports validation failures without suppressing other results', async () => {
+        const pending = new Subject<unknown>();
+        getStructureRaw.mockReturnValueOnce(of([folderItem('first.md'), folderItem('second.md')]))
+            .mockReturnValueOnce(pending)
+            .mockReturnValueOnce(of({ content: '' }));
+        await component.refreshData('owner', 'repository', 'main', 'folder');
+        component.onListViewChange('action_content');
+        fixture.detectChanges();
+        expect(validateButton()?.disabled).toBe(true);
+
+        pending.error(new HttpErrorResponse({ status: 403 }));
+        fixture.detectChanges();
+        expect(validateButton()?.disabled).toBe(false);
+        await clickValidate();
+
+        const panel = fixture.nativeElement.querySelector('aside') as HTMLElement;
+        expect(panel.textContent).toContain('Could not validate:');
+        expect(panel.querySelector('li')?.textContent).toBe('folder/first.md');
+        expect(panel.textContent).toContain('folder/second.md');
+        expect(panel.textContent).not.toContain('All validation rules passed.');
+        expect(component.validationTotals()).toEqual({ errors: 2, warnings: 0, suggestions: 1 });
+    });
+
+    it('shows when the folder has no Markdown files to validate', async () => {
+        getStructureRaw.mockReturnValue(of([]));
+        await component.refreshData('owner', 'repository', 'main', 'folder');
+        component.onListViewChange('action_content');
+        fixture.detectChanges();
+        await clickValidate();
+
+        expect(fixture.nativeElement.querySelector('aside')?.textContent).toContain('No Markdown files to validate.');
+    });
+
     it('validates on click and renders colored issues with source rows beside the source', async () => {
         await loadFile('# Customer\nIntro\n## description\nText');
         expect(fixture.nativeElement.querySelector('aside')).toBeNull();
@@ -74,7 +180,7 @@ describe('StructureViewComponent validation', () => {
         expect(errorCard.querySelector('mat-icon')?.textContent?.trim()).toBe('error');
         expect(errorCard.textContent).toContain('Add a lowercase entity type after #.');
         expect(panel.querySelector('.bg-yellow-100 mat-icon')?.textContent?.trim()).toBe('warning');
-        const tooltips = fixture.debugElement.queryAll(By.directive(MatTooltip))
+        const tooltips = fixture.debugElement.queryAll(By.css('aside button mat-icon[aria-label]'))
             .map(element => element.injector.get(MatTooltip).message);
         expect(tooltips).toEqual(['error', 'warning']);
         expect(component.validationTotals()).toEqual({ errors: 1, warnings: 1, suggestions: 0 });
@@ -216,6 +322,7 @@ describe('StructureViewComponent validation', () => {
 
         expect(fixture.nativeElement.querySelectorAll('aside .bg-red-100')).toHaveLength(2);
         expect(fixture.nativeElement.querySelectorAll('aside .bg-blue-100')).toHaveLength(1);
+        expect(fixture.nativeElement.querySelector('aside h3')?.textContent).toBe('empty.MD');
         expect(component.validationTotals()).toEqual({ errors: 2, warnings: 0, suggestions: 1 });
     });
 
@@ -227,6 +334,7 @@ describe('StructureViewComponent validation', () => {
         fixture.detectChanges();
 
         expect(fixture.nativeElement.querySelector('aside')?.textContent).toContain('Checking Markdown links');
+        expect(fixture.nativeElement.querySelector('aside mat-progress-bar[aria-label="Validation progress"]')).not.toBeNull();
         expect(fixture.nativeElement.querySelector('aside')?.textContent).not.toContain('All validation rules passed.');
         expect(fixture.nativeElement.querySelector('button[aria-controls="structure-validation-panel"]')?.disabled).toBe(true);
         pending.next(false);
@@ -239,6 +347,7 @@ describe('StructureViewComponent validation', () => {
         expect(error.textContent).toContain('Wrong local link');
         expect(error.textContent).toContain('/missing.md');
         expect(error.textContent).toContain('Row 3');
+        expect(fixture.nativeElement.querySelector('aside mat-progress-bar')).toBeNull();
         expect(component.isValidating()).toBe(false);
     });
 

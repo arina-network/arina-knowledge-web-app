@@ -1,4 +1,4 @@
-import { afterRenderEffect, Component, computed, effect, ElementRef, inject, signal, viewChild } from '@angular/core';
+import { afterRenderEffect, Component, computed, effect, ElementRef, inject, signal, viewChild, viewChildren } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { AsyncPipe } from '@angular/common';
 import { ActivatedRoute, NavigationEnd, Router, RouterLink } from '@angular/router';
@@ -8,6 +8,7 @@ import { MatButtonToggleModule } from '@angular/material/button-toggle';
 import { MatDialog } from '@angular/material/dialog';
 import { MatDividerModule } from '@angular/material/divider';
 import { MatIconModule } from '@angular/material/icon';
+import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { MatTooltipModule } from '@angular/material/tooltip';
 
 import { AppRoutes } from '@/app/core/constants/app-routes';
@@ -25,9 +26,20 @@ import { StructureValidationService } from '../../services/structure-validation.
 import { StructureValidation } from '../../models/structure-validation';
 import { StructureValidationResult } from '../../constants/structure-validation-result';
 import { StructureLink } from '../../models/structure-link';
+import { parseStructureTitle } from '../../validation/structure-title';
 import { StructureContentComponent } from '../structure-content/structure-content.component';
 import { StructureHomeComponent } from '../structure-home/structure-home.component';
 import { ProgressExportComponent } from '@/app/core/components/progress-export/progress-export.component';
+
+interface ViewValidation extends StructureValidation {
+    filePath?: string;
+}
+
+interface ValidationGroup {
+    path: string;
+    name: string;
+    issues: ViewValidation[];
+}
 
 @Component({
     selector: 'app-structure-view',
@@ -39,6 +51,7 @@ import { ProgressExportComponent } from '@/app/core/components/progress-export/p
         MatDividerModule,
         MatButtonModule,
         MatIconModule,
+        MatProgressBarModule,
         MatTooltipModule,
         MatButtonToggleModule,
         ProgressComponent,
@@ -71,6 +84,7 @@ export class StructureViewComponent {
 
     public isDataLoading = signal<boolean>(false);
     public isNotFound = signal(false);
+    protected readonly isFolder = signal(false);
     private dataRequest = 0;
 
     constructor() {
@@ -97,14 +111,21 @@ export class StructureViewComponent {
 
         afterRenderEffect(onCleanup => {
             const selection = this.selectedValidation();
-            const content = this.validationContent()?.nativeElement;
-            if (!selection || !content) {
+            if (!selection) {
                 return;
             }
 
-            const target = this.currentView() === 'action_source'
+            const filePath = selection.result.filePath;
+            const content = filePath
+                ? this.findFolderFile(filePath)?.renderedContent()?.nativeElement
+                : this.validationContent()?.nativeElement;
+            if (!content) {
+                return;
+            }
+
+            const target = !filePath && this.currentView() === 'action_source'
                 ? content.querySelector<HTMLElement>(`[data-source-row="${this.selectedSourceRow()}"]`)
-                : this.findRenderedRow(content, selection.result.row);
+                : this.findRenderedRow(content, selection.result.row) ?? (filePath ? content : undefined);
             if (target) {
                 target.classList.add('bg-amber-50', 'scroll-mb-18');
                 onCleanup(() => target.classList.remove('bg-amber-50', 'scroll-mb-18'));
@@ -125,16 +146,30 @@ export class StructureViewComponent {
     public source = signal<string | undefined>(undefined);
     protected readonly sourceRows = computed(() => (this.source() ?? '').split(/\r\n|\r|\n/));
     private readonly contentViewport = viewChild<ElementRef<HTMLElement>>('contentViewport');
+    private readonly structureStart = viewChild<ElementRef<HTMLElement>>('structureStart');
     private readonly validationContent = viewChild<ElementRef<HTMLElement>>('validationContent');
-    protected readonly selectedValidation = signal<{ result: StructureValidation } | undefined>(undefined);
+    private readonly folderContent = viewChildren(StructureContentComponent);
+    protected readonly selectedValidation = signal<{ result: ViewValidation } | undefined>(undefined);
     protected readonly selectedSourceRow = computed(() => {
         const row = this.selectedValidation()?.result.row;
         return row === undefined ? undefined : Math.min(row, this.sourceRows().length);
     });
 
-    protected goToValidationRow(result: StructureValidation) {
+    protected goToValidationRow(result: ViewValidation) {
         // Clicking the same issue again should also bring it back into view.
         this.selectedValidation.set({ result });
+    }
+
+    protected goToStructure(path: string) {
+        const start = this.isFolderContent()
+            ? this.findFolderFile(path)?.element.nativeElement
+            : this.structureStart()?.nativeElement;
+        this.selectedValidation.set(undefined);
+        start?.scrollIntoView?.({ block: 'start', inline: 'nearest' });
+    }
+
+    private findFolderFile(path: string) {
+        return this.folderContent().find(file => file.key() === path);
     }
 
     private findRenderedRow(content: HTMLElement, row: number): HTMLElement | undefined {
@@ -174,12 +209,30 @@ export class StructureViewComponent {
         [StructureValidationResult.Warning]: 'warning',
         [StructureValidationResult.Suggestion]: 'lightbulb'
     };
-    public validationResults = signal<StructureValidation[] | undefined>(undefined);
+    public validationResults = signal<ViewValidation[] | undefined>(undefined);
+    protected readonly validationFailures = signal<readonly string[]>([]);
     public isValidating = signal(false);
     private validationRun = 0;
     public validationIssues = computed(() =>
         this.validationResults()?.filter(validation => validation.result !== StructureValidationResult.Ok) ?? []
     );
+    protected readonly validationGroups = computed(() => {
+        const groups = new Map<string, ValidationGroup>();
+        const sources = new Map(this.folderContent().map(file => [file.key(), file.source()]));
+        for (const issue of this.validationIssues()) {
+            const path = issue.filePath ?? this.key ?? '';
+            let group = groups.get(path);
+            if (!group) {
+                const source = issue.filePath ? sources.get(path) : this.source();
+                const firstLine = source?.split(/\r\n?|\n/, 1)[0] ?? '';
+                const { entityName } = parseStructureTitle(firstLine);
+                group = { path, name: entityName ?? (path.split('/').at(-1) || 'Structure'), issues: [] };
+                groups.set(path, group);
+            }
+            group.issues.push(issue);
+        }
+        return [...groups.values()];
+    });
     public validationTotals = computed(() => {
         const totals = { errors: 0, warnings: 0, suggestions: 0 };
         for (const validation of this.validationIssues()) {
@@ -194,19 +247,22 @@ export class StructureViewComponent {
 
     async validate() {
         const source = this.source();
-        if (!this.canValidate() || source === undefined || this.isValidating()) {
+        const folder = this.isFolderContent();
+        if (this.isValidating() || (folder ? this.isFolderValidationLoading() : !this.canValidate())) {
             return;
         }
         const run = ++this.validationRun;
         this.selectedValidation.set(undefined);
+        this.validationFailures.set([]);
         this.isValidating.set(true);
         this.validationResults.set([]);
         try {
-            const results = await this.validationService.validate(source, {
-                owner: this.owner!, repository: this.repository!, branch: this.branch ?? 'main', key: this.key!
-            });
+            const { results, failures } = folder
+                ? await this.validateFolder(run)
+                : { results: await this.validateFile(source!, this.key!), failures: [] };
             if (run === this.validationRun) {
                 this.validationResults.set(results);
+                this.validationFailures.set(failures);
             }
         } catch (error) {
             if (run === this.validationRun) {
@@ -221,11 +277,41 @@ export class StructureViewComponent {
         }
     }
 
+    private validateFile(source: string, key: string) {
+        return this.validationService.validate(source, {
+            owner: this.owner!, repository: this.repository!, branch: this.branch ?? 'main', key
+        });
+    }
+
+    private async validateFolder(run: number) {
+        const sources = new Map(this.folderContent().map(file => [file.key(), file.source()]));
+        const results: ViewValidation[] = [];
+        const failures: string[] = [];
+        for (const filePath of this.folderMarkdownPaths()) {
+            if (run !== this.validationRun) {
+                break;
+            }
+            const source = sources.get(filePath);
+            if (source === undefined) {
+                failures.push(filePath);
+                continue;
+            }
+            try {
+                const fileResults = await this.validateFile(source, filePath);
+                results.push(...fileResults.map(result => ({ ...result, filePath })));
+            } catch {
+                failures.push(filePath);
+            }
+        }
+        return { results, failures };
+    }
+
     closeValidation() {
         this.validationRun++;
         this.selectedValidation.set(undefined);
         this.isValidating.set(false);
         this.validationResults.set(undefined);
+        this.validationFailures.set([]);
     }
 
     public contentLinks = signal<StructureLink[]>([]);
@@ -240,8 +326,21 @@ export class StructureViewComponent {
 
     // folder view
     currentListView = signal<'action_readme' | 'action_list' | 'action_content' >('action_readme');
+    protected readonly isFolderContent = computed(() => this.isFolder() && this.currentListView() === 'action_content');
+    protected readonly folderFiles = computed(() => this.contentLinks()
+        .filter(item => !item.isFolder && item.name !== 'README.md'));
+    protected readonly folderMarkdownPaths = computed(() => this.folderFiles()
+        .filter(item => item.key && /\.md$/i.test(item.key))
+        .map(item => item.key!));
+    protected readonly isFolderValidationLoading = computed(() => {
+        const files = new Map(this.folderContent().map(file => [file.key(), file]));
+        return this.folderMarkdownPaths().some(path => files.get(path)?.isDataLoading() !== false);
+    });
 
     onListViewChange(view: 'action_readme' | 'action_list' | 'action_content') {
+        if (view !== 'action_content' && this.isFolderContent()) {
+            this.closeValidation();
+        }
         this.currentListView.set(view);
     }
 
@@ -289,7 +388,8 @@ export class StructureViewComponent {
 
                     this.rawUrl.set(data.download_url);
                     this.githubUrl.set(`${this.routes.github}/${this.owner}/${this.repository}/${this.routes.githubBlob}/${this.branch}/${this.key}`);
-                } else {
+                } else if (Array.isArray(data)) {
+                    this.isFolder.set(true);
                     let readme: any = undefined;
                     data.map(item => {
                         const parsedUrl = new URL(item.url);
@@ -372,12 +472,13 @@ export class StructureViewComponent {
                                 this.isDataLoading.set(false);
                                 return;
                             }
-                            this.clearData()
                             this.isDataLoading.set(false);
 
                             this.notificationService.showError('Error fetching README.md from GitHub: ' + err.message);
                         }
-                    });                   
+                    });
+                } else {
+                    this.isDataLoading.set(false);
                 }
 
                 // this.cdr.detectChanges(); 
@@ -418,6 +519,7 @@ export class StructureViewComponent {
 
     protected clearData() {
         this.isNotFound.set(false);
+        this.isFolder.set(false);
         this.closeValidation();
         this.githubUrl.set(undefined);
 

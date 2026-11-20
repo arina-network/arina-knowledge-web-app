@@ -42,9 +42,9 @@
         }
         @if (!isNotFound()) {
             <div class="ml-auto flex flex-wrap items-center justify-end gap-2">
-                @if (canValidate()) {
+                @if (canValidate() || isFolderContent()) {
                     <button mat-button type="button" (click)="validate()"
-                            [disabled]="isValidating()"
+                            [disabled]="isValidating() || (isFolderContent() && isFolderValidationLoading())"
                             [attr.aria-expanded]="validationResults() !== undefined"
                             aria-controls="structure-validation-panel">
                         <mat-icon fontSet="material-symbols-outlined">fact_check</mat-icon>
@@ -57,9 +57,9 @@
                         <span class="hover:underline">Open in GitHub</span>
                     </a>
                 } @else {
-                    <button matButton="outlined" color="primary" (click)="exportToPdf()" class="!text-gray-700">
-                        <mat-icon class="mr-1" fontSet="material-symbols-outlined">picture_as_pdf</mat-icon>
-                        <span>Export to PDF</span>
+                    <button mat-button type="button" (click)="exportToPdf()">
+                        <mat-icon fontSet="material-symbols-outlined">picture_as_pdf</mat-icon>
+                        Export to PDF
                     </button>
                 }
             </div>
@@ -85,10 +85,19 @@
             Back to repository
         </a>
     </section>
-} @else if (source() !== undefined){
+} @else if (source() !== undefined || isFolderContent()) {
     <div class="ml-4 flex flex-col gap-4 lg:flex-row lg:items-start">
-        <div class="min-w-0 flex-1">
-            @if (currentView() === 'action_view') {
+        <div #structureStart class="min-w-0 flex-1">
+            @if (isFolderContent()) {
+                @for (item of folderFiles(); track item.url) {
+                    <app-structure-content [owner]="item.owner" [repository]="item.repository" [branch]="item.branch" [key]="item.key"></app-structure-content>
+                } @empty {
+                    <div class="flex flex-col items-center justify-center py-20 text-slate-400">
+                        <mat-icon fontSet="material-symbols-outlined" class="text-6xl mb-4 h-16 w-16">folder_open</mat-icon>
+                        <p class="text-lg font-medium">No content found.</p>
+                    </div>
+                }
+            } @else if (currentView() === 'action_view') {
                 @if (source() | markdown:true | async; as htmlContent) {
                     <div #validationContent class="prose max-w-5xl p-4 mx-4" [innerHTML]="htmlContent | safeHtml">
                     </div>
@@ -123,40 +132,66 @@
                         <span>{{ validationTotals().suggestions }} suggestions</span>
                     </p>
                     @if (isValidating()) {
-                        <p class="text-sm text-slate-700">Checking Markdown links…</p>
-                    } @else if (validationIssues().length === 0) {
-                        <p class="text-sm text-slate-700">All validation rules passed.</p>
+                        <mat-progress-bar class="mb-2" mode="indeterminate" aria-label="Validation progress"></mat-progress-bar>
+                        <p class="text-sm text-slate-700">{{ isFolderContent() ? 'Validating Markdown files…' : 'Checking Markdown links…' }}</p>
                     } @else {
-                        <div class="flex flex-col gap-3">
-                            @for (validation of validationIssues(); track $index) {
-                                <button type="button" class="cursor-pointer rounded-md border p-3 text-left text-sm hover:brightness-95"
-                                     (click)="goToValidationRow(validation)"
-                                     [attr.aria-pressed]="selectedValidation()?.result === validation"
-                                     [class.bg-red-100]="validation.result === validationResult.Error"
-                                     [class.border-red-300]="validation.result === validationResult.Error"
-                                     [class.text-red-900]="validation.result === validationResult.Error"
-                                     [class.bg-yellow-100]="validation.result === validationResult.Warning"
-                                     [class.border-yellow-300]="validation.result === validationResult.Warning"
-                                     [class.text-yellow-900]="validation.result === validationResult.Warning"
-                                     [class.bg-blue-100]="validation.result === validationResult.Suggestion"
-                                     [class.border-blue-300]="validation.result === validationResult.Suggestion"
-                                     [class.text-blue-900]="validation.result === validationResult.Suggestion">
-                                    <span class="mb-2 flex items-start gap-2">
-                                        <mat-icon class="shrink-0" fontSet="material-symbols-outlined"
-                                                  [matTooltip]="validation.result"
-                                                  [attr.aria-label]="validation.result" [attr.aria-hidden]="false">
-                                            {{ validationIcons[validation.result] }}
-                                        </mat-icon>
-                                        <span class="font-semibold">{{ validation.message }}</span>
-                                    </span>
-                                    <span class="block">Row {{ validation.row }}</span>
-                                    @if (validation.url !== undefined) {
-                                        <span class="mt-1 block break-all">{{ validation.url }}</span>
+                        @if (validationFailures().length > 0) {
+                            <div class="mb-3 rounded-md bg-slate-100 p-3 text-sm text-slate-700">
+                                <p class="font-semibold">Could not validate:</p>
+                                <ul class="list-disc break-all pl-4">
+                                    @for (path of validationFailures(); track path) {
+                                        <li>{{ path }}</li>
                                     }
-                                    @if (validation.suggestion) {
-                                        <span class="mt-1 block">{{ validation.suggestion }}</span>
+                                </ul>
+                            </div>
+                        } @else if (isFolderContent() && folderMarkdownPaths().length === 0) {
+                            <p class="text-sm text-slate-700">No Markdown files to validate.</p>
+                        } @else if (validationIssues().length === 0) {
+                            <p class="text-sm text-slate-700">All validation rules passed.</p>
+                        }
+                        <div class="flex flex-col gap-4">
+                            @for (group of validationGroups(); track group.path) {
+                                <section class="flex min-w-0 flex-col gap-2" [attr.aria-labelledby]="'structure-validation-group-' + $index">
+                                    <div class="min-w-0">
+                                        <h3 [id]="'structure-validation-group-' + $index" class="font-semibold text-slate-800">
+                                            <button type="button" (click)="goToStructure(group.path)" [matTooltip]="group.name"
+                                                    class="block w-full cursor-pointer truncate text-left hover:underline">{{ group.name }}</button>
+                                        </h3>
+                                        @if (isFolderContent()) {
+                                            <p class="truncate text-xs text-slate-600" [title]="group.path">{{ group.path }}</p>
+                                        }
+                                    </div>
+                                    @for (validation of group.issues; track validation) {
+                                        <button type="button" class="cursor-pointer rounded-md border p-3 text-left text-sm hover:brightness-95"
+                                                (click)="goToValidationRow(validation)"
+                                                [attr.aria-pressed]="selectedValidation()?.result === validation"
+                                                [class.bg-red-100]="validation.result === validationResult.Error"
+                                                [class.border-red-300]="validation.result === validationResult.Error"
+                                                [class.text-red-900]="validation.result === validationResult.Error"
+                                                [class.bg-yellow-100]="validation.result === validationResult.Warning"
+                                                [class.border-yellow-300]="validation.result === validationResult.Warning"
+                                                [class.text-yellow-900]="validation.result === validationResult.Warning"
+                                                [class.bg-blue-100]="validation.result === validationResult.Suggestion"
+                                                [class.border-blue-300]="validation.result === validationResult.Suggestion"
+                                                [class.text-blue-900]="validation.result === validationResult.Suggestion">
+                                            <span class="mb-2 flex items-start gap-2">
+                                                <mat-icon class="shrink-0" fontSet="material-symbols-outlined"
+                                                          [matTooltip]="validation.result"
+                                                          [attr.aria-label]="validation.result" [attr.aria-hidden]="false">
+                                                    {{ validationIcons[validation.result] }}
+                                                </mat-icon>
+                                                <span class="font-semibold">{{ validation.message }}</span>
+                                            </span>
+                                            <span class="block">Row {{ validation.row }}</span>
+                                            @if (validation.url) {
+                                                <span class="mt-1 block break-all">{{ validation.url }}</span>
+                                            }
+                                            @if (validation.suggestion) {
+                                                <span class="mt-1 block">{{ validation.suggestion }}</span>
+                                            }
+                                        </button>
                                     }
-                                </button>
+                                </section>
                             }
                         </div>
                     }
@@ -164,7 +199,7 @@
             </aside>
         }
     </div>
-} @else if (contentReadme() || contentLinks().length > 0)  {
+} @else if (isFolder()) {
     @if (currentListView() === 'action_readme') {
         @if (contentReadme() | markdown | async; as htmlContent) {
             <div class="prose max-w-5xl p-4 mx-4" [innerHTML]="htmlContent | safeHtml">
@@ -193,21 +228,6 @@
                 <p class="text-lg font-medium">No content found.</p>
             </div>
         }
-    } @else if (currentListView() === 'action_content') {
-        @if (contentLinks()?.length > 0) {
-            <div class="p-4 ml-4">
-                @for (item of contentLinks(); track item.url) {
-                    @if (item.name !== 'README.md') {
-                        <app-structure-content [owner]="item.owner" [repository]="item.repository" [branch]="item.branch" [key]="item.key"></app-structure-content>
-                    }
-                }
-            </div>
-        } @else {
-            <div class="flex flex-col items-center justify-center py-20 text-slate-400">
-                <mat-icon fontSet="material-symbols-outlined" class="text-6xl mb-4 h-16 w-16">folder_open</mat-icon>
-                <p class="text-lg font-medium">No content found.</p>
-            </div>
-        }
-    }  
+    }
 }
 </div>

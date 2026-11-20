@@ -73,9 +73,13 @@ export const structureLinkRule: StructureValidationRule = {
     async validate(context) {
         const checks = markdownLinks(context.source).map(async link => {
             const results: StructureValidation[] = [];
-            const add = (result: StructureValidationResult, message: string, suggestion: string) =>
+            const add = (result: StructureValidationResult, message: string, suggestion?: string) =>
                 results.push({ ruleId: this.id, result, message, suggestion, row: link.row, url: link.href });
             const href = link.href;
+            if (!href.trim()) {
+                add(StructureValidationResult.Error, 'Empty link');
+                return results;
+            }
             if (href.startsWith('#')) {
                 return results;
             }
@@ -110,7 +114,7 @@ export const structureLinkRule: StructureValidationRule = {
 
             let path: string;
             try {
-                if (!localPath || /\\|%(?![\da-f]{2})/i.test(localPath)) {
+                if (/\\|%(?![\da-f]{2})/i.test(localPath)) {
                     throw new Error('Invalid repository path');
                 }
                 const basePath = (context.repository?.key ?? '').split('/').map(encodeURIComponent).join('/');

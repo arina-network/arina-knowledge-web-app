@@ -102,10 +102,17 @@ describe('Markdown link validation', () => {
         }]);
     });
 
-    it.each(['/%ZZ.md', '/%00.md', ''])('rejects invalid local destinations without a request: %s', async href => {
+    it.each(['/%ZZ.md', '/%00.md'])('rejects invalid local destinations without a request: %s', async href => {
         expect(await validate(`[Link](${href})`)).toContainEqual(expect.objectContaining({
             result: StructureValidationResult.Error, message: 'Wrong local link'
         }));
+        expect(structureExists).not.toHaveBeenCalled();
+    });
+
+    it.each(['[Link]()', '[Link]( )', '[Link](<>)'])('reports one error for an empty link: %s', async markdown => {
+        expect(await validate(markdown)).toEqual([{
+            ruleId: 'markdown-links', result: StructureValidationResult.Error, row: 3, url: '', message: 'Empty link'
+        }]);
         expect(structureExists).not.toHaveBeenCalled();
     });
 

@@ -3,6 +3,7 @@ import { firstValueFrom } from 'rxjs';
 
 import { StructureValidation, StructureValidationContext, StructureValidationRepository, StructureValidationRule } from '../models/structure-validation';
 import { STRUCTURE_RULES } from '../validation/structure-rules';
+import { parseStructureTitle } from '../validation/structure-title';
 import { StructureApiService } from './structure-api.service';
 
 export const STRUCTURE_VALIDATION_RULES = new InjectionToken<readonly StructureValidationRule[]>(
@@ -18,15 +19,7 @@ export class StructureValidationService {
     async validate(markdown: string, repository?: StructureValidationRepository): Promise<StructureValidation[]> {
         const source = markdown.replace(/^\uFEFF/, '').replace(/\r\n?/g, '\n');
         const lines = source.split('\n');
-        const title = /^#[ \t]+(.*)$/.exec(lines[0])?.[1]
-            .replace(/[ \t]+#+[ \t]*$/, '').trim() ?? '';
-        const words = title ? title.split(/\s+/) : [];
-        const nameIndex = words.findIndex(word => /^\p{Lu}/u.test(word));
-        const typeWords = nameIndex < 0 ? words : words.slice(0, nameIndex);
-        const entityType = typeWords.length && typeWords.every(word =>
-            /^\p{Ll}[\p{Ll}\p{M}\p{N}'’-]*$/u.test(word)
-        ) ? typeWords.join(' ') : undefined;
-        const entityName = nameIndex < 0 ? undefined : words.slice(nameIndex).join(' ');
+        const { entityType, entityName } = parseStructureTitle(lines[0]);
         const checks = new Map<string, Promise<boolean>>();
         const context: StructureValidationContext = {
             source, lines, entityType, entityName, repository,
