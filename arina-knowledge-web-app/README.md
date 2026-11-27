@@ -1,6 +1,29 @@
-# ArinaKnowledgeWebApp
+# Arina Knowledge Web App
 
 This project was generated using [Angular CLI](https://github.com/angular/angular-cli) version 21.2.5.
+
+## Run App locally
+
+1. Run backend app locally
+```
+Arina.Knowledge.Web from arina-knowledge.sln on https://localhost:44323/
+```
+2. Set root folder
+```
+cd arina-knowledge-web-app
+```
+3. Run https version
+```
+ng serve --ssl
+```
+
+## Deploy App as GitHub 
+
+1. Build prod version
+
+```
+npm run deploy
+```
 
 ## Development server
 
