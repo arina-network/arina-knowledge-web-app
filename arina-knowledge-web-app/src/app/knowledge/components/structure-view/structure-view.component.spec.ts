@@ -233,6 +233,34 @@ describe('StructureViewComponent validation', () => {
         expect(validateButton()).toBeDefined();
     });
 
+    it('renders inline code in paragraphs and repository link labels', async () => {
+        await loadFile([
+            '# model Customer',
+            '',
+            '`Created Pronunciation`',
+            '',
+            '[`Created Pronunciation`](/models/Pronunciation.md)',
+            '',
+            '```text',
+            '`Created Pronunciation`',
+            '```'
+        ].join('\n'));
+        component.onViewChange('action_view');
+
+        const root = fixture.nativeElement as HTMLElement;
+        await expect.poll(() => {
+            fixture.detectChanges();
+            return root.querySelector('.markdown-content p > code')?.textContent;
+        }).toBe('Created Pronunciation');
+
+        const link = root.querySelector('.markdown-content a');
+        expect(link?.querySelector('code')?.textContent).toBe('Created Pronunciation');
+        expect(link?.getAttribute('href')).toMatch(/^#\/knowledge\/.*\/main\/models\/Pronunciation\.md$/);
+        expect(link?.getAttribute('data-markdown-row')).toBe('5');
+        expect(root.querySelector('.markdown-content pre > code')?.textContent?.trimEnd())
+            .toBe('`Created Pronunciation`');
+    });
+
     it('selects the issue row in Source and highlights the full paragraph after switching to View', async () => {
         const markdown = '# model Customer\r\n\r\n## description\r\n[Good](https://example.com) [Bad](http://example.com)';
         await loadFile(markdown);

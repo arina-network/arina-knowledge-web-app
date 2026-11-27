@@ -62,16 +62,12 @@ export class AppMarkdownPipe implements PipeTransform {
                     hr: withSourceRows(Renderer.prototype.hr)
                 } : {}),
                 link(token) {
-                    const { href, title, text } = token;
-                    let finalHref = href;
-
-                    if (href.startsWith('/')) { // process only local links
-                        finalHref = `#/knowledge/${owner}/${repository}/${branch}${href}`
-                        // finalHref = `${knowledge}/${owner}/${repository}/${branch}${href}`
-                    }
-
-                    const titleAttr = title ? ` title="${title}"` : '';
-                    return `<a href="${finalHref}"${titleAttr}${rowAttributes(token)}>${text}</a>`;
+                    const href = token.href.startsWith('/')
+                        ? `#/knowledge/${owner}/${repository}/${branch}${token.href}`
+                        : token.href;
+                    // Let Marked render inline formatting in the link label.
+                    const html = Renderer.prototype.link.call(this, { ...token, href });
+                    return html.replace(/^<a(?=\s|>)/, `<a${rowAttributes(token)}`);
                 }
             },
             // asynchronous Token Modifier Strategy for SVGs

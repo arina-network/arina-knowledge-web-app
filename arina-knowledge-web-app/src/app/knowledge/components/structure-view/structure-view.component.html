@@ -99,7 +99,7 @@
                 }
             } @else if (currentView() === 'action_view') {
                 @if (source() | markdown:true | async; as htmlContent) {
-                    <div #validationContent class="prose max-w-5xl p-4 mx-4" [innerHTML]="htmlContent | safeHtml">
+                    <div #validationContent class="markdown-content prose max-w-5xl p-4 mx-4" [innerHTML]="htmlContent | safeHtml">
                     </div>
                 }
             } @else if (currentView() === 'action_source') {
@@ -202,7 +202,7 @@
 } @else if (isFolder()) {
     @if (currentListView() === 'action_readme') {
         @if (contentReadme() | markdown | async; as htmlContent) {
-            <div class="prose max-w-5xl p-4 mx-4" [innerHTML]="htmlContent | safeHtml">
+            <div class="markdown-content prose max-w-5xl p-4 mx-4" [innerHTML]="htmlContent | safeHtml">
             </div>
         } @else {
             <div class="flex flex-col items-center justify-center py-20 text-slate-400">
