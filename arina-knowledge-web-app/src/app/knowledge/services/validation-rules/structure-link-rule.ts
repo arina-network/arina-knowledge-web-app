@@ -1,18 +1,15 @@
 import { Lexer, marked } from 'marked';
 
-import { markdownSourceRows } from '@/app/core/markdown/markdown-source-rows';
-
-import { StructureValidationResult } from '../constants/structure-validation-result';
-import { StructureValidation, StructureValidationContext, StructureValidationRule } from '../models/structure-validation';
-
-interface MarkdownLink {
-    href: string;
-    row: number;
-}
+import { StructureValidationResult } from '../../constants/structure-validation-result';
+import { MarkdownLink } from '../../models/validation/markdown-link';
+import { StructureValidation } from '../../models/validation/structure-validation';
+import { StructureValidationContext } from '../../models/validation/structure-validation-context';
+import { StructureValidationRule } from '../../models/validation/structure-validation-rule';
+import { convertToSourceRows } from '../../utils/convert-to-source-rows';
 
 function markdownLinks(source: string): MarkdownLink[] {
     const tokens = Lexer.lex(source);
-    const rows = markdownSourceRows(source, tokens);
+    const rows = convertToSourceRows(source, tokens);
     const links: MarkdownLink[] = [];
     marked.walkTokens(tokens, token => {
         const position = rows.get(token);
@@ -68,6 +65,11 @@ function repositoryPath(url: URL, context: StructureValidationContext): string |
         : undefined;
 }
 
+/**
+ * Reports empty destinations, malformed external URLs, and HTTP links as errors.
+ * For repository links, warns when the link is not root-relative and checks that
+ * the target exists on the current branch. Fragment-only links are allowed.
+ */
 export const structureLinkRule: StructureValidationRule = {
     id: 'markdown-links',
     async validate(context) {

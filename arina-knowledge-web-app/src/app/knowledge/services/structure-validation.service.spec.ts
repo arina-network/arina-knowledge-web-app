@@ -1,10 +1,13 @@
 import { TestBed } from '@angular/core/testing';
 
 import { StructureValidationResult } from '../constants/structure-validation-result';
-import { StructureValidationContext, StructureValidationRule } from '../models/structure-validation';
-import { STRUCTURE_RULES } from '../validation/structure-rules';
+import { StructureValidationContext } from '../models/validation/structure-validation-context';
+import { StructureValidationRule } from '../models/validation/structure-validation-rule';
 import { STRUCTURE_VALIDATION_RULES, StructureValidationService } from './structure-validation.service';
 import { StructureApiService } from './structure-api.service';
+import { structureDescriptionRule } from './validation-rules/structure-description-rule';
+import { structureLinkRule } from './validation-rules/structure-link-rule';
+import { structureNameRule } from './validation-rules/structure-name-rule';
 
 describe('StructureValidationService', () => {
     let service: StructureValidationService;
@@ -98,18 +101,18 @@ describe('StructureValidationService', () => {
     });
 });
 
-describe('Entity-specific structure rules', () => {
-    it('runs general rules and only the rules matching the parsed entity type', async () => {
+describe('Structure-type-specific rules', () => {
+    it('runs general rules and only the rules matching the parsed structure type', async () => {
         const validate = vi.fn((context: StructureValidationContext) => [{
             ruleId: 'data-object-rule', result: StructureValidationResult.Warning,
-            message: context.entityName!, row: 1
+            message: context.structureName!, row: 1
         }]);
         const rule: StructureValidationRule = {
-            id: 'data-object-rule', entityTypes: ['data object'], validate
+            id: 'data-object-rule', structureTypes: ['data object'], validate
         };
         TestBed.configureTestingModule({
             providers: [
-                { provide: STRUCTURE_VALIDATION_RULES, useValue: [...STRUCTURE_RULES, rule] },
+                { provide: STRUCTURE_VALIDATION_RULES, useValue: [structureNameRule, structureDescriptionRule, structureLinkRule, rule] },
                 { provide: StructureApiService, useValue: {} }
             ]
         });

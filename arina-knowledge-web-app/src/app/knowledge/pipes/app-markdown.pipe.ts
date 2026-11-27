@@ -4,11 +4,12 @@ import { catchError, firstValueFrom, from, Observable, of, tap } from 'rxjs';
 
 import { Marked, Renderer, Token } from 'marked';
 
-import { AppParams } from '../constants/app-params';
-import { AppRoutes } from '../constants/app-routes';
-import { markdownSourceRows, MarkdownSourceRows } from '../markdown/markdown-source-rows';
+import { AppParams } from '@/app/core/constants/app-params';
+import { AppRoutes } from '@/app/core/constants/app-routes';
 
-import { StructureApiService } from '@/app/knowledge/services/structure-api.service';
+import { SourceRows } from '../models/source-rows';
+import { StructureApiService } from '../services/structure-api.service';
+import { convertToSourceRows } from '../utils/convert-to-source-rows';
 
 @Pipe({
     name: 'markdown',
@@ -30,7 +31,7 @@ export class AppMarkdownPipe implements PipeTransform {
             return of('');
         }
 
-        let sourceRows: WeakMap<Token, MarkdownSourceRows> | undefined;
+        let sourceRows: WeakMap<Token, SourceRows> | undefined;
         const rowAttributes = (token: Token) => {
             const rows = sourceRows?.get(token);
             return rows ? ` data-markdown-row="${rows.start}" data-markdown-end-row="${rows.end}"` : '';
@@ -45,7 +46,7 @@ export class AppMarkdownPipe implements PipeTransform {
             async: true,
             hooks: includeSourceRows ? {
                 processAllTokens(tokens) {
-                    sourceRows = markdownSourceRows(value, tokens);
+                    sourceRows = convertToSourceRows(value, tokens);
                     return tokens;
                 }
             } : undefined,

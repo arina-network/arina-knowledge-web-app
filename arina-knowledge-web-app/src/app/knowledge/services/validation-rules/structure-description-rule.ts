@@ -1,34 +1,13 @@
 import { Lexer } from 'marked';
 
-import { StructureValidationResult } from '../constants/structure-validation-result';
-import { StructureValidation, StructureValidationRule } from '../models/structure-validation';
-import { structureLinkRule } from './structure-link-rule';
+import { StructureValidationResult } from '../../constants/structure-validation-result';
+import { StructureValidationRule } from '../../models/validation/structure-validation-rule';
 
-const entityTitleRule: StructureValidationRule = {
-    id: 'entity-title',
-    validate({ entityType, entityName }) {
-        const results: StructureValidation[] = [];
-
-        if (!entityType) {
-            results.push({
-                ruleId: this.id, result: StructureValidationResult.Error, message: 'No Entity Type', row: 1,
-                suggestion: 'Add a lowercase entity type after #.'
-            });
-        }
-        if (!entityName) {
-            results.push({
-                ruleId: this.id, result: StructureValidationResult.Error, message: 'No Entity Name', row: 1,
-                suggestion: 'Add an entity name starting with an uppercase letter.'
-            });
-        }
-
-        return results.length ? results : [
-            { ruleId: this.id, result: StructureValidationResult.Ok, message: 'Entity title is valid', row: 1 }
-        ];
-    }
-};
-
-const descriptionRule: StructureValidationRule = {
+/**
+ * Looks for a top-level `## description` heading. Suggests adding it if absent
+ * and warns if it does not follow row 1. Blank lines between the two are allowed.
+ */
+export const structureDescriptionRule: StructureValidationRule = {
     id: 'description',
     validate({ source, lines }) {
         let offset = 0;
@@ -65,5 +44,3 @@ const descriptionRule: StructureValidationRule = {
         }];
     }
 };
-
-export const STRUCTURE_RULES: readonly StructureValidationRule[] = [entityTitleRule, descriptionRule, structureLinkRule];

@@ -1,11 +1,11 @@
 import { ChangeDetectorRef, Component, ElementRef, inject, input, signal, viewChild } from '@angular/core';
 import { AsyncPipe } from '@angular/common';
 
-import { AppMarkdownPipe } from '@/app/core/pipes/app-marked.pipe';
 import { AppSafeHtmlPipe } from '@/app/core/pipes/app-safe-html.pipe';
 import { ProgressComponent } from '@/app/core/components/progress/progress.component';
 import { NotificationService } from '@/app/core/services/notification.service';
 
+import { AppMarkdownPipe } from '../../pipes/app-markdown.pipe';
 import { StructureApiService } from '../../services/structure-api.service';
 
 @Component({

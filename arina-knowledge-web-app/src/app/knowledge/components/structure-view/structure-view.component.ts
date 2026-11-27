@@ -13,7 +13,6 @@ import { MatTooltipModule } from '@angular/material/tooltip';
 
 import { AppRoutes } from '@/app/core/constants/app-routes';
 import { Breadcrumb } from '@/app/core/models/breadcrumb';
-import { AppMarkdownPipe } from '@/app/core/pipes/app-marked.pipe';
 import { AppSafeHtmlPipe } from '@/app/core/pipes/app-safe-html.pipe';
 import { ProgressComponent } from '@/app/core/components/progress/progress.component';
 import { AppParams } from '@/app/core/constants/app-params';
@@ -23,23 +22,15 @@ import { NotificationService } from '@/app/core/services/notification.service';
 import { StructureApiService } from '../../services/structure-api.service';
 import { StructureExportService } from '../../services/structure-export.service';
 import { StructureValidationService } from '../../services/structure-validation.service';
-import { StructureValidation } from '../../models/structure-validation';
+import { ValidationGroup } from '../../models/validation/validation-group';
+import { ViewValidation } from '../../models/validation/view-validation';
 import { StructureValidationResult } from '../../constants/structure-validation-result';
 import { StructureLink } from '../../models/structure-link';
-import { parseStructureTitle } from '../../validation/structure-title';
+import { AppMarkdownPipe } from '../../pipes/app-markdown.pipe';
+import { parseStructureFirstLine } from '../../utils/parse-structure-first-line';
 import { StructureContentComponent } from '../structure-content/structure-content.component';
 import { StructureHomeComponent } from '../structure-home/structure-home.component';
 import { ProgressExportComponent } from '@/app/core/components/progress-export/progress-export.component';
-
-interface ViewValidation extends StructureValidation {
-    filePath?: string;
-}
-
-interface ValidationGroup {
-    path: string;
-    name: string;
-    issues: ViewValidation[];
-}
 
 @Component({
     selector: 'app-structure-view',
@@ -225,8 +216,8 @@ export class StructureViewComponent {
             if (!group) {
                 const source = issue.filePath ? sources.get(path) : this.source();
                 const firstLine = source?.split(/\r\n?|\n/, 1)[0] ?? '';
-                const { entityName } = parseStructureTitle(firstLine);
-                group = { path, name: entityName ?? (path.split('/').at(-1) || 'Structure'), issues: [] };
+                const { structureName } = parseStructureFirstLine(firstLine);
+                group = { path, name: structureName ?? (path.split('/').at(-1) || 'Structure'), issues: [] };
                 groups.set(path, group);
             }
             group.issues.push(issue);

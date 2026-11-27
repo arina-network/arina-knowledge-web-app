@@ -1,11 +1,11 @@
 import { TestBed } from '@angular/core/testing';
 import { of, throwError } from 'rxjs';
 
-import { StructureValidationResult } from '../constants/structure-validation-result';
-import { StructureApiService } from './structure-api.service';
-import { StructureValidationService } from './structure-validation.service';
+import { StructureValidationResult } from '../../constants/structure-validation-result';
+import { StructureApiService } from '../structure-api.service';
+import { StructureValidationService } from '../structure-validation.service';
 
-describe('Markdown link validation', () => {
+describe('Structure link rule', () => {
     let service: StructureValidationService;
     let structureExists: ReturnType<typeof vi.fn>;
     const repository = { owner: 'owner', repository: 'repository', branch: 'main', key: 'models/Customer.md' };
