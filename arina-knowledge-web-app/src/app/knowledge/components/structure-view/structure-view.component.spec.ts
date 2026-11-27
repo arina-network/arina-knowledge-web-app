@@ -24,7 +24,7 @@ describe('StructureViewComponent validation', () => {
             imports: [StructureViewComponent],
             providers: [
                 provideRouter([]),
-                { provide: StructureApiService, useValue: { getStructureRaw, structureExists } },
+                { provide: StructureApiService, useValue: { getStructureRaw, isStructureExists: structureExists } },
                 { provide: StructureExportService, useValue: {} },
                 { provide: NotificationService, useValue: { showError: vi.fn() } },
                 { provide: MatDialog, useValue: {} }

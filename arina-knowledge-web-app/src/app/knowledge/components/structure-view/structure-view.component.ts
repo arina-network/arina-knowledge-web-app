@@ -22,8 +22,8 @@ import { NotificationService } from '@/app/core/services/notification.service';
 import { StructureApiService } from '../../services/structure-api.service';
 import { StructureExportService } from '../../services/structure-export.service';
 import { StructureValidationService } from '../../services/structure-validation.service';
-import { ValidationGroup } from '../../models/validation/validation-group';
-import { ViewValidation } from '../../models/validation/view-validation';
+import { StructureValidationView } from '../../models/validation/structure-validation-view';
+import { StructureValidationViewGroup } from '../../models/validation/structure-validation-view-group';
 import { StructureValidationResult } from '../../constants/structure-validation-result';
 import { StructureLink } from '../../models/structure-link';
 import { AppMarkdownPipe } from '../../pipes/app-markdown.pipe';
@@ -140,13 +140,13 @@ export class StructureViewComponent {
     private readonly structureStart = viewChild<ElementRef<HTMLElement>>('structureStart');
     private readonly validationContent = viewChild<ElementRef<HTMLElement>>('validationContent');
     private readonly folderContent = viewChildren(StructureContentComponent);
-    protected readonly selectedValidation = signal<{ result: ViewValidation } | undefined>(undefined);
+    protected readonly selectedValidation = signal<{ result: StructureValidationView } | undefined>(undefined);
     protected readonly selectedSourceRow = computed(() => {
         const row = this.selectedValidation()?.result.row;
         return row === undefined ? undefined : Math.min(row, this.sourceRows().length);
     });
 
-    protected goToValidationRow(result: ViewValidation) {
+    protected goToValidationRow(result: StructureValidationView) {
         // Clicking the same issue again should also bring it back into view.
         this.selectedValidation.set({ result });
     }
@@ -200,7 +200,7 @@ export class StructureViewComponent {
         [StructureValidationResult.Warning]: 'warning',
         [StructureValidationResult.Suggestion]: 'lightbulb'
     };
-    public validationResults = signal<ViewValidation[] | undefined>(undefined);
+    public validationResults = signal<StructureValidationView[] | undefined>(undefined);
     protected readonly validationFailures = signal<readonly string[]>([]);
     public isValidating = signal(false);
     private validationRun = 0;
@@ -208,7 +208,7 @@ export class StructureViewComponent {
         this.validationResults()?.filter(validation => validation.result !== StructureValidationResult.Ok) ?? []
     );
     protected readonly validationGroups = computed(() => {
-        const groups = new Map<string, ValidationGroup>();
+        const groups = new Map<string, StructureValidationViewGroup>();
         const sources = new Map(this.folderContent().map(file => [file.key(), file.source()]));
         for (const issue of this.validationIssues()) {
             const path = issue.filePath ?? this.key ?? '';
@@ -276,7 +276,7 @@ export class StructureViewComponent {
 
     private async validateFolder(run: number) {
         const sources = new Map(this.folderContent().map(file => [file.key(), file.source()]));
-        const results: ViewValidation[] = [];
+        const results: StructureValidationView[] = [];
         const failures: string[] = [];
         for (const filePath of this.folderMarkdownPaths()) {
             if (run !== this.validationRun) {

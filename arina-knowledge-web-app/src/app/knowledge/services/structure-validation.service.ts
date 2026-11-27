@@ -31,12 +31,19 @@ export class StructureValidationService {
         const { structureType, structureName } = parseStructureFirstLine(lines[0]);
         const checks = new Map<string, Promise<boolean>>();
         const context: StructureValidationContext = {
-            source, lines, structureType, structureName, repository,
+            source, 
+            lines, 
+            structureType, 
+            structureName, 
+            repository,
             structureExists: repository ? path => {
                 let check = checks.get(path);
                 if (!check) {
-                    check = firstValueFrom(this.api.structureExists(
-                        repository.owner, repository.repository, repository.branch, path
+                    check = firstValueFrom(this.api.isStructureExists(
+                        repository.owner, 
+                        repository.repository, 
+                        repository.branch, 
+                        path
                     ));
                     checks.set(path, check);
                 }

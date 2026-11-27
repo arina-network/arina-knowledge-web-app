@@ -13,7 +13,7 @@ describe('Structure link rule', () => {
     beforeEach(() => {
         structureExists = vi.fn().mockReturnValue(of(true));
         TestBed.configureTestingModule({
-            providers: [{ provide: StructureApiService, useValue: { structureExists } }]
+            providers: [{ provide: StructureApiService, useValue: { isStructureExists: structureExists } }]
         });
         service = TestBed.inject(StructureValidationService);
     });

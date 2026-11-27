@@ -49,9 +49,10 @@ export class StructureApiService {
             return of([]);
         }
 
-        const headers =  this.getHeaders()
+        const url = `${this.routes.githubApiRepositories}/${ownerName}/${repositoryName}/${this.routes.githubApiBranches}`;
 
-        return this.http.get(`${this.routes.githubApiRepositories}/${ownerName}/${repositoryName}/${this.routes.githubApiBranches}`, { headers });
+        const headers =  this.getHeaders()
+        return this.http.get(url, { headers });
     }
 
     getStructureTreeRootNodes(
@@ -65,9 +66,10 @@ export class StructureApiService {
             return of([]);
         }
 
-        const headers =  this.getHeaders()
+        const url = `${this.routes.githubApiRepositories}/${ownerName}/${repositoryName}/${this.routes.githubApiContents}/?ref=${branchName}`;
 
-        return this.http.get(`${this.routes.githubApiRepositories}/${ownerName}/${repositoryName}/${this.routes.githubApiContents}/?ref=${branchName}`, { headers });
+        const headers =  this.getHeaders()
+        return this.http.get(url, { headers });
     }
 
     getStructureTreeChildNodes(
@@ -80,9 +82,10 @@ export class StructureApiService {
             return of([]);
         }
         
+        const url = `${this.routes.githubApiRepositories}/${ownerName}/${repositoryName}/${this.routes.githubApiContents}/${containerKey}?ref=${branchName}`;
+        
         const headers =  this.getHeaders()
-
-        return this.http.get(`${this.routes.githubApiRepositories}/${ownerName}/${repositoryName}/${this.routes.githubApiContents}/${containerKey}?ref=${branchName}`, { headers });
+        return this.http.get(url, { headers });
     }
 
     getStructureRaw(
@@ -105,12 +108,18 @@ export class StructureApiService {
         return this.http.get(url, { headers });
     }
 
-    structureExists(owner: string, repository: string, branch: string, path: string): Observable<boolean> {
+    isStructureExists(
+        owner: string, 
+        repository: string, 
+        branch: string, 
+        path: string
+    ): Observable<boolean> {
         const encodedPath = path.split('/').map(segment => encodeURIComponent(segment)).join('/');
         const url = `${this.routes.githubApiRepositories}/${encodeURIComponent(owner)}/${encodeURIComponent(repository)}`
             + `/contents/${encodedPath}?ref=${encodeURIComponent(branch)}`;
 
-        return this.http.get(url, { headers: this.getHeaders() }).pipe(
+        const headers =  this.getHeaders()
+        return this.http.get(url, { headers }).pipe(
             map(() => true),
             catchError((error: HttpErrorResponse) => error.status === 404 ? of(false) : throwError(() => error))
         );

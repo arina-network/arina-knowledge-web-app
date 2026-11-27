@@ -311,7 +311,7 @@ export class StructureDesignerComponent {
 
         // Minimum 150px and maximum 500px bounds constraint
         const newWidth = event.clientX; 
-        if (newWidth >= 150 && newWidth <= 500) {
+        if (newWidth >= 150 && newWidth <= 800) {
             this.sidenavWidth = newWidth;
         }
     }
