@@ -1,16 +1,17 @@
-import { ChangeDetectorRef, Component, inject, input, signal } from '@angular/core';
+import { ChangeDetectorRef, Component, ElementRef, inject, input, signal, viewChild } from '@angular/core';
 import { AsyncPipe } from '@angular/common';
 
-import { AppMarkdownPipe } from '@/app/core/pipes/app-marked.pipe';
 import { AppSafeHtmlPipe } from '@/app/core/pipes/app-safe-html.pipe';
 import { ProgressComponent } from '@/app/core/components/progress/progress.component';
 import { NotificationService } from '@/app/core/services/notification.service';
 
+import { AppMarkdownPipe } from '../../pipes/app-markdown.pipe';
 import { StructureApiService } from '../../services/structure-api.service';
 
 @Component({
     selector: 'app-structure-content',
     standalone: true,
+    host: { class: 'block' },
     imports: [
         AsyncPipe,
         ProgressComponent,
@@ -34,6 +35,8 @@ export class StructureContentComponent {
     key = input<string>();    
     
     public source = signal<string | undefined>(undefined);
+    public readonly element = inject(ElementRef<HTMLElement>);
+    public readonly renderedContent = viewChild<ElementRef<HTMLElement>>('renderedContent');
 
     ngOnInit() {
         this.refreshData();
@@ -63,7 +66,7 @@ export class StructureContentComponent {
                 }
 
                 // content
-                if (data.content) {
+                if (typeof data.content === 'string') {
                     this.setSource(data)
                     this.isDataLoading.set(false);
                 } else {

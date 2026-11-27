@@ -2,12 +2,14 @@ import { ChangeDetectorRef, inject, Pipe, PipeTransform } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { catchError, firstValueFrom, from, Observable, of, tap } from 'rxjs';
 
-import { Marked } from 'marked';
+import { Marked, Renderer, Token } from 'marked';
 
-import { AppParams } from '../constants/app-params';
-import { AppRoutes } from '../constants/app-routes';
+import { AppParams } from '@/app/core/constants/app-params';
+import { AppRoutes } from '@/app/core/constants/app-routes';
 
-import { StructureApiService } from '@/app/knowledge/services/structure-api.service';
+import { SourceRows } from '../models/source-rows';
+import { StructureApiService } from '../services/structure-api.service';
+import { convertToSourceRows } from '../utils/convert-to-source-rows';
 
 @Pipe({
     name: 'markdown',
@@ -19,7 +21,7 @@ export class AppMarkdownPipe implements PipeTransform {
     protected api = inject(StructureApiService);
     protected cdr = inject(ChangeDetectorRef);   
         
-    transform(value: string | null | undefined): Observable<string> {
+    transform(value: string | null | undefined, includeSourceRows = false): Observable<string> {
         // const knowledge = this.routes.knowledge;
         const owner = this.route.snapshot.paramMap.get(AppParams.Owner);
         const repository = this.route.snapshot.paramMap.get(AppParams.Repository);
@@ -29,21 +31,43 @@ export class AppMarkdownPipe implements PipeTransform {
             return of('');
         }
 
+        let sourceRows: WeakMap<Token, SourceRows> | undefined;
+        const rowAttributes = (token: Token) => {
+            const rows = sourceRows?.get(token);
+            return rows ? ` data-markdown-row="${rows.start}" data-markdown-end-row="${rows.end}"` : '';
+        };
+        const withSourceRows = <T extends Token>(render: (this: Renderer, token: T) => string) =>
+            function (this: Renderer, token: T) {
+                return render.call(this, token).replace(/^(<[a-z][\w-]*)/i, `$1${rowAttributes(token)}`);
+            };
+
         // create marked to intercept links
         const localMarked = new Marked({
             async: true,
+            hooks: includeSourceRows ? {
+                processAllTokens(tokens) {
+                    sourceRows = convertToSourceRows(value, tokens);
+                    return tokens;
+                }
+            } : undefined,
             // synchronous Link Renderer Strategy
             renderer: {
-                link({ href, title, text }) {
-                    let finalHref = href;
-
-                    if (href.startsWith('/')) { // process only local links
-                        finalHref = `#/knowledge/${owner}/${repository}/${branch}${href}`
-                        // finalHref = `${knowledge}/${owner}/${repository}/${branch}${href}`
-                    }
-
-                    const titleAttr = title ? ` title="${title}"` : '';
-                    return `<a href="${finalHref}"${titleAttr}>${text}</a>`;
+                ...(includeSourceRows ? {
+                    heading: withSourceRows(Renderer.prototype.heading),
+                    paragraph: withSourceRows(Renderer.prototype.paragraph),
+                    listitem: withSourceRows(Renderer.prototype.listitem),
+                    blockquote: withSourceRows(Renderer.prototype.blockquote),
+                    code: withSourceRows(Renderer.prototype.code),
+                    table: withSourceRows(Renderer.prototype.table),
+                    hr: withSourceRows(Renderer.prototype.hr)
+                } : {}),
+                link(token) {
+                    const href = token.href.startsWith('/')
+                        ? `#/knowledge/${owner}/${repository}/${branch}${token.href}`
+                        : token.href;
+                    // Let Marked render inline formatting in the link label.
+                    const html = Renderer.prototype.link.call(this, { ...token, href });
+                    return html.replace(/^<a(?=\s|>)/, `<a${rowAttributes(token)}`);
                 }
             },
             // asynchronous Token Modifier Strategy for SVGs

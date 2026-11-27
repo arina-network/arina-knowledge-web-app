@@ -1,6 +1,6 @@
 import { Injectable, inject } from '@angular/core';
-import { HttpClient, HttpHeaders } from '@angular/common/http';
-import { Observable, of } from 'rxjs';
+import { HttpClient, HttpErrorResponse, HttpHeaders } from '@angular/common/http';
+import { catchError, map, Observable, of, throwError } from 'rxjs';
 
 import { AppRoutes } from '@/app/core/constants/app-routes';
 import { AuthorizationService } from '@/app/core/services/authorization.service';
@@ -49,9 +49,10 @@ export class StructureApiService {
             return of([]);
         }
 
-        const headers =  this.getHeaders()
+        const url = `${this.routes.githubApiRepositories}/${ownerName}/${repositoryName}/${this.routes.githubApiBranches}`;
 
-        return this.http.get(`${this.routes.githubApiRepositories}/${ownerName}/${repositoryName}/${this.routes.githubApiBranches}`, { headers });
+        const headers =  this.getHeaders()
+        return this.http.get(url, { headers });
     }
 
     getStructureTreeRootNodes(
@@ -65,9 +66,10 @@ export class StructureApiService {
             return of([]);
         }
 
-        const headers =  this.getHeaders()
+        const url = `${this.routes.githubApiRepositories}/${ownerName}/${repositoryName}/${this.routes.githubApiContents}/?ref=${branchName}`;
 
-        return this.http.get(`${this.routes.githubApiRepositories}/${ownerName}/${repositoryName}/${this.routes.githubApiContents}/?ref=${branchName}`, { headers });
+        const headers =  this.getHeaders()
+        return this.http.get(url, { headers });
     }
 
     getStructureTreeChildNodes(
@@ -80,9 +82,10 @@ export class StructureApiService {
             return of([]);
         }
         
+        const url = `${this.routes.githubApiRepositories}/${ownerName}/${repositoryName}/${this.routes.githubApiContents}/${containerKey}?ref=${branchName}`;
+        
         const headers =  this.getHeaders()
-
-        return this.http.get(`${this.routes.githubApiRepositories}/${ownerName}/${repositoryName}/${this.routes.githubApiContents}/${containerKey}?ref=${branchName}`, { headers });
+        return this.http.get(url, { headers });
     }
 
     getStructureRaw(
@@ -103,5 +106,22 @@ export class StructureApiService {
 
         const headers =  this.getHeaders()
         return this.http.get(url, { headers });
+    }
+
+    isStructureExists(
+        owner: string, 
+        repository: string, 
+        branch: string, 
+        path: string
+    ): Observable<boolean> {
+        const encodedPath = path.split('/').map(segment => encodeURIComponent(segment)).join('/');
+        const url = `${this.routes.githubApiRepositories}/${encodeURIComponent(owner)}/${encodeURIComponent(repository)}`
+            + `/contents/${encodedPath}?ref=${encodeURIComponent(branch)}`;
+
+        const headers =  this.getHeaders()
+        return this.http.get(url, { headers }).pipe(
+            map(() => true),
+            catchError((error: HttpErrorResponse) => error.status === 404 ? of(false) : throwError(() => error))
+        );
     }
 }
